@@ -9,5 +9,11 @@ class Driver extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'transport_type'];
+    protected $fillable = ['id','name', 'transport_type',];
+
+    public function transports()
+{
+    return $this->hasMany(Transport::class);
+}
+
 }
