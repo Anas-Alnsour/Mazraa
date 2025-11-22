@@ -47,11 +47,16 @@
         </div>
 
         {{-- Driver --}}
-        <div>
-            <label class="block mb-2 font-semibold">Driver (Assigned automatically)</label>
-            <input type="text" class="w-full border p-3 rounded-lg bg-gray-100" x-model="driverName" readonly>
-            <input type="hidden" name="driver_id" :value="driverId">
+     <div>
+            <label class="block mb-2 font-semibold">Driver</label>
+            <select name="driver_id" class="w-full border p-3 rounded-lg" x-model="driverId">
+                <option value="" disabled selected>Select Driver</option>
+                @foreach($drivers as $driver)
+                    <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                @endforeach
+            </select>
         </div>
+       
 
         {{-- Start, Destination & Distance --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
