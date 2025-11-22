@@ -42,7 +42,7 @@
                         <tr class="text-gray-700 hover:bg-gray-50 transition">
                             <td class="p-3 border">{{ $transport->transport_type }}</td>
                             <td class="p-3 border">{{ $transport->passengers }}</td>
-                            <td class="p-3 border">{{ $transport->driver }}</td>
+                            <td class="p-3 border">{{ $transport->driver->name }}</td>
                             <td class="p-3 border">{{ $transport->start_point }}</td>
                             <td class="p-3 border">{{ $transport->destination }}</td>
                             <td class="p-3 border">{{ $transport->distance }}</td>
