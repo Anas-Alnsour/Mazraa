@@ -24,7 +24,7 @@
         <div class="flex flex-wrap justify-center gap-4">
 
             @guest
-                <a href="{{ route('farms.index') }}" class="px-8 py-4 bg-green-600 text-white rounded-xl shadow-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-300">
+                <a href="{{ route('farms.index') }}" class="px-8 py-4 bg-green-600 text-white  rounded-xl shadow-lg hover:bg-green-700 transform hover:scale-105 transition-all duration-300">
                     Explore Farms
                 </a>
 

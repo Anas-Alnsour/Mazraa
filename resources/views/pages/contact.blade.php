@@ -3,7 +3,8 @@
 @section('title', 'Contact Us')
 
 @section('content')
-<div class="flex justify-center items-center py-16 min-h-[calc(100vh-8rem)]">
+<div class="relative bg-gradient-to-r from-green-100 via-green-200 to-green-100 h-screen flex justify-center items-center py-16 min-h-[calc(100vh-8rem)]">
+
     <div class="w-1/2 bg-white rounded-3xl shadow-2xl p-12">
         <h2 class="text-4xl font-extrabold text-green-700 mb-6 text-center">Contact Us</h2>
         <p class="text-gray-500 mb-8 text-center">Have questions or feedback? Send us a message!</p>
@@ -19,21 +20,30 @@
             @csrf
 
             <div>
-                <label for="name" class="text-gray-700 font-semibold mb-2 block">Name</label>
+                <div class="flex items-start">
+                 <x-heroicon-o-user class="w-5 h-5 text-green-600" />
+                 <label for="name" class="text-gray-700 font-semibold mb-3 block">Name</label>
+                </div>
                 <input type="text" name="name" id="name" value="{{ old('name') }}" required
                     class="w-full px-5 py-3 border border-green-300 rounded-2xl shadow-sm focus:ring-3 focus:ring-green-300 focus:border-green-500 transition duration-300 hover:shadow-md"/>
                 <x-input-error :messages="$errors->get('name')" class="mt-1 text-sm text-red-600"/>
             </div>
 
             <div>
+                <div class="flex items-start">
+                    <x-heroicon-o-envelope class="w-5 h-5 text-green-600" />
                 <label for="email" class="text-gray-700 font-semibold mb-2 block">Email</label>
+                </div>
                 <input type="email" name="email" id="email" value="{{ old('email') }}" required
                     class="w-full px-5 py-3 border border-green-300 rounded-2xl shadow-sm focus:ring-3 focus:ring-green-300 focus:border-green-500 transition duration-300 hover:shadow-md"/>
                 <x-input-error :messages="$errors->get('email')" class="mt-1 text-sm text-red-600"/>
             </div>
 
             <div>
+                <div class="flex items-start">
+                    <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 text-green-600 mt-1" />
                 <label for="message" class="text-gray-700 font-semibold mb-2 block">Message</label>
+                </div>
                 <textarea name="message" id="message" rows="5" required
                     class="w-full px-5 py-3 border border-green-300 rounded-2xl shadow-sm focus:ring-3 focus:ring-green-300 focus:border-green-500 transition duration-300 hover:shadow-md">{{ old('message') }}</textarea>
                 <x-input-error :messages="$errors->get('message')" class="mt-1 text-sm text-red-600"/>

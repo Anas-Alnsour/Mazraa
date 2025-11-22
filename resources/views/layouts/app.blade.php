@@ -25,36 +25,36 @@
                     Home
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('explore') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('explore') }}" class="py-2 px-3  relative text-center text-center group transition duration-300">
                     Explore Farms
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('bookings.my_bookings') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('bookings.my_bookings') }}" class="py-2 px-3  relative text-center group text-center transition duration-300">
                     My Bookings
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('supplies.index') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('supplies.index') }}" class="py-2 px-3 relative text-center group  text-center transition duration-300">
                     Order Supplies
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('orders.my_orders') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('orders.my_orders') }}" class="py-2 px-3 relative text-center text-center group transition duration-300">
                     My Orders
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('transports.index') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('transports.index') }}" class="py-2 px-3 relative text-center group transition duration-300">
                     Transport
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('contact') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('contact') }}" class="py-2 px-3 relative text-center group transition duration-300">
                     Contact
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
-                <a href="{{ route('about') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('about') }}" class="py-2 px-3 relative text-center group transition duration-300">
                     About
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
                 @auth
-                <a href="{{ route('favorites.index') }}" class="py-2 px-3 relative group transition duration-300">
+                <a href="{{ route('favorites.index') }}" class="py-2 px-3 relative text-center group transition duration-300">
                     Favorites
                     <span class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                 </a>
@@ -127,9 +127,9 @@
     @yield('content')
 </main>
 
----
 
-<footer class="bg-gray-800 text-white mt-24 border-t-8 border-green-700">
+
+<footer class="bg-gray-800 text-white border-t-8 border-green-700">
     <div class="max-w-7xl mx-auto px-6 py-12">
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
