@@ -10,6 +10,7 @@ class Transport extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'transport_type',
         'passengers',
         'driver_id',
@@ -22,4 +23,9 @@ class Transport extends Model
         'notes',
         'status',
     ];
+    public function driver()
+{
+    return $this->belongsTo(Driver::class);
+}
+
 }
