@@ -42,7 +42,7 @@
             <label class="block mb-2 font-semibold">Driver</label>
             <select name="driver_id" class="w-full border p-3 rounded-lg" x-model="driverId">
                 <option value="" disabled selected>Select Driver</option>
-                @foreach($randomDrivers as $driver)
+                @foreach($Drivers as $driver)
                     <option value="{{ $driver->id }}">{{ $driver->name }}</option>
                 @endforeach
             </select>
