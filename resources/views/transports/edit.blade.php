@@ -24,7 +24,8 @@
         </div>
     @endif
 
-    <form action="{{ route('transports.update', $transport->id) }}" method="POST" class="bg-white p-8 rounded-lg shadow-lg space-y-6" x-data="transportForm()">
+    <form action="{{ route('transports.update', $transport->id) }}" method="POST" class="bg-white p-8 rounded-lg shadow-lg space-y-6" x-data="transportForm()"
+       style=" margin-left:3em ;margin-right:3em "  >
         @csrf
         @method('PUT')
 

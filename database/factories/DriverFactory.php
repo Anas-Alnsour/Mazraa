@@ -10,7 +10,7 @@ class DriverFactory extends Factory
 
     public function definition()
     {
-        $transportTypes = ['Car', 'Bus', 'Large Bus'];
+        $transportTypes = ['Car (Max 4 passengers)', 'Bus (Max 20 passengers)', 'Large Bus (Max 50 passengers)'];
 
         return [
             'name' => $this->faker->name(),
