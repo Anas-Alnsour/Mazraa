@@ -9,9 +9,10 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SupplyOrderController;
 use App\Http\Controllers\TransportController;
-
-
-
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\FarmAdminController;
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -21,7 +22,7 @@ use App\Http\Controllers\TransportController;
 // الصفحة الرئيسية
 Route::get('/', function () {
     return view('home');
-});
+})->name('home');
 
 // لوحة التحكم (Dashboard)
 Route::get('/dashboard', function () {
@@ -33,11 +34,37 @@ Route::get('/dashboard', function () {
 | Profile Routes (Authenticated)
 |--------------------------------------------------------------------------
 */
+
+Route::get('/gate-test', function () {
+    if (!auth()->check()) {
+        return 'NOT LOGGED IN';
+    }
+
+    return auth()->user()->role === 'admin'
+        ? 'YES ADMIN'
+        : 'NOT ADMIN';
+})->middleware('auth');
+
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
 });
+Route::middleware(['auth', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::resource('farms', FarmAdminController::class);
+
+    });
+
+
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -98,12 +125,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/orders/{order}', [SupplyOrderController::class, 'update'])->name('orders.update');
     Route::delete('/orders/{order}', [SupplyOrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/orders/place-all', [SupplyOrderController::class, 'placeAll'])->name('orders.place_all');
-
 });
 
 Route::post('/orders/place-all', [SupplyOrderController::class, 'placeAll'])->name('orders.place_all');
 
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::resource('transports', TransportController::class);
 });
 
@@ -115,7 +141,7 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
 
-Route::middleware(['auth'])->group(function() {
+Route::middleware(['auth'])->group(function () {
     Route::post('/farm/{id}/favorite', [FavoriteController::class, 'add'])->name('favorites.add');
     Route::delete('/farm/{id}/favorite', [FavoriteController::class, 'remove'])->name('favorites.remove');
 });
@@ -134,4 +160,4 @@ Route::middleware('auth')->group(function () {
 
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

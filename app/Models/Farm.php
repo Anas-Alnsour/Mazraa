@@ -2,30 +2,30 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use App\Models\FarmImage;
-use App\Models\FarmBooking;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Database\Eloquent\Model;
 
 class Farm extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'location',
+        'price_per_night',
+        'capacity',
+        'rating',
+        'description',
+        'main_image',
+    ];
+
     public function images()
-{
-    return $this->hasMany(FarmImage::class);
-}
+    {
+        return $this->hasMany(FarmImage::class);
+    }
 
-public function bookings()
-{
-    return $this->hasMany(FarmBooking::class);
-}
-
-public function favoritedBy()
-{
-    return $this->belongsToMany(\App\Models\User::class, 'favorites')->withTimestamps();
-}
-
-
-
+    public function bookings()
+    {
+        return $this->hasMany(FarmBooking::class);
+    }
 }

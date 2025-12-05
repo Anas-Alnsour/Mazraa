@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -28,7 +29,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('explore', absolute: false));
+        session(['role' => auth()->user()->role]);
+
+        if (auth()->user()->role === 'admin') {
+            return redirect()->route('home');
+        }
+
+        return redirect()->route('home');
     }
 
     /**
