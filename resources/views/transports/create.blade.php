@@ -17,19 +17,19 @@
     @endif
 
     <form action="{{ route('transports.store') }}" method="POST"
-        class="bg-white p-8 rounded-lg shadow-lg space-y-6"
-        x-data="transportForm({
-            transport_type: '{{ old('transport_type') }}',
-            passengers: {{ old('passengers', 1) }},
-            driverId: '{{ old('driver_id') }}',
-            start_point: '{{ old('start_point') }}',
-            destination: '{{ old('destination') }}',
-            distance: {{ old('distance', 0) }},
-            departure_time: '{{ old('departure_time') }}',
-            arrival_time: '{{ old('arrival_time') }}',
-            status: '{{ old('status', 'Pending') }}',
-            notes: '{{ old('notes') }}'
-        })" style="margin-bottom:5em ;margin-left:5em ;margin-right:5em ">
+          class="bg-white p-8 rounded-lg shadow-lg space-y-6"
+          x-data='transportForm(@json([
+              "transport_type" => old("transport_type"),
+              "passengers" => old("passengers", 1),
+              "driver_id" => old("driver_id"),
+              "start_and_return_point" => old("start_and_return_point", isset($transport) ? ($transport->start_and_return_point ?? "") : ""),
+              "farm_id" => old("farm_id"),
+              "distance" => old("distance", 0),
+              "departure_time" => old("departure_time"),
+              "arrival_time" => old("arrival_time"),
+              "status" => old("status", "Pending"),
+              "notes" => old("notes")
+          ]))'>
 
         @csrf
 
@@ -56,7 +56,7 @@
         {{-- Driver Dropdown --}}
         <div>
             <label class="block mb-2 font-semibold">Driver</label>
-            <select name="driver_id" class="w-full border p-3 rounded-lg" x-model="driverId">
+            <select name="driver_id" class="w-full border p-3 rounded-lg" x-model="driver_id">
                 <option value="" disabled>Select Driver</option>
                 @foreach($Drivers as $driver)
                     <option value="{{ $driver->id }}">{{ $driver->name }}</option>
@@ -64,18 +64,24 @@
             </select>
         </div>
 
-        {{-- Start & Destination & Distance --}}
+        {{-- Start & Destination & Distance (merged with start_and_return_point & farm) --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block mb-2 font-semibold">Start Point</label>
-                <input type="text" name="start_point" class="w-full border p-3 rounded-lg"
-                       x-model="start_point" placeholder="Starting location">
+                <label class="block mb-2 font-semibold">Start & Return Point</label>
+                <input type="text" name="start_and_return_point"
+                       value="{{ old('start_and_return_point', isset($transport) ? ($transport->start_and_return_point ?? '') : '') }}"
+                       class="w-full border p-3 rounded-lg"
+                       x-model="start_and_return_point" placeholder="Starting location">
             </div>
 
             <div>
-                <label class="block mb-2 font-semibold">Destination</label>
-                <input type="text" name="destination" class="w-full border p-3 rounded-lg"
-                       x-model="destination" placeholder="Destination">
+                <label class="block mb-2 font-semibold">Select Farm</label>
+                <select name="farm_id" class="w-full border p-3 rounded-lg" x-model="farm_id">
+                    <option value="">Select Farm</option>
+                    @foreach($farms as $farm)
+                        <option value="{{ $farm->id }}">{{ $farm->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
@@ -96,17 +102,34 @@
         {{-- Departure & Arrival --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block mb-2 font-semibold">Departure Time</label>
-                <input type="datetime-local" name="departure_time" class="w-full border p-3 rounded-lg"
-                       x-model="departure_time">
+                <label class="block mb-2 font-semibold">Farm Arrival Time</label>
+                <input type="datetime-local" name="departure_time" id="departure_time"
+                       class="w-full border p-3 rounded-lg" x-model="departure_time"
+                       :value="departure_time">
             </div>
 
             <div>
-                <label class="block mb-2 font-semibold">Arrival Time</label>
-                <input type="datetime-local" name="arrival_time" class="w-full border p-3 rounded-lg"
-                       x-model="arrival_time">
+                <label class="block mb-2 font-semibold">Farm Departure Time</label>
+                <input type="datetime-local" name="arrival_time" id="arrival_time"
+                       class="w-full border p-3 rounded-lg" x-model="arrival_time"
+                       :value="arrival_time">
             </div>
         </div>
+
+        {{-- set min for datetime inputs to now (client-side) --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var now = new Date();
+                // format to yyyy-mm-ddThh:MM (slice to minutes)
+                var pad = function(n){ return n < 10 ? '0' + n : n; };
+                var local = now.getFullYear() + '-' + pad(now.getMonth()+1) + '-' + pad(now.getDate())
+                            + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+                var dep = document.getElementById('departure_time');
+                var arr = document.getElementById('arrival_time');
+                if (dep) dep.setAttribute('min', local);
+                if (arr) arr.setAttribute('min', local);
+            });
+        </script>
 
         {{-- Status --}}
         <div>
@@ -121,37 +144,39 @@
         {{-- Notes --}}
         <div>
             <label class="block mb-2 font-semibold">Notes</label>
-            <textarea name="notes" class="w-full border p-3 rounded-lg"
-                      x-model="notes" placeholder="Extra notes"></textarea>
+            <textarea name="notes" class="w-full border p-3 rounded-lg" x-model="notes" placeholder="Extra notes">{{ old('notes') }}</textarea>
         </div>
 
         <div class="text-center">
             <button type="submit"
-                class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition">
+                    class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition">
                 Create Transport
             </button>
         </div>
-
     </form>
 </div>
 
 <script>
-function transportForm(oldValues) {
+function transportForm(oldValues = {}) {
     return {
-        transport_type: oldValues.transport_type || '',
-        passengers: oldValues.passengers || 1,
-        driverId: oldValues.driverId || '',
-        start_point: oldValues.start_point || '',
-        destination: oldValues.destination || '',
-        distance: oldValues.distance || 0,
-        departure_time: oldValues.departure_time || '',
-        arrival_time: oldValues.arrival_time || '',
-        status: oldValues.status || 'Pending',
-        notes: oldValues.notes || '',
+        // keep keys exactly as form names for straightforward binding
+        transport_type: oldValues.transport_type ?? '',
+        passengers: Number(oldValues.passengers ?? 1),
+        driver_id: oldValues.driver_id ?? '',
+        start_and_return_point: oldValues.start_and_return_point ?? '',
+        farm_id: oldValues.farm_id ?? '',
+        distance: Number(oldValues.distance ?? 0),
+        departure_time: oldValues.departure_time ?? '',
+        arrival_time: oldValues.arrival_time ?? '',
+        status: oldValues.status ?? 'Pending',
+        notes: oldValues.notes ?? '',
         rate: 2,
 
         get calculatedPrice() {
-            return (this.distance/15 * this.passengers * this.rate).toFixed(2);
+            // distance (km) * passengers * rate ($/km)
+            const d = Number(this.distance) || 0;
+            const p = Number(this.passengers) || 0;
+            return (d * p * this.rate).toFixed(2);
         },
 
         get maxPassengers() {
