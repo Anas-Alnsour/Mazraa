@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Driver;
 use App\Models\Transport;
+use App\Models\Farm;    
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,20 +16,23 @@ class TransportController extends Controller
         $this->middleware('auth'); // تأكد من تفعيل auth middleware
     }
 
-    public function index()
-    {   
-        $transports1 = Transport::with('driver') // eager load لتقليل عدد الاستعلامات
-                    ->where('user_id', Auth::id())
-                    ->get();
+   public function index()
+{
+    $baseQuery = Transport::with(['driver','farm'])
+        ->where('user_id', Auth::id())
+        ->latest();
 
-        $transports = Transport::where('user_id', Auth::id())->get();
-        return view('transports.index', compact('transports','transports1'));
-    }
+    $transports  = $baseQuery->get();   // تستخدمه الواجهة الحالية
+    $transports1 = $transports;         // تظل متوفرة لو في أماكن بتعتمد عليها
+
+    return view('transports.index', compact('transports','transports1'));
+}
 
     public function create()
     {
         $Drivers = Driver::all();
-        return view('transports.create', compact('Drivers'));
+        $farms = Farm::all();
+       return view('transports.create', compact('Drivers', 'farms'));
     }
 
     public function store(Request $request)
@@ -37,12 +41,16 @@ class TransportController extends Controller
         'transport_type' => 'required|string|max:255',
         'passengers'     => 'required|integer|min:1',
         'driver_id'      => 'required|exists:drivers,id',
-        'start_point'    => 'required|string|max:255',
-        'destination'    => 'required|string|max:255',
+     // 'start_point'    => 'required|string|max:255',
+        'start_and_return_point'    => 'required|string|max:255',                         
+     // 'destination'    => 'required|string|max:255',
+        'farm_id' => 'required|exists:farms,id', 
         'distance'       => 'required|numeric|min:0.1',
         'price'          => 'required|numeric',
-        'departure_time' => 'required|date',
-        'arrival_time'   => 'required|date|after:departure_time',
+      //'departure_time' => 'required|date',
+      //'arrival_time'   => 'required|date|after:departure_time',
+        'Farm_Arrival_Time' => 'required|date',
+        'Farm_Departure_Time'   => 'required|date|after:Farm_Arrival_Time',
         'status'         => 'required|string',
         'notes'          => 'nullable|string'
     ]);
@@ -51,7 +59,7 @@ class TransportController extends Controller
 
     Transport::create($validated);
 
-    return redirect()->route('transports.index')->with('success', 'تم الحفظ بنجاح');
+    return redirect()->route('transports.index')->with('success', 'Transport created successfully!');
 }
 
 //     public function store(Request $request)
@@ -88,40 +96,56 @@ class TransportController extends Controller
 
 
 
-    public function edit(/*Transport $transport,*/$id)
-    {   
-         $transport = Transport::with('driver')->findOrFail($id);
-    // استخراج اسم السائق ومعرّفه
-    // $driverName = $transport->driver->name ?? 'غير مخصص';
-    // $driverId = $transport->driver->id ?? null;
-   
-       $this->authorize('update', $transport);
-       $drivers = Driver::all();
-        return view('transports.edit', compact('transport',/*'driverName', 'driverId',*/'drivers'));
-    }
+    public function edit($id)
+{
+    // الحصول على النقل مع السائق
+    $transport = Transport::with('driver')->findOrFail($id);
 
-    public function update(Request $request, Transport $transport)
-    {
-        $this->authorize('update', $transport);
+    // الحصول على جميع السائقين
+    $drivers = Driver::all();
+    
+    // الحصول على جميع المزارع
+    $farms = Farm::all();
 
-        $request->validate([
-            'transport_type' => 'required|string|max:255',
-            'passengers' => 'required|integer|min:1',
-            'driver_id' => 'required|exists:drivers,id',
-            'start_point' => 'required|string|max:255',
-            'destination' => 'required|string|max:255',
-            'distance' => 'required|numeric|min:0',
-            'price' => 'required|numeric|min:0',
-            'departure_time' => 'required|date',
-        ]);
+    // تمرير المتغيرات إلى الـ View
+    return view('transports.edit', compact('transport', 'drivers', 'farms'));
+}
 
-$transport->update($request->only([
-    'transport_type', 'passengers', 'driver_id', 'start_point',
-    'destination', 'distance', 'price', 'departure_time', 'arrival_time', 'notes', 'status'
-]));
+       public function update(Request $request, Transport $transport)
+{
+    $this->authorize('update', $transport);
 
-        return redirect()->route('transports.index')->with('success', 'Transport request updated successfully!');
-    }
+    $validated = $request->validate([
+        'transport_type'           => 'required|string|max:255',
+        'passengers'               => 'required|integer|min:1',
+        'driver_id'                => 'required|exists:drivers,id',
+        'farm_id'=> 'required|exists:farms,id',
+        'start_and_return_point'   => 'required|string|max:255',
+        'distance'                 => 'required|numeric|min:0',
+        'price'                    => 'required|numeric|min:0',
+        'Farm_Arrival_Time'        => 'required|date',
+        'Farm_Departure_Time'      => 'required|date|after_or_equal:Farm_Arrival_Time',
+        'notes'                    => 'nullable|string',
+        'status'                   => 'required|string',
+    ]);
+
+    $transport->update($request->only([
+        'transport_type',
+        'passengers',
+        'driver_id',
+        'farm_id',
+        'start_and_return_point',
+        'distance',
+        'price',
+        'Farm_Arrival_Time',
+        'Farm_Departure_Time',
+        'notes',
+        'status',
+    ]));
+
+    return redirect()->route('transports.index')
+        ->with('success', 'Transport request updated successfully!');
+}  
 
     public function destroy(Transport $transport)
     {

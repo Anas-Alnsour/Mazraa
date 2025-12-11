@@ -14,18 +14,24 @@ class Transport extends Model
         'transport_type',
         'passengers',
         'driver_id',
-        'start_point',
-        'destination',
+        'farm_id',
+        'start_and_return_point',
+        //'destination',
         'distance',
         'price',
-        'departure_time',
-        'arrival_time',
+        'Farm_Arrival_Time',
+        'Farm_Departure_Time',
         'notes',
         'status',
     ];
     public function driver()
 {
     return $this->belongsTo(Driver::class);
+}
+
+public function farm()
+{
+    return $this->belongsTo(Farm::class);
 }
 
 }

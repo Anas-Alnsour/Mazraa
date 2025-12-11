@@ -6,23 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('transports', function (Blueprint $table) {
-            $table->foreignId('driver_id')->references('id')->on('drivers')->onDelete('cascade')->onUpdate('cascade')->change();
-        });
+        // لو العمود driver_id مش موجود أضِفه، غير هيك لا تعمل شيء
+        if (!Schema::hasColumn('transports', 'driver_id')) {
+            Schema::table('transports', function (Blueprint $table) {
+                $table->foreignId('driver_id')
+                      ->constrained('drivers')
+                      ->cascadeOnDelete();
+            });
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('transports', function (Blueprint $table) {
-            //
-        });
+        // بما إنه العمود موجود أصلاً قبل هذا الميجريشن، مش هنحذفه هنا
+        // ولو بدك تكون حذر:
+        if (Schema::hasColumn('transports', 'driver_id')) {
+            Schema::table('transports', function (Blueprint $table) {
+                // لو كنت أضفته هنا فقط، اسقط الـ FK (اختياري)
+                // $table->dropForeign(['driver_id']);
+            });
+        }
     }
 };

@@ -64,47 +64,79 @@
             </select>
         </div>
 
-        {{-- Start & Destination & Distance --}}
+         {{-- Start & Return | Select Farm | Distance --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-                <label class="block mb-2 font-semibold">Start Point</label>
-                <input type="text" name="start_point" class="w-full border p-3 rounded-lg"
-                       x-model="start_point" placeholder="Starting location">
+                <label class="block mb-2 font-semibold">Start & Return Point</label>
+                <input
+                    type="text"
+                    name="start_and_return_point"
+                    value="{{ old('start_and_return_point') }}"
+                    class="w-full border p-3 rounded-lg"
+                    placeholder="Starting location"
+                >
             </div>
 
             <div>
-                <label class="block mb-2 font-semibold">Destination</label>
-                <input type="text" name="destination" class="w-full border p-3 rounded-lg"
-                       x-model="destination" placeholder="Destination">
+                <label class="block mb-2 font-semibold">Select Farm</label>
+                <select
+                    name="farm_id"
+                    class="w-full border p-3 rounded-lg"
+                >
+                    <option value="">Select Farm</option>
+                    @foreach($farms as $farm)
+                        <option value="{{ $farm->id }}">{{ $farm->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div>
                 <label class="block mb-2 font-semibold">Distance (km)</label>
-                <input type="number" step="0.1" name="distance" class="w-full border p-3 rounded-lg"
-                       x-model.number="distance">
+                <input
+                    type="number"
+                    step="0.1"
+                    name="distance"class="w-full border p-3 rounded-lg"
+                    x-model.number="distance"
+                >
             </div>
         </div>
 
         {{-- Price --}}
         <div>
             <label class="block mb-2 font-semibold">Price ($)</label>
-            <input type="number" name="price" class="w-full border p-3 rounded-lg bg-gray-100"
-                   :value="calculatedPrice" readonly>
-            <p class="text-gray-500 text-sm mt-1">Distance × Passengers × Rate ($2/km)</p>
+            <input
+                type="number"name="price"
+                class="w-full border p-3 rounded-lg bg-gray-100"
+                :value="calculatedPrice"
+                readonly
+            >
+            <p class="text-gray-500 text-sm mt-1">
+                Distance × Passengers × Rate ($2/km)
+            </p>
         </div>
 
-        {{-- Departure & Arrival --}}
+        {{-- Farm Arrival & Departure --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block mb-2 font-semibold">Departure Time</label>
-                <input type="datetime-local" name="departure_time" class="w-full border p-3 rounded-lg"
-                       x-model="departure_time">
+                <label class="block mb-2 font-semibold">Farm Arrival Time</label>
+                <input
+                    type="datetime-local"
+                    name="Farm_Arrival_Time"
+                    id="Farm_Arrival_Time"
+                    class="w-full border p-3 rounded-lg"
+                    x-model="arrival_time"
+                >
             </div>
 
             <div>
-                <label class="block mb-2 font-semibold">Arrival Time</label>
-                <input type="datetime-local" name="arrival_time" class="w-full border p-3 rounded-lg"
-                       x-model="arrival_time">
+                <label class="block mb-2 font-semibold">Farm Departure Time</label>
+                <input
+                    type="datetime-local"
+                    name="Farm_Departure_Time"
+                    id="Farm_Departure_Time"
+                    class="w-full border p-3 rounded-lg"
+                    x-model="departure_time"
+                >
             </div>
         </div>
 
@@ -136,33 +168,51 @@
 </div>
 
 <script>
-function transportForm(oldValues) {
-    return {
-        transport_type: oldValues.transport_type || '',
-        passengers: oldValues.passengers || 1,
-        driverId: oldValues.driverId || '',
-        start_point: oldValues.start_point || '',
-        destination: oldValues.destination || '',
-        distance: oldValues.distance || 0,
-        departure_time: oldValues.departure_time || '',
-        arrival_time: oldValues.arrival_time || '',
-        status: oldValues.status || 'Pending',
-        notes: oldValues.notes || '',
-        rate: 2,
+    document.addEventListener('DOMContentLoaded', function () {
+        const arrivalTimeInput   = document.getElementById('Farm_Arrival_Time');
+        const departureTimeInput = document.getElementById('Farm_Departure_Time');
+        const currentDateTime    = new Date().toISOString().slice(0, 16);
 
-        get calculatedPrice() {
-            return (this.distance/15 * this.passengers * this.rate).toFixed(2);
-        },
+        if (arrivalTimeInput) {
+            arrivalTimeInput.setAttribute('min', currentDateTime);
+        }
 
-        get maxPassengers() {
-            switch(this.transport_type) {
-                case 'Car': return 4;
-                case 'Bus': return 20;
-                case 'Large Bus': return 50;
-                default: return 100;
+        if (departureTimeInput) {
+            departureTimeInput.setAttribute('min', currentDateTime);
+        }
+    });
+
+    function transportForm() {
+        return {
+            transport_type: '',
+            passengers: 1,
+            driverId: '',
+            start_point: '',
+            destination: '',
+            distance: 0,
+            departure_time: '',
+            arrival_time: '',
+            status: 'Pending',
+            notes: '',
+            rate: 2,
+
+            get calculatedPrice() {
+                return (this.distance * this.passengers * this.rate).toFixed(2);
+            },
+
+            get maxPassengers() {
+                switch (this.transport_type) {
+                    case 'Car':
+                        return 4;
+                    case 'Bus':
+                        return 20;
+                    case 'Large Bus':
+                        return 50;
+                    default:
+                        return 100;
+                }
             }
         }
     }
-}
 </script>
 @endsection

@@ -17,12 +17,13 @@ public function up(): void
         $table->string('transport_type');
         $table->integer('passengers');
         $table->foreignId('driver_id');
-        $table->string('start_point');
-        $table->string('destination');
+        $table->string('start_and_return_point');
+        $table->foreignId('farm_id')->constrained('farms')->onDelete('cascade');
+        //$table->string('destination');
         $table->float('distance');
         $table->float('price');
-        $table->dateTime('departure_time');
-        $table->dateTime('arrival_time')->nullable();
+        $table->dateTime('Farm_Arrival_Time');
+        $table->dateTime('Farm_Departure_Time')->nullable();
         $table->string('status');
         $table->text('notes')->nullable();
         $table->timestamps();
