@@ -44,7 +44,6 @@
             </div>
         </div>
 
-        {{-- MAIN IMAGE + PREVIEW (Alpine) --}}
         <div>
             <label class="block text-gray-700 font-semibold">Main Image</label>
 
@@ -78,7 +77,6 @@
                     class="h-24 rounded border"
                 >
 
-                {{-- this will be sent to backend when user removes old main image --}}
                 <input
                     type="checkbox"
                     name="remove_main_image"
@@ -105,7 +103,6 @@
             </div>
         </div>
 
-        {{-- GALLERY IMAGES + EXISTING + PREVIEW (Alpine) --}}
         <div class="mb-4">
             <label class="block font-semibold mb-2">Gallery Images</label>
 
@@ -133,7 +130,6 @@
                 To select multiple images, hold <strong>Ctrl</strong> (Windows) or <strong>Shift</strong> while clicking.
             </p>
 
-            {{-- existing gallery images --}}
             @if($farm->images->count())
                 <div id="gallery-existing" class="mt-3 flex flex-wrap gap-4">
                     @foreach($farm->images as $image)
@@ -148,7 +144,6 @@
                                 class="h-24 w-32 object-cover rounded border"
                             >
 
-                            {{-- this hidden input is enabled when user clicks X, so backend knows which IDs to delete --}}
                             <input
                                 type="hidden"
                                 name="remove_gallery_images[]"
@@ -175,7 +170,6 @@
                 </div>
             @endif
 
-            {{-- previews for newly selected gallery images --}}
             <div id="gallery-preview" class="mt-3 flex flex-wrap gap-4">
                 <template x-for="(img, index) in galleryPreviews" :key="index">
                     <div class="relative inline-block">
