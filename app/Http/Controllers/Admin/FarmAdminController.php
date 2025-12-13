@@ -31,8 +31,8 @@ class FarmAdminController extends Controller
             'capacity' => 'required|numeric',
             'rating' => 'required|numeric|min:1|max:5',
             'description' => 'required',
-            'main_image' => 'nullable|image|max:2048',
-            'images.*' => 'image|max:2048',
+            'main_image' => 'nullable|image|max:10240',
+            'images.*' => 'image|max:10240',
         ]);
 
         if ($request->hasFile('main_image')) {
@@ -41,7 +41,7 @@ class FarmAdminController extends Controller
 
         $farm = Farm::create($validated);
 
-        
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
                 $path = $img->store('farm_gallery', 'public');
@@ -68,33 +68,68 @@ class FarmAdminController extends Controller
     public function update(Request $request, Farm $farm)
     {
         $validated = $request->validate([
-            'name' => 'required',
-            'location' => 'required',
+            'name'            => 'required',
+            'location'        => 'required',
             'price_per_night' => 'required|numeric',
-            'capacity' => 'required|numeric',
-            'rating' => 'required|numeric|min:1|max:5',
-            'description' => 'required',
-            'main_image' => 'nullable|image|max:2048'
+            'capacity'        => 'required|numeric',
+            'rating'          => 'required|numeric|min:1|max:5',
+            'description'     => 'required',
+            'main_image'      => 'nullable|image|max:10240',
+            'images.*'        => 'nullable|image|max:10240',
         ]);
 
-        if ($request->hasFile('main_image')) {
+        $data = $validated;
 
+        if ($request->boolean('remove_main_image')) {
             if ($farm->main_image) {
                 Storage::disk('public')->delete($farm->main_image);
             }
-
-            $validated['main_image'] = $request->file('main_image')->store('farms', 'public');
+            $data['main_image'] = null;
+        } elseif ($request->hasFile('main_image')) {
+            if ($farm->main_image) {
+                Storage::disk('public')->delete($farm->main_image);
+            }
+            $data['main_image'] = $request->file('main_image')->store('farms', 'public');
+        } else {
+            $data['main_image'] = $farm->main_image;
         }
 
-        $farm->update($validated);
+        $removeIds = $request->input('remove_gallery_images', []);
+        if (!empty($removeIds)) {
+            $imagesToDelete = $farm->images()->whereIn('id', $removeIds)->get();
 
-        return redirect()->route('admin.farms.index')->with('success', 'Farm updated successfully.');
+            foreach ($imagesToDelete as $image) {
+                Storage::disk('public')->delete($image->image_url);
+                $image->delete();
+            }
+        }
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                $path = $imgFile->store('farm_gallery', 'public');
+
+                $farm->images()->create([
+                    'image_url' => $path,
+                ]);
+            }
+        }
+
+        $farm->update($data);
+
+        return redirect()
+            ->route('admin.farms.index')
+            ->with('success', 'Farm updated successfully.');
     }
 
     public function destroy(Farm $farm)
     {
         if ($farm->main_image) {
             Storage::disk('public')->delete($farm->main_image);
+        }
+
+        foreach ($farm->images as $image) {
+            Storage::disk('public')->delete($image->image_url);
+            $image->delete();
         }
 
         $farm->delete();
