@@ -11,6 +11,7 @@ use App\Http\Controllers\SupplyOrderController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\FarmAdminController;
+use App\Http\Controllers\Admin\SuppliesAdmainController;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 /*
@@ -59,6 +60,7 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('farms', FarmAdminController::class);
+        Route::resource('supplies', SuppliesAdmainController::class);
 
     });
 

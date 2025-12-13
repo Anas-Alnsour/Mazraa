@@ -37,6 +37,12 @@
                             <span
                                 class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                         </a>
+
+                        <a href="{{ route('admin.supplies.index') }}" class="py-2 px-3 relative group transition duration-300">
+                            Manage Supplies
+                            <span
+                                class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                        </a>
                     @else
                         
                         <a href="{{ url('/') }}"
