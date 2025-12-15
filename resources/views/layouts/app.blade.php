@@ -22,7 +22,7 @@
                 </div>
 
                 <!-- Nav Links -->
-                <div class="hidden md:flex items-center space-x-8 text-sm font-semibold text-gray-600">
+                <div class="hidden md:flex flex-1 items-center space-x-8 text-sm font-semibold text-gray-600">
 
                     @if (Auth::check() && Auth::user()->role === 'admin')
                         {{--  روابط الأدمن  --}}
@@ -44,7 +44,7 @@
                                 class="absolute bottom-0 left-0 w-full h-0.5 bg-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                         </a>
                     @else
-                        
+
                         <a href="{{ url('/') }}"
                             class="py-2 px-3 relative text-center group transition duration-300">
                             Home
@@ -102,10 +102,10 @@
                         @endauth
                     @endif
                 </div>
-                
+
 
                 <!-- Auth Buttons -->
-                <div class="flex items-center space-x-5 text-sm font-medium">
+                <div class="flex items-center space-x-5 text-sm font-medium ml-auto">
                     @auth
                         <div
                             class="flex items-center gap-2 whitespace-nowrap bg-green-200 rounded-full py-2 px-4 text-green-800">
