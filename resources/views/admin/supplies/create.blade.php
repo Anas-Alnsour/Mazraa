@@ -16,8 +16,8 @@
             </div>
         @endif
 
-        <form action="{{ route('admin.supplies.store') }}" method="POST" class="bg-white p-6 rounded-2xl shadow-lg space-y-6 "
-            style="margin-bottom:5em ;margin-left:10em ;margin-right:10em ">
+        <form action="{{ route('admin.supplies.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-2xl shadow-lg space-y-6 "
+            style="margin-bottom:5em ;margin-left:20em ;margin-right:20em ">
 
             @csrf
 
@@ -45,16 +45,40 @@
                         step="any" class="w-full border p-3 rounded-xl bg-gray-50">
 
                 </div>
+            </div>
 
+            {{-- Image Upload --}}
+            <div x-data="{ mainPreview: null }" class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Supply Image
+                </label>
+                <!-- زر مخصص -->
+                <div class="flex items-center space-x-4">
+                    <label for="image"
+                        class="cursor-pointer px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-md 
+                                            hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Choose image
+                    </label>
+                    <span x-show="!mainPreview" x-cloak class="text-gray-500 text-sm">No image selected</span>
+                </div>
+                <!-- الحقل مخفي -->
+                <input type="file" name="image" id="image" class="hidden"
+                    x-on:change="
+            const file = $event.target.files[0];
+            mainPreview = file ? URL.createObjectURL(file) : null;
+        ">
+                <!-- معاينة الصورة -->
+                <div class="mt-4">
+                    <img x-show="mainPreview" x-cloak :src="mainPreview"
+                        class="w-48 h-48 object-cover rounded-lg border shadow-md">
+                </div>
             </div>
 
 
             {{-- description --}}
-
             <div>
                 <label class="block mb-2 font-semibold">description</label>
-                <textarea name="description" class="w-full border p-3 rounded-lg" 
-                    placeholder="Extra description">{{ old('description') }}</textarea>
+                <textarea name="description" class="w-full border p-3 rounded-lg" placeholder="Extra description">{{ old('description') }}</textarea>
             </div>
 
             <div class="text-center">

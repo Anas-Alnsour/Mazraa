@@ -41,7 +41,7 @@ class SupplyController extends Controller
             'total_price' => $totalPrice,
         ]);
 
-        return back()->with('success', "You ordered {$quantity} {$supply->name}(s) successfully!");
+        return redirect()->route('supplies.index')->with('success', "You ordered {$quantity} {$supply->name}(s) successfully!");
     }
 
     // عرض الطلبات الخاصة بالمستخدم

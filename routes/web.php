@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\FarmAdminController;
 use App\Http\Controllers\Admin\SuppliesAdmainController;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -37,11 +38,11 @@ Route::get('/dashboard', function () {
 */
 
 Route::get('/gate-test', function () {
-    if (!auth()->check()) {
+    if (!Auth::check()) {
         return 'NOT LOGGED IN';
     }
 
-    return auth()->user()->role === 'admin'
+    return Auth::user()->role === 'admin'
         ? 'YES ADMIN'
         : 'NOT ADMIN';
 })->middleware('auth');
