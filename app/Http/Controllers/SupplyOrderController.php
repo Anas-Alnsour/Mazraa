@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\SupplyOrder;
 use App\Models\Supply;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class SupplyOrderController extends Controller
 {
@@ -14,9 +15,15 @@ class SupplyOrderController extends Controller
     {
         $orders = SupplyOrder::with('supply')
             ->where('user_id', Auth::id())
+            ->where('status', '!=', 'cart')
             ->get();
 
-        return view('supplies.my_orders', compact('orders'));
+        // Group orders by order_id, if null, use id as key
+        $groupedOrders = $orders->groupBy(function ($order) {
+            return $order->order_id ?? $order->id;
+        });
+
+        return view('supplies.my_orders', compact('groupedOrders'));
     }
 
     // صفحة تعديل الطلب
@@ -178,9 +185,12 @@ class SupplyOrderController extends Controller
             return redirect()->route('cart.view')->with('error', 'Your cart is empty.');
         }
 
+        $orderId = Str::uuid()->toString();
+
         foreach ($cartOrders as $order) {
             $order->supply->decrement('stock', $order->quantity);
             $order->status = 'in_way';
+            $order->order_id = $orderId;
             $order->save();
         }
 
