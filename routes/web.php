@@ -52,7 +52,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
 });
 Route::middleware(['auth', 'admin'])
     ->prefix('admin')
@@ -62,7 +61,6 @@ Route::middleware(['auth', 'admin'])
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('farms', FarmAdminController::class);
         Route::resource('supplies', SuppliesAdmainController::class);
-
     });
 
 
@@ -128,6 +126,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/orders/{order}', [SupplyOrderController::class, 'update'])->name('orders.update');
     Route::delete('/orders/{order}', [SupplyOrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/orders/place-all', [SupplyOrderController::class, 'placeAll'])->name('orders.place_all');
+
+    // Cart routes
+    Route::post('/cart/add/{supply}', [SupplyOrderController::class, 'addToCart'])->name('cart.add');
+    Route::get('/cart', [SupplyOrderController::class, 'viewCart'])->name('cart.view');
+    Route::put('/cart/{order}', [SupplyOrderController::class, 'updateCart'])->name('cart.update');
+    Route::delete('/cart/{order}', [SupplyOrderController::class, 'removeFromCart'])->name('cart.remove');
+    Route::post('/cart/place-order', [SupplyOrderController::class, 'placeOrder'])->name('cart.place_order');
 });
 
 Route::post('/orders/place-all', [SupplyOrderController::class, 'placeAll'])->name('orders.place_all');

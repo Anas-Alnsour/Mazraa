@@ -13,7 +13,12 @@
             </div>
         @endif
 
-        <!-- شبكة العرض -->
+        <div class="fixed top-20 right-6 z-50">
+            <a href="{{ route('cart.view') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition transform hover:scale-105">
+                View Cart
+            </a>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12">
             @foreach ($supplies as $info)
                 <div
@@ -21,21 +26,21 @@
             transition-transform duration-300 overflow-hidden min-h-[355px] max-h-[360px]
             transform hover:scale-105">
 
-                    <!-- صورة المنتج -->
                     <div class="relative">
                         <img src="{{ $info->image ? Storage::url($info->image) : 'https://via.placeholder.com/800x400' }}"
                             alt="{{ $info->name }}"
                             class="w-full h-full rounded-xl object-cover shadow-md hover:shadow-xl transition-all transform hover:scale-105 duration-300 min-h-[360px] max-h-[360px]">
 
-                        <!-- أزرار تعديل وحذف -->
-                        <div class="absolute top-3 right-3 flex space-x-2 z-20 ">
-                            <a href="{{ route('supplies.show', $info->id) }}"
-                                class="mt-auto px-4 py-2 bg-green-600 text-white rounded-xl text-center hover:bg-green-700 shadow-md transition-all duration-300 transform hover:scale-105">
-                                Order
-                            </a>
+                        <div class="absolute top-3 right-3 flex space-x-2 z-20">
+                            <form action="{{ route('cart.add', $info->id) }}" method="POST" class="flex items-center space-x-2">
+                                @csrf
+                                <input type="number" name="quantity" min="1" max="{{ $info->stock }}" value="1" class="w-16 px-2 py-1 border rounded text-center">
+                                <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-md transition-all duration-300 transform hover:scale-105">
+                                    Add to Cart
+                                </button>
+                            </form>
                         </div>
 
-                        <!-- Overlay عند المرور -->
                         <div
                             class="absolute inset-0 rounded-xl bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-end">
                             <div class="p-4 text-white w-full">
@@ -46,22 +51,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- تفاصيل أسفل الصورة -->
-                    {{-- <div class="p-4 flex flex-col items-center text-center">
-                    <h2 class="text-xl font-semibold text-gray-800">{{ $info->name }}</h2>
-                    <p class="text-gray-600 text-sm mt-2">{{ \Illuminate\Support\Str::limit($info->description, 60) }}</p>
-                    <p class="text-green-700 font-bold mt-2">${{ $info->price }}</p>
-                    <p class="text-gray-500 text-xs mt-1">Stock: {{ $info->stock }}</p>
-                     <div class="flex space-x-4 mt-2">
-                        <a href="{{ route('supplies.show', $info->id) }}"
-                   class="mt-auto px-4 py-2 bg-green-600 text-white rounded-xl text-center hover:bg-green-700 shadow-md transition-all duration-300 transform hover:scale-105">
-                    Order
-                    </a>
-
-                    </div>
-                </div> --}}
-
                 </div>
             @endforeach
         </div>

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supply;
-use App\Models\SupplyOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,30 +26,20 @@ class SuppliesAdmainController extends Controller
             'name' => 'required|string',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            'image' => 'required|image|max:2048',
+            'image' => 'required|image|max:5120',
             'description' => 'nullable|string'
         ]);
 
-        $name = $request->name;
-        $stock = $request->quantity;
-        $price = $request->price;
-        if ($request->hasFile('image')) {
-            // تخزين الصورة داخل disk 'public' داخل المجلد supply_gallery
-            // سيعيد المسار مثل: supply_gallery/filename.jpg
-            $path = $request->file('image')->store('supply_gallery', 'public');
-            $imageName = $path;
-        } else {
-            $imageName = null; // أو اسم صورة افتراضية إذا رغبت
-        }
-        $description = $request->description;
+        $imageName = $request->hasFile('image')
+            ? $request->file('image')->store('supply_gallery', 'public')
+            : null;
 
         $my_s = Supply::create([
-
-            'name' => $name,
-            'stock' => $stock,
-            'price' => $price,
+            'name' => $request->name,
+            'stock' => $request->quantity,
+            'price' => $request->price,
             'image' => $imageName,
-            'description' => $description
+            'description' => $request->description
         ]);
 
         return back()->with('success', "A new supply : {$my_s->name}  with Quantity {$my_s->stock} and price {$my_s->price} was created successfully!");
@@ -68,23 +57,21 @@ class SuppliesAdmainController extends Controller
             'name' => 'required|string',
             'quantity' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
-            'image' => 'required|image|max:2048',
+            'image' => 'nullable|image|max:5120',
             'description' => 'nullable|string'
         ]);
 
+        $imageName = $supply->image;
         if ($request->hasFile('image')) {
-            // حذف الصورة القديمة إذا موجودة
-        if ($supply->image) {
-            Storage::delete($supply->image);
+            if ($supply->image) {
+                Storage::delete($supply->image);
+            }
+            $imageName = $request->file('image')->store('supply_gallery', 'public');
         }
-           // رفع الصورة الجديدة
-        $data['image'] = $request->file('image')->store('supply_gallery', 'public');
-    }
-    $imageName = $data['image'] ?? $supply->image;
 
         $supply->update([
             'name' => $request->name,
-            'stock' => $request->quantity, // تحويل quantity إلى stock
+            'stock' => $request->quantity,
             'price' => $request->price,
             'image' => $imageName,
             'description' => $request->description,
@@ -92,10 +79,9 @@ class SuppliesAdmainController extends Controller
         return redirect()->route('admin.supplies.index')->with('success', 'Supply updated successfully!');
     }
 
-     public function destroy(Supply $supply)
+    public function destroy(Supply $supply)
     {
         $supply->delete();
         return redirect()->route('admin.supplies.index')->with('success', 'Supply deleted successfully!');
     }
-
 };

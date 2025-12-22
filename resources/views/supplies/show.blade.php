@@ -12,7 +12,7 @@
                 <p class="text-gray-500 mb-6">Available Stock: {{ $supply->stock }}</p>
                 <p class="text-green-700 font-extrabold text-lg mb-4">Price: ${{ $supply->price }}</p>
 
-                <form action="{{ route('supplies.order', $supply->id) }}" method="POST" class="space-y-4">
+                <form action="{{ route('cart.add', $supply->id) }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block mb-2 font-semibold text-gray-700">Quantity:</label>
@@ -22,7 +22,7 @@
                     <div class="text-center md:text-left ">
                         <button type="submit"
                             class="px-8 py-3 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
-                            Order Now
+                            Add to Cart
                         </button>
                     </div>
                 </form>
