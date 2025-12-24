@@ -119,7 +119,7 @@ class TransportController extends Controller
         'transport_type'           => 'required|string|max:255',
         'passengers'               => 'required|integer|min:1',
         'driver_id'                => 'required|exists:drivers,id',
-        'farm_id'=> 'required|exists:farms,id',
+        'farm_id'                  => 'required|exists:farms,id',
         'start_and_return_point'   => 'required|string|max:255',
         'distance'                 => 'required|numeric|min:0',
         'price'                    => 'required|numeric|min:0',

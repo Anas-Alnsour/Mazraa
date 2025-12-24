@@ -88,7 +88,7 @@
 
                         {{-- description --}}
 
-                        <div class="mt-4 mr-10 w-full">
+                        <div class="mt-16 mr-10 w-full">
                         <label class="block mb-2 font-semibold ">description</label>
                         <textarea name="description" class="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                             placeholder="Extra description">{{ old('description', $supply->description) }}</textarea>

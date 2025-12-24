@@ -54,5 +54,15 @@
                 </div>
             @endforeach
         </div>
+
+        <!-- Pagination -->
+        @if ($supplies->hasPages())
+            <div class="mt-6 flex justify-end">
+                <div class="bg-white shadow-md rounded-2xl px-4 py-2">
+                    {{ $supplies->links('vendor.pagination.custom') }}
+                </div>
+            </div>
+        @endif
+
     </div>
 @endsection

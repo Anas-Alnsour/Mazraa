@@ -149,6 +149,12 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
 
+// Contact Us - Admin View Messages
+Route::get('/admin/contact-messages', [PageController::class, 'showContactMessages'])->middleware('auth', 'admin')->name('admin.contact.show');
+Route::delete('/admin/contact/{id}', [PageController::class, 'destroy'])->name('contact.destroy');
+Route::patch('/admin/contact/{id}/read', [PageController::class, 'markAsRead'])->name('contact.markAsRead');
+
+
 Route::middleware(['auth'])->group(function () {
     Route::post('/farm/{id}/favorite', [FavoriteController::class, 'add'])->name('favorites.add');
     Route::delete('/farm/{id}/favorite', [FavoriteController::class, 'remove'])->name('favorites.remove');

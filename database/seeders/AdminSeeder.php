@@ -17,6 +17,7 @@ class AdminSeeder extends Seeder
             ['email' => 'admin@mazraa.com'], // إيميل الأدمن
             [
                 'name' => 'Admin',
+                'phone' => '0780000000',
                 'password' => Hash::make('admin123'),
                 'role' => 'admin'
             ]

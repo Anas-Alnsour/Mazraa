@@ -11,7 +11,7 @@ class SuppliesAdmainController extends Controller
 {
     public function index()
     {
-        $supply = Supply::latest()->get();
+        $supply = Supply::latest()->paginate(9);
         return view('admin.supplies.index', compact('supply'));
     }
 

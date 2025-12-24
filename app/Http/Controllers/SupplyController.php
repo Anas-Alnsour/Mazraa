@@ -12,7 +12,7 @@ class SupplyController extends Controller
     // عرض كل المستلزمات المتوفرة للطلب
     public function index()
     {
-        $supplies = Supply::all();
+        $supplies = Supply::where('stock', '>', 0)->paginate(9);
         return view('supplies.index', compact('supplies'));
     }
 

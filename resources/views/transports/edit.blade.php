@@ -105,11 +105,12 @@
                 <label class="block mb-2 font-semibold">Select Farm</label>
                 <select
                     name="farm_id"
-                    class="w-full border p-3 rounded-lg"
-                >
+                    x-model="farm_id"
+                    class="w-full border p-3 rounded-lg">
                     <option value="">Select Farm</option>
                     @foreach($farms as $farm)
-                        <option value="{{ $farm->id }}">
+                        <option value="{{ $farm->id }}"
+                            {{ old('farm_id') == $farm->id ? 'selected' : '' }}>
                             {{ $farm->name }}
                         </option>
                     @endforeach
@@ -249,7 +250,7 @@
             driverId: @json($transport->driver_id),
             driverName: @json($transport->driver_name),
             start_point: @json($transport->start_point),
-            destination: @json($transport->destination),
+            farm_id: @json($transport->farm_id),
             distance: @json($transport->distance),
             departure_time: @json($transport->departure_time),
             arrival_time: @json($transport->arrival_time),
@@ -271,12 +272,13 @@
                 }
             },
 
-            setRandomDriver() {
-                if (this.transport_type && this.randomDrivers[this.transport_type]) {
-                    this.driverId   = this.randomDrivers[this.transport_type]?.id   ?? '';
-                    this.driverName = this.randomDrivers[this.transport_type]?.name ?? '';
+             setRandomDriver() 
+                {
+                    if (this.transport_type && this.randomDrivers[this.transport_type]) {
+                        this.driverId   = this.randomDrivers[this.transport_type]?.id   ?? '';
+                     this.driverName = this.randomDrivers[this.transport_type]?.name ?? '';
+                    }
                 }
-            }
         }
     }
 </script>

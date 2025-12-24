@@ -3,7 +3,7 @@
 @section('title', 'Shopping Cart')
 
 @section('content')
-<div class="max-w-6xl mx-auto py-10 px-6 bg-white rounded-2xl shadow-lg">
+<div class="max-w-6xl my-5 mx-auto py-10 px-6 bg-white rounded-2xl shadow-lg">
     <h1 class="text-4xl font-extrabold text-green-800 mb-8 text-center">Shopping Cart</h1>
 
     @if(session('success'))
@@ -71,4 +71,12 @@
         </div>
     @endif
 </div>
+            <!-- Pagination -->
+            @if ($cartOrders->hasPages())
+                <div class="my-6 flex justify-end  mx-auto max-w-6xl">
+                    <div class="bg-white shadow-md rounded-2xl px-4 py-2">
+                        {{ $cartOrders->links('vendor.pagination.custom') }}
+                    </div>
+                </div>
+            @endif
 @endsection

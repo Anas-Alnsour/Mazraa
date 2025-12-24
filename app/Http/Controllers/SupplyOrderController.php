@@ -135,7 +135,7 @@ class SupplyOrderController extends Controller
         $cartOrders = SupplyOrder::with('supply')
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
-            ->get();
+            ->latest()->paginate(8);
 
         $total = $cartOrders->sum('total_price');
 
