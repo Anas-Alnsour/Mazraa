@@ -73,11 +73,7 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-gray-700 font-semibold">Description</label>
-                <textarea name="description" rows="4" class="w-full border rounded-lg p-3" placeholder="Write farm details..."
-                          required></textarea>
-            </div>
+            
 
             <div class="mb-4">
                 <label class="block font-semibold mb-2">Gallery Images</label>
@@ -103,6 +99,11 @@
                         >
                     </template>
                 </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold">Description</label>
+                <textarea name="description" rows="4" class="w-full border rounded-lg p-3" placeholder="Write farm details..."
+                          required></textarea>
             </div>
 
             <div class="text-center">

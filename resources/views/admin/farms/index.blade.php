@@ -28,13 +28,13 @@
                     @forelse ($farms as $farm)
                         <tr class="border-b hover:bg-gray-50">
                             <td class="py-2 px-4">
-                                
+
                                 @if ($farm->main_image)
                                     <img src="{{ asset('storage/' . $farm->main_image) }}"
                                         class="h-14 w-20 rounded-md border mb-2 object-cover" alt="">
                                 @endif
 
-                                
+
                                 @if ($farm->images->count())
                                     <div class="flex flex-wrap gap-1">
                                         @foreach ($farm->images as $img)
@@ -51,22 +51,24 @@
                             <td class="py-2 px-4 text-green-700 font-bold">${{ $farm->price_per_night }}</td>
                             <td class="py-2 px-4">{{ $farm->rating }} ⭐</td>
 
-                            <td class="py-2 px-4 text-center">
-                                <a href="{{ route('admin.farms.edit', $farm->id) }}"
-                                    class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-md">
-                                    Edit
-                                </a>
+                            <td class=" py-2 px-4 text-center ">
+                                <div class="flex gap-5  ">
+                                    <a href="{{ route('admin.farms.edit', $farm->id) }}"
+                                        class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-md">
+                                        Edit
+                                    </a>
 
-                                <form action="{{ route('admin.farms.destroy', $farm->id) }}" method="POST"
-                                    class="inline-block">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
-                                        onclick="return confirm('Are you sure?')">
-                                        Delete
-                                    </button>
-                                </form>
+                                    <form action="{{ route('admin.farms.destroy', $farm->id) }}" method="POST"
+                                        class="inline-block">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md"
+                                            onclick="return confirm('Are you sure?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

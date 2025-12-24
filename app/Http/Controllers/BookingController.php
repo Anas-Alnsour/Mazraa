@@ -15,19 +15,24 @@ class BookingController extends Controller
     public function store(Request $request, Farm $farm)
     {
         $request->validate([
-            'start_time' => 'required|date|after:now',
+            'start_time' => 'required|date|after_or_equal:today',
+            'end_time'   => 'required|date|after:start_time',
             'event_type' => 'nullable|string|max:255',
         ]);
 
         // تحديد مدة الحجز 12 ساعة
         $start = \Carbon\Carbon::parse($request->start_time);
-        $end = $start->copy()->addHours(12);
+        $end   = \Carbon\Carbon::parse($request->end_time);
 
         // التحقق من عدم تعارض الحجز مع الحجوزات السابقة
         $conflict = $farm->bookings()
-            ->where(function($query) use ($start, $end) {
+            ->where(function ($query) use ($start, $end) {
                 $query->whereBetween('start_time', [$start, $end])
-                      ->orWhereBetween('end_time', [$start, $end]);
+                    ->orWhereBetween('end_time', [$start, $end])
+                    ->orWhere(function ($q) use ($start, $end) {
+                        $q->where('start_time', '<=', $start)
+                            ->where('end_time', '>=', $end);
+                    });
             })
             ->exists();
 
@@ -53,7 +58,7 @@ class BookingController extends Controller
     public function myBookings(Request $request)
     {
         $query = FarmBooking::where('user_id', Auth::id())
-            ->where('start_time', '>=', now())
+            ->where('end_time', '>=', now())
             ->with('farm');
 
         if ($request->filled('filter_date')) {
@@ -74,13 +79,13 @@ class BookingController extends Controller
                     break;
                 case 'name_asc':
                     $query->join('farms', 'farm_bookings.farm_id', '=', 'farms.id')
-                          ->orderBy('farms.name', 'asc')
-                          ->select('farm_bookings.*');
+                        ->orderBy('farms.name', 'asc')
+                        ->select('farm_bookings.*');
                     break;
                 case 'name_desc':
                     $query->join('farms', 'farm_bookings.farm_id', '=', 'farms.id')
-                          ->orderBy('farms.name', 'desc')
-                          ->select('farm_bookings.*');
+                        ->orderBy('farms.name', 'desc')
+                        ->select('farm_bookings.*');
                     break;
             }
         } else {
@@ -152,6 +157,6 @@ class BookingController extends Controller
         ]);
 
         return redirect()->route('bookings.show', $booking->id)
-                         ->with('success', 'Booking updated successfully!');
+            ->with('success', 'Booking updated successfully!');
     }
 }
