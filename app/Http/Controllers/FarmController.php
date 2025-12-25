@@ -32,23 +32,16 @@ class FarmController extends Controller
             $query->orderBy('rating', $request->rating_sort);
         }
 
-
-        $farms = $query->get();
+        // التعديل هنا: استخدام paginate(9) بدلاً من get()
+        $farms = $query->paginate(9);
 
         return view('explore', compact('farms'));
-
-
     }
 
     public function show(Farm $farm)
     {
-    // يمكن إضافة أي بيانات إضافية لاحقاً (مثل availability أو rooms)
+        // يمكن إضافة أي بيانات إضافية لاحقاً (مثل availability أو rooms)
         $farm->load('images', 'bookings'); // تحميل الصور والحجوزات
-    return view('farm-details', compact('farm'));
+        return view('farm-details', compact('farm'));
     }
-
-
-
-
 };
-

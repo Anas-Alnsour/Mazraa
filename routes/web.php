@@ -11,10 +11,11 @@ use App\Http\Controllers\SupplyOrderController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\FarmAdminController;
-use App\Http\Controllers\Admin\SuppliesAdmainController;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Admin\ContactAdminController;
+use App\Http\Controllers\Admin\SupplyAdminController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -60,8 +61,7 @@ Route::middleware(['auth', 'admin'])
 
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('farms', FarmAdminController::class);
-        Route::resource('supplies', SuppliesAdmainController::class);
-    });
+Route::resource('supplies', SupplyAdminController::class);    });
 
 
 
@@ -172,6 +172,21 @@ Route::middleware('auth')->group(function () {
     Route::delete('/favorites/{farm}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
 });
 
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
+    // صفحة عرض الجدول (Index)
+    // لاحظ أننا نربطها بدالة index
+    Route::get('/contact-messages', [ContactAdminController::class, 'index'])->name('contact.index');
+
+    // صفحة عرض التفاصيل (Show)
+    // لاحظ وجود {id} لأننا نحتاج رقم الرسالة
+    Route::get('/contact-messages/{id}', [ContactAdminController::class, 'show'])->name('contact.show');
+
+    // الحذف
+    Route::delete('/contact-messages/{id}', [ContactAdminController::class, 'destroy'])->name('contact.destroy');
+
+    // تغيير الحالة
+    Route::patch('/contact-messages/{id}/read', [ContactAdminController::class, 'markAsRead'])->name('contact.markAsRead');
+});
 
 require __DIR__ . '/auth.php';
