@@ -17,6 +17,10 @@ class Farm extends Model
         'rating',
         'description',
         'main_image',
+        'owner_id',
+        'latitude',
+        'longitude',
+        'commission_rate',
     ];
 
     public function images()
