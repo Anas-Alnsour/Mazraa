@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com'
         ], [
             'name' => 'Test User',
+            'phone' => '0791234567',
             'password' => Hash::make('password'),
         ]);
 
@@ -35,7 +36,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SupplySeeder::class);
 
         // إضافة 10 سائقين وهميين
-        Driver::factory(10)->create();
+        User::factory(10)->create(['role' => 'transport_driver']);
 
         // إضافة 20 طلب نقل وهمي
         Transport::factory()->count(10)->create();
