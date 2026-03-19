@@ -46,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/owner/dashboard', [OwnerDashboardController::class, 'index'])->name('owner.dashboard');
     Route::get('/owner/farms', [OwnerFarmController::class, 'index'])->name('owner.farms.index');
     Route::get('/owner/farms/create', [OwnerFarmController::class, 'create'])->name('owner.farms.create');
+    Route::post('/owner/farms', [OwnerFarmController::class, 'store'])->name('owner.farms.store');
     Route::delete('/owner/farms/{farm}', [OwnerFarmController::class, 'destroy'])->name('owner.farms.destroy');
 
     // Supply Company Dashboard
