@@ -28,8 +28,9 @@ public function definition(): array
         'email' => $this->faker->unique()->safeEmail(),
         'email_verified_at' => now(),
         'password' => Hash::make('password'), // كلمة سر افتراضية
-        'role' => 'customer', // القيمة الافتراضية
-        'remember_token' => \str::random(10),
+            'role' => 'user', // القيمة الافتراضية
+            'phone' => $this->faker->phoneNumber(),
+            'remember_token' => \Illuminate\Support\Str::random(10),
     ];
 }
 
