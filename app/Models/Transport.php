@@ -23,10 +23,14 @@ class Transport extends Model
         'Farm_Departure_Time',
         'notes',
         'status',
+        'pickup_lat',
+        'pickup_lng',
+        'commission_amount',
+        'net_company_amount',
     ];
     public function driver()
 {
-    return $this->belongsTo(Driver::class);
+    return $this->belongsTo(User::class, 'driver_id');
 }
 
 public function farm()
