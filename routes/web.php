@@ -17,11 +17,9 @@ use App\Http\Controllers\SupplyCompanyDashboardController;
 use App\Http\Controllers\TransportCompanyDashboardController;
 use App\Http\Controllers\SupplyDriverDashboardController;
 use App\Http\Controllers\TransportDriverDashboardController;
-use Illuminate\Support\Facades\Gate;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SupplyAdminController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,113 +37,104 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// Role-based dashboards
+// --------------------------------------------------------------------------
+// 🚀 لوحات التحكم بناءً على الدور (Role-based dashboards)
+// --------------------------------------------------------------------------
 Route::middleware(['auth'])->group(function () {
 
-    // Farm Owner Dashboard & Farm Management
-    Route::get('/owner/dashboard', [OwnerDashboardController::class, 'index'])->name('owner.dashboard');
-    Route::get('/owner/farms', [OwnerFarmController::class, 'index'])->name('owner.farms.index');
-    Route::get('/owner/farms/create', [OwnerFarmController::class, 'create'])->name('owner.farms.create');
-    Route::delete('/owner/farms/{farm}', [OwnerFarmController::class, 'destroy'])->name('owner.farms.destroy');
+    // --- [1] Farm Owner: إدارة المزارع واللوحة الخاصة بالمالك ---
+    Route::prefix('owner')->name('owner.')->group(function () {
 
-    // Supply Company Dashboard
+        // كبسة الـ Overview (Dashboard)
+        Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
+
+        // كبسات إدارة المزارع (CRUD)
+        Route::get('/farms', [OwnerFarmController::class, 'index'])->name('farms.index');
+        Route::get('/farms/create', [OwnerFarmController::class, 'create'])->name('farms.create');
+        Route::post('/farms', [OwnerFarmController::class, 'store'])->name('farms.store');
+        Route::get('/farms/{farm}/edit', [OwnerFarmController::class, 'edit'])->name('farms.edit');
+        Route::put('/farms/{farm}', [OwnerFarmController::class, 'update'])->name('farms.update');
+        Route::delete('/farms/{farm}', [OwnerFarmController::class, 'destroy'])->name('farms.destroy');
+
+        // --- 🛠️ تفعيل نظام القبول والرفض للحجوزات من قبل المالك ---
+        Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
+        Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
+
+        // كبسة الـ Financials
+        Route::get('/financials', function() {
+            return view('owner.financials');
+        })->name('financials');
+    });
+
+    // --- [2] Supply Company Dashboard ---
     Route::get('/supplies/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('supplies.dashboard');
 
-    // Transport Company Dashboard
+    // --- [3] Transport Company Dashboard ---
     Route::get('/transport/dashboard', [TransportCompanyDashboardController::class, 'index'])->name('transport.dashboard');
 
-    // Supply Driver Dashboard
+    // --- [4] Supply Driver Dashboard ---
     Route::get('/delivery/orders', [SupplyDriverDashboardController::class, 'index'])->name('delivery.orders');
 
-    // Transport Driver Dashboard
+    // --- [5] Transport Driver Dashboard ---
     Route::get('/shuttle/trips', [TransportDriverDashboardController::class, 'index'])->name('shuttle.trips');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Profile Routes (Authenticated)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/gate-test', function () {
-    if (!Auth::check()) {
-        return 'NOT LOGGED IN';
-    }
-
-    return Auth::user()->role === 'admin'
-        ? 'YES ADMIN'
-        : 'NOT ADMIN';
-})->middleware('auth');
-
+// --------------------------------------------------------------------------
+// 👤 Profile Routes (Settings)
+// --------------------------------------------------------------------------
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('farms', FarmAdminController::class);
-        Route::resource('supplies', SupplyAdminController::class);
-    });
+// --------------------------------------------------------------------------
+// 🛡️ Admin Routes (لوحة التحكم للمسؤول)
+// --------------------------------------------------------------------------
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::resource('farms', FarmAdminController::class);
+    Route::resource('supplies', SupplyAdminController::class);
 
-/*
-|--------------------------------------------------------------------------
-| Farm Routes
-|--------------------------------------------------------------------------
-*/
+    // إدارة رسائل التواصل
+    Route::get('/contact-messages', [ContactAdminController::class, 'index'])->name('contact.index');
+    Route::get('/contact-messages/{id}', [ContactAdminController::class, 'show'])->name('contact.show');
+    Route::delete('/contact-messages/{id}', [ContactAdminController::class, 'destroy'])->name('contact.destroy');
+    Route::patch('/contact-messages/{id}/read', [ContactAdminController::class, 'markAsRead'])->name('contact.markAsRead');
+
+    // مسار العرض القديم
+    Route::get('/contact-messages-view', [PageController::class, 'showContactMessages'])->name('contact.view');
+});
+
+// --------------------------------------------------------------------------
+// 🏠 Farm Explore & Booking (الموقع العام)
+// --------------------------------------------------------------------------
 Route::get('/explore', [FarmController::class, 'index'])->name('explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
 Route::post('/farms/{farm}/book', [BookingController::class, 'store'])->name('farms.book')->middleware('auth');
 
-/*
-|--------------------------------------------------------------------------
-| Booking Routes
-|--------------------------------------------------------------------------
-*/
 Route::middleware('auth')->group(function () {
-    // عرض الحجوزات الخاصة بالمستخدم
     Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.my');
-    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
-
-    // صفحة عرض الحجز المنفرد
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
-
-    // تعديل الحجز
     Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('/bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
+    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
+
+    // نسخة مكررة للحفاظ على التوافق
+    Route::get('/my-bookings-list', [BookingController::class, 'myBookings'])->name('bookings.my_bookings');
+    Route::delete('/bookings-delete/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Duplicate routes (to preserve original)
-|--------------------------------------------------------------------------
-*/
-Route::middleware('auth')->group(function () {
-    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.my_bookings');
-    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy')->whereNumber('booking');
-});
-
-Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])
-    ->middleware('auth')
-    ->name('bookings.destroy')
-    ->missing(function () {
-        return redirect()->route('bookings.my_bookings')->with('error', 'Booking not found.');
-    });
-
+// --------------------------------------------------------------------------
+// 🛒 Supplies & Orders (المستلزمات)
+// --------------------------------------------------------------------------
 Route::get('/supplies', [SupplyController::class, 'index'])->name('supplies.index');
 Route::get('/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
 Route::post('/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order')->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/my-supply-orders', [SupplyController::class, 'myOrders'])->name('supplies.my_orders');
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/my-orders', [SupplyOrderController::class, 'myOrders'])->name('orders.my_orders');
     Route::get('/orders/{order}/edit', [SupplyOrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [SupplyOrderController::class, 'update'])->name('orders.update');
@@ -160,55 +149,28 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/place-order', [SupplyOrderController::class, 'placeOrder'])->name('cart.place_order');
 });
 
-Route::post('/orders/place-all', [SupplyOrderController::class, 'placeAll'])->name('orders.place_all');
-
+// --------------------------------------------------------------------------
+// ❤️ Favorites & Transport
+// --------------------------------------------------------------------------
 Route::middleware(['auth'])->group(function () {
     Route::resource('transports', TransportController::class);
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/{farm}', [FavoriteController::class, 'store'])->name('favorites.store');
+    Route::delete('/favorites/{farm}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+    Route::post('/farm/{id}/favorite', [FavoriteController::class, 'add'])->name('favorites.add');
 });
 
-// About Us
+// --------------------------------------------------------------------------
+// 📄 Static Pages
+// --------------------------------------------------------------------------
 Route::get('/about', [PageController::class, 'about'])->name('about');
-
-// Contact Us
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
 
-// Contact Us - Admin View Messages
-Route::get('/admin/contact-messages', [PageController::class, 'showContactMessages'])->middleware('auth', 'admin')->name('admin.contact.show');
-Route::delete('/admin/contact/{id}', [PageController::class, 'destroy'])->name('contact.destroy');
-Route::patch('/admin/contact/{id}/read', [PageController::class, 'markAsRead'])->name('contact.markAsRead');
-
-Route::middleware(['auth'])->group(function () {
-    Route::post('/farm/{id}/favorite', [FavoriteController::class, 'add'])->name('favorites.add');
-    Route::delete('/farm/{id}/favorite', [FavoriteController::class, 'remove'])->name('favorites.remove');
-});
-
-// عرض صفحة المفضلات (للمستخدم)
-Route::middleware('auth')->group(function () {
-    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
-
-    // إضافة إلى المفضلات
-    Route::post('/favorites/{farm}', [FavoriteController::class, 'store'])->name('favorites.store');
-
-    // إزالة من المفضلات
-    Route::delete('/favorites/{farm}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
-});
-
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-
-    // صفحة عرض الجدول (Index)
-    // لاحظ أننا نربطها بدالة index
-    Route::get('/contact-messages', [ContactAdminController::class, 'index'])->name('contact.index');
-
-    // صفحة عرض التفاصيل (Show)
-    // لاحظ وجود {id} لأننا نحتاج رقم الرسالة
-    Route::get('/contact-messages/{id}', [ContactAdminController::class, 'show'])->name('contact.show');
-
-    // الحذف
-    Route::delete('/contact-messages/{id}', [ContactAdminController::class, 'destroy'])->name('contact.destroy');
-
-    // تغيير الحالة
-    Route::patch('/contact-messages/{id}/read', [ContactAdminController::class, 'markAsRead'])->name('contact.markAsRead');
-});
+// 🛠️ Test Route
+Route::get('/gate-test', function () {
+    if (!Auth::check()) return 'NOT LOGGED IN';
+    return Auth::user()->role === 'admin' ? 'YES ADMIN' : 'NOT ADMIN';
+})->middleware('auth');
 
 require __DIR__ . '/auth.php';

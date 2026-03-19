@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class FarmImage extends Model
 {
-    use HasFactory; // مهم جداً لعمل factory
+    use HasFactory;
 
     protected $fillable = [
         'farm_id',
-        'image_url',
+        'image_url', // هذا الحقل سيخزن مسار الصور الفرعية
     ];
 
     public function farm()

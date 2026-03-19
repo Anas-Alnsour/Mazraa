@@ -4,46 +4,89 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Farm;
-use App\Models\FarmBooking;
+use App\Models\FarmBooking; // تأكد أن اسم الموديل عندك FarmBooking وليس Booking
 use Illuminate\Support\Facades\Auth;
 
 class OwnerDashboardController extends Controller
 {
+    /**
+     * عرض لوحة تحكم صاحب المزرعة مع الإحصائيات الحقيقية
+     */
     public function index()
     {
         $user = Auth::user();
 
-        // Ensure only farm owners can access this
+        // [1] التحقق من الصلاحيات (Security Check)
         if ($user->role !== 'farm_owner') {
             abort(403, 'Unauthorized access.');
         }
 
-        // Fetch farms owned by this user
+        // [2] جلب مزارع هذا المالك فقط
         $farms = Farm::where('owner_id', $user->id)->get();
         $farmIds = $farms->pluck('id');
 
-        // Fetch bookings related to those farms
+        // [3] إحصائيات المزارع
+        $totalFarms = $farms->count();
+
+        // [4] الحجوزات النشطة (التي تنتظر الموافقة أو المؤكدة)
+        // عرضنا في التصميم Active Bookings و Pending Approval
+        $activeBookingsCount = FarmBooking::whereIn('farm_id', $farmIds)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->count();
+
+        $pendingApprovalCount = FarmBooking::whereIn('farm_id', $farmIds)
+            ->where('status', 'pending')
+            ->count();
+
+        // [5] حساب صافي الأرباح (Net Revenue)
+        // نحسب فقط الحجوزات المؤكدة (confirmed)
+        $totalRevenue = FarmBooking::whereIn('farm_id', $farmIds)
+            ->where('status', 'confirmed')
+            ->sum('net_profit');
+
+        // [6] جلب آخر 5 نشاطات حجوزات مع بيانات المستخدم والمزرعة
         $recentBookings = FarmBooking::with(['user', 'farm'])
             ->whereIn('farm_id', $farmIds)
             ->latest()
             ->take(5)
             ->get();
 
-        // Calculate basic statistics
-        $totalFarms = $farms->count();
-        $totalBookings = FarmBooking::whereIn('farm_id', $farmIds)->count();
-
-        // Sum up the net profit from all bookings (assuming net_profit represents the owner's cut)
-        $totalRevenue = FarmBooking::whereIn('farm_id', $farmIds)
-            ->where('status', 'confirmed')
-            ->sum('net_profit');
-
-        return view('owner.dashboard', compact(
-            'farms',
-            'recentBookings',
-            'totalFarms',
-            'totalBookings',
-            'totalRevenue'
-        ));
+        // [7] تمرير البيانات للـ View
+        return view('owner.dashboard', [
+            'totalFarms' => $totalFarms,
+            'activeBookingsCount' => $activeBookingsCount,
+            'pendingApprovalCount' => $pendingApprovalCount,
+            'totalRevenue' => $totalRevenue,
+            'recentBookings' => $recentBookings,
+            'farms' => $farms // في حال احتجت قائمة المزارع في الدروب داون مثلاً
+        ]);
     }
+    // الموافقة على الحجز
+public function approveBooking($id)
+{
+    $booking = FarmBooking::findOrFail($id);
+
+    // التحقق من الملكية (لضمان أن المالك لا يوافق على حجز لمزرعة غير تابعة له)
+    if ($booking->farm->owner_id !== auth()->id()) {
+        abort(403);
+    }
+
+    $booking->update(['status' => 'confirmed']);
+
+    return back()->with('success', 'Booking confirmed successfully!');
+}
+
+// رفض الحجز
+public function rejectBooking($id)
+{
+    $booking = FarmBooking::findOrFail($id);
+
+    if ($booking->farm->owner_id !== auth()->id()) {
+        abort(403);
+    }
+
+    $booking->update(['status' => 'cancelled']);
+
+    return back()->with('error', 'Booking has been rejected.');
+}
 }

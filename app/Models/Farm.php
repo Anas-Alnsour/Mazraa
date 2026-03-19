@@ -9,19 +9,7 @@ class Farm extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'location',
-        'price_per_night',
-        'capacity',
-        'rating',
-        'description',
-        'main_image',
-        'owner_id',
-        'latitude',
-        'longitude',
-        'commission_rate',
-    ];
+protected $fillable = ['name', 'location', 'price_per_night', 'capacity', 'description', 'main_image', 'owner_id', 'rating', 'commission_rate', 'latitude', 'longitude'];
 
     public function images()
     {

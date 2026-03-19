@@ -4,58 +4,163 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Farm;
+use App\Models\FarmImage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class OwnerFarmController extends Controller
 {
     /**
-     * Display a listing of the owner's farms.
+     * عرض قائمة مزارع المالك (بما فيها حالة الموافقة)
      */
     public function index()
     {
         $user = Auth::user();
 
-        // Ensure only farm owners can access this
         if ($user->role !== 'farm_owner') {
             abort(403, 'Unauthorized access.');
         }
 
-        // Fetch farms exclusively owned by this user
-        $farms = Farm::with('bookings')
-            ->where('owner_id', $user->id)
+        $farms = Farm::where('owner_id', $user->id)
             ->latest()
-            ->paginate(10); // Using pagination for a clean UI
+            ->paginate(10);
 
         return view('owner.farms.index', compact('farms'));
     }
 
-    /**
-     * Show the form for creating a new farm.
-     */
     public function create()
     {
-        $user = Auth::user();
-
-        if ($user->role !== 'farm_owner') {
-            abort(403, 'Unauthorized access.');
+        if (Auth::user()->role !== 'farm_owner') {
+            abort(403);
         }
-
         return view('owner.farms.create');
     }
 
     /**
-     * Remove the specified farm from storage.
+     * حفظ طلب إضافة مزرعة جديدة (توضع حالة الطلب Pending تلقائياً)
      */
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'price_per_night' => 'required|numeric|min:0',
+            'capacity' => 'required|integer|min:1',
+            'description' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // الغلاف
+            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // المعرض
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        // 1. رفع الصورة الرئيسية
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('farms/covers', 'public');
+            $validated['main_image'] = $path;
+        }
+
+        // 2. إعدادات افتراضية (المهم هنا حالة الـ pending)
+        $validated['owner_id'] = $user->id;
+        $validated['status'] = 'pending';
+        $validated['commission_rate'] = 10;
+        $validated['rating'] = 0.0;
+
+        $farm = Farm::create($validated);
+
+        // 3. رفع الصور الفرعية (Gallery)
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                $galleryPath = $file->store('farms/gallery', 'public');
+                FarmImage::create([
+                    'farm_id' => $farm->id,
+                    'image_url' => $galleryPath
+                ]);
+            }
+        }
+
+        return redirect()->route('owner.farms.index')
+            ->with('success', 'Farm request submitted! It will be live after Admin approval.');
+    }
+
+    /**
+     * عرض صفحة التعديل
+     */
+    public function edit(Farm $farm)
+    {
+        // التحقق من الملكية
+        if ($farm->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        return view('owner.farms.edit', compact('farm'));
+    }
+
+    /**
+     * تحديث بيانات المزرعة
+     */
+    // داخل OwnerFarmController.php
+
+public function update(Request $request, Farm $farm)
+{
+    if ($farm->owner_id !== Auth::id()) abort(403);
+
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'location' => 'required|string|max:255',
+        'price_per_night' => 'required|numeric',
+        'capacity' => 'required|integer',
+        'description' => 'required|string',
+        'image' => 'nullable|image|max:5120', // الغلاف الجديد
+        'gallery.*' => 'nullable|image|max:5120', // صور المعرض الجديدة
+        'delete_images' => 'nullable|array', // مصفوفة لصور يراد حذفها
+    ]);
+
+    // 1. تحديث البيانات الأساسية
+    if ($request->hasFile('image')) {
+        Storage::disk('public')->delete($farm->main_image);
+        $validated['main_image'] = $request->file('image')->store('farms/covers', 'public');
+    }
+    $farm->update($validated);
+
+    // 2. حذف الصور المختارة من المعرض
+    if ($request->has('delete_images')) {
+        foreach ($request->delete_images as $imageId) {
+            $img = FarmImage::find($imageId);
+            if ($img && $img->farm_id == $farm->id) {
+                Storage::disk('public')->delete($img->image_url);
+                $img->delete();
+            }
+        }
+    }
+
+    // 3. إضافة صور جديدة للمعرض
+    if ($request->hasFile('gallery')) {
+        foreach ($request->file('gallery') as $file) {
+            $path = $file->store('farms/gallery', 'public');
+            $farm->images()->create(['image_url' => $path]);
+        }
+    }
+
+    return redirect()->route('owner.farms.index')->with('success', 'Farm updated successfully!');
+}
+
     public function destroy(Farm $farm)
     {
-        // Security check: ensure the user actually owns this farm before deleting
         if ($farm->owner_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            abort(403);
+        }
+
+        // حذف الصور من التخزين قبل حذف السجل
+        Storage::disk('public')->delete($farm->main_image);
+        foreach($farm->images as $img) {
+            Storage::disk('public')->delete($img->image_url);
         }
 
         $farm->delete();
 
         return redirect()->route('owner.farms.index')
-            ->with('success', 'Farm successfully deleted from your portfolio.');
+            ->with('success', 'Farm deleted successfully.');
     }
 }
