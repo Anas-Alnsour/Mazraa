@@ -18,14 +18,13 @@ class User extends Authenticatable
      * @var list<string>
      */
 protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',     // يجب أن يكون موجوداً
-        'role',      // يجب أن يكون موجوداً
-        'company_id' // يجب أن يكون موجوداً
-    ];
-
+    'name',
+    'phone',
+    'email',
+    'password',
+    'role',
+    'company_id',
+];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -50,11 +49,9 @@ protected $fillable = [
         ];
     }
 
-
 public function favorites()
 {
     return $this->belongsToMany(\App\Models\Farm::class, 'favorites')->withTimestamps();
 }
-
 
 }

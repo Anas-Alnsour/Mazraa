@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect('/');
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -42,9 +42,10 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_users_can_logout(): void
+public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        /** @var \Illuminate\Contracts\Auth\Authenticatable $user */
+        $user = clone User::factory()->create();
 
         $response = $this->actingAs($user)->post('/logout');
 

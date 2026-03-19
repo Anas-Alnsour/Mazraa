@@ -11,11 +11,18 @@ use App\Http\Controllers\SupplyOrderController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\FarmAdminController;
+use App\Http\Controllers\OwnerDashboardController;
+use App\Http\Controllers\OwnerFarmController;
+use App\Http\Controllers\SupplyCompanyDashboardController;
+use App\Http\Controllers\TransportCompanyDashboardController;
+use App\Http\Controllers\SupplyDriverDashboardController;
+use App\Http\Controllers\TransportDriverDashboardController;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SupplyAdminController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -27,10 +34,32 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
-// لوحة التحكم (Dashboard)
+// لوحة التحكم (Dashboard) للمستخدم العادي
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Role-based dashboards
+Route::middleware(['auth'])->group(function () {
+
+    // Farm Owner Dashboard & Farm Management
+    Route::get('/owner/dashboard', [OwnerDashboardController::class, 'index'])->name('owner.dashboard');
+    Route::get('/owner/farms', [OwnerFarmController::class, 'index'])->name('owner.farms.index');
+    Route::get('/owner/farms/create', [OwnerFarmController::class, 'create'])->name('owner.farms.create');
+    Route::delete('/owner/farms/{farm}', [OwnerFarmController::class, 'destroy'])->name('owner.farms.destroy');
+
+    // Supply Company Dashboard
+    Route::get('/supplies/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('supplies.dashboard');
+
+    // Transport Company Dashboard
+    Route::get('/transport/dashboard', [TransportCompanyDashboardController::class, 'index'])->name('transport.dashboard');
+
+    // Supply Driver Dashboard
+    Route::get('/delivery/orders', [SupplyDriverDashboardController::class, 'index'])->name('delivery.orders');
+
+    // Transport Driver Dashboard
+    Route::get('/shuttle/trips', [TransportDriverDashboardController::class, 'index'])->name('shuttle.trips');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -48,24 +77,20 @@ Route::get('/gate-test', function () {
         : 'NOT ADMIN';
 })->middleware('auth');
 
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
 Route::middleware(['auth', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('farms', FarmAdminController::class);
-Route::resource('supplies', SupplyAdminController::class);    });
-
-
-
-
+        Route::resource('supplies', SupplyAdminController::class);
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -141,7 +166,6 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('transports', TransportController::class);
 });
 
-
 // About Us
 Route::get('/about', [PageController::class, 'about'])->name('about');
 
@@ -154,12 +178,10 @@ Route::get('/admin/contact-messages', [PageController::class, 'showContactMessag
 Route::delete('/admin/contact/{id}', [PageController::class, 'destroy'])->name('contact.destroy');
 Route::patch('/admin/contact/{id}/read', [PageController::class, 'markAsRead'])->name('contact.markAsRead');
 
-
 Route::middleware(['auth'])->group(function () {
     Route::post('/farm/{id}/favorite', [FavoriteController::class, 'add'])->name('favorites.add');
     Route::delete('/farm/{id}/favorite', [FavoriteController::class, 'remove'])->name('favorites.remove');
 });
-
 
 // عرض صفحة المفضلات (للمستخدم)
 Route::middleware('auth')->group(function () {

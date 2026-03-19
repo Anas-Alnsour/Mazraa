@@ -21,6 +21,10 @@ class FarmFactory extends Factory
             'price_per_night' => $this->faker->numberBetween(100, 800),
             'rating' => $this->faker->randomFloat(1, 3, 5),
             'main_image' => $this->faker->imageUrl(1000, 600, 'farm', true),
+            'owner_id' => \App\Models\User::factory()->create(['role' => 'farm_owner'])->id,
+            'latitude' => $this->faker->latitude(),
+            'longitude' => $this->faker->longitude(),
+            'commission_rate' => $this->faker->randomElement([null, 5.0, 10.0, 15.0]),
         ];
     }
 

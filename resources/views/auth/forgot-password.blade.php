@@ -1,69 +1,141 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-@section('title', 'Forgot Password')
+    <title>Forgot Password - {{ config('app.name', 'Mazraa') }}</title>
 
-@section('content')
-    <div class="relative min-h-[calc(100vh-5rem)] flex items-center justify-center p-4 overflow-hidden"
-        style="background-image:url('{{ asset('backgrounds/login&register.jpg') }}'); background-size:cover; background-position:center;">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=Outfit:300,400,500,600,700,800&display=swap" rel="stylesheet" />
 
-        {{-- طبقة التعتيم والتدريج اللوني --}}
-        <div class="absolute inset-0 bg-gradient-to-br from-green-900/80 via-black/60 to-black/80"></div>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        {{-- الكارد الزجاجي --}}
-        <div class="relative z-10 w-full max-w-lg bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 shadow-2xl overflow-hidden animate-fade-in-up">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .bg-blob { position: absolute; filter: blur(80px); z-index: 0; opacity: 0.4; }
+    </style>
+</head>
+<body class="font-sans text-gray-900 antialiased bg-slate-50 relative overflow-hidden">
 
-            <div class="p-8 md:p-12">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-extrabold text-white mb-3 tracking-tight">Forgot Password?</h2>
-                    <p class="text-green-100 text-sm leading-relaxed">
-                        No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.
+    <div class="bg-blob bg-green-200 w-96 h-96 rounded-full top-0 right-0 translate-x-1/3 -translate-y-1/3"></div>
+    <div class="bg-blob bg-emerald-100 w-96 h-96 rounded-full bottom-0 right-1/4 translate-y-1/3"></div>
+
+    <div class="min-h-screen flex relative z-10">
+
+        <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-gray-900 group">
+
+             <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                 alt="Luxury Farm Retreat"
+                 class="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-overlay transition-transform duration-[20s] ease-linear group-hover:scale-110">
+
+            <div class="absolute inset-0 bg-gradient-to-tr from-green-950/90 via-emerald-900/70 to-transparent"></div>
+
+            <div class="absolute top-12 left-12 glass-panel rounded-full px-6 py-2 flex items-center space-x-3 shadow-2xl animate-bounce" style="animation-duration: 3s;">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span class="text-white text-sm font-medium tracking-wide">Secure Account Recovery</span>
+            </div>
+
+            <div class="relative z-10 flex flex-col justify-end p-16 w-full h-full">
+                <div class="glass-panel p-10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] max-w-xl mb-6 transform transition-all hover:-translate-y-2 duration-500 border-l-4 border-l-green-400">
+                    <div class="mb-8 flex items-center space-x-4">
+                        <div class="p-4 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl shadow-lg">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-white tracking-wider">MAZRAA<span class="text-green-400">.COM</span></h2>
+                    </div>
+                    <h1 class="text-5xl font-extrabold text-white mb-6 leading-tight">
+                        Don't Worry, <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-200">We've Got You.</span>
+                    </h1>
+                    <p class="text-lg text-green-50/90 leading-relaxed">
+                        Losing your password can be frustrating, but regaining access to your premium farm management and bookings is just a click away.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-[45%] flex flex-col relative px-8 py-10 sm:px-16 lg:px-20 xl:px-28 bg-white/60 backdrop-blur-xl">
+
+            <div class="absolute top-8 left-8 sm:left-12 lg:left-16">
+                <a href="{{ url('/') }}" class="group flex items-center space-x-2 text-sm font-semibold text-gray-500 hover:text-green-600 transition-colors duration-300">
+                    <div class="p-2 rounded-full bg-white shadow-sm border border-gray-100 group-hover:bg-green-50 transition-colors">
+                        <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </div>
+                    <span>Back to Home</span>
+                </a>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-center mt-12 lg:mt-0">
+
+                <div class="lg:hidden flex justify-center mb-10">
+                    <div class="p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg shadow-green-500/30">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="mb-8 text-center lg:text-left">
+                    <h2 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 tracking-tight mb-3">
+                        Reset Password
+                    </h2>
+                    <p class="text-base text-gray-500 font-medium leading-relaxed">
+                        Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.
                     </p>
                 </div>
 
-                @if (session('status'))
-                    <div class="mb-6 bg-green-500/20 border border-green-500/50 p-4 rounded-xl flex items-start gap-3 shadow-inner">
-                        <svg class="w-6 h-6 text-green-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p class="text-green-100 text-sm font-medium">{{ session('status') }}</p>
-                    </div>
-                @endif
+                <x-auth-session-status class="mb-6" :status="session('status')" />
 
                 <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
                     @csrf
 
                     <div class="group">
-                        <label for="email" class="block text-sm font-semibold text-green-100 mb-2 pl-1">Email Address</label>
+                        <label for="email" class="block text-sm font-bold text-gray-700 mb-2 transition-colors group-focus-within:text-green-600">Registered Email Address</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-green-200 group-focus-within:text-green-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
                             </div>
-                            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus placeholder="name@example.com"
-                                class="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white/10 transition-all duration-300" />
+                            <input id="email" name="email" type="email" autocomplete="email" required autofocus
+                                class="pl-12 block w-full bg-white border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-green-500/20 focus:border-green-500 sm:text-base py-3.5 transition-all duration-300 {{ $errors->has('email') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}"
+                                value="{{ old('email') }}" placeholder="you@example.com">
                         </div>
-                        <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-red-300 pl-1" />
+                        <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-red-600 font-medium" />
                     </div>
 
-                    <button type="submit"
-                        class="w-full px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold rounded-xl shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2">
-                        <span>Email Password Reset Link</span>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    </button>
+                    <div class="pt-4">
+                        <button type="submit"
+                            class="relative w-full flex justify-center py-4 px-4 border border-transparent rounded-2xl shadow-[0_8px_20px_-6px_rgba(16,185,129,0.5)] text-base font-extrabold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-[0_12px_25px_-6px_rgba(16,185,129,0.6)] hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 ease-out overflow-hidden group">
+                            <span class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:left-full transition-all duration-700 ease-in-out"></span>
+                            Send Reset Link
+                        </button>
+                    </div>
                 </form>
 
-                <div class="mt-8 text-center">
-                    <a href="{{ route('login') }}" class="inline-flex items-center text-sm text-green-200 hover:text-white transition group">
-                        <svg class="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        Back to Login
-                    </a>
+                <div class="mt-10 text-center">
+                    <p class="text-sm font-medium text-gray-600">
+                        Remembered your password?
+                        <a href="{{ route('login') }}" class="font-extrabold text-green-600 hover:text-emerald-700 transition-colors ml-1 flex items-center justify-center inline-flex group">
+                            <svg class="w-4 h-4 mr-1 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            Back to Sign In
+                        </a>
+                    </p>
                 </div>
-            </div>
 
-            <div class="h-1.5 w-full bg-gradient-to-r from-green-400 via-green-500 to-emerald-600"></div>
+            </div>
         </div>
     </div>
-
-    {{-- Animations --}}
-    <style>
-        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-@endsection
+</body>
+</html>

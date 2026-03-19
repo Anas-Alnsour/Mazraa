@@ -15,6 +15,11 @@ class FarmBooking extends Model
         'start_time',
         'end_time',
         'event_type',
+        'total_price',
+        'commission_amount',
+        'tax_amount',
+        'net_profit',
+        'status',
     ];
 
     /**
