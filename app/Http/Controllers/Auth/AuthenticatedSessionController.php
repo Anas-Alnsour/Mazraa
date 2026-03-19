@@ -31,11 +31,19 @@ class AuthenticatedSessionController extends Controller
 
         session(['role' => auth()->user()->role]);
 
-        if (auth()->user()->role === 'admin') {
-            return redirect()->route('home');
-        }
+        $role = auth()->user()->role;
 
-        return redirect()->route('home');
+        $redirectUrl = match ($role) {
+            'admin' => '/admin/dashboard',
+            'farm_owner' => '/owner/dashboard',
+            'supply_company' => '/supplies/dashboard',
+            'transport_company' => '/transport/dashboard',
+            'supply_driver' => '/delivery/orders',
+            'transport_driver' => '/shuttle/trips',
+            default => '/',
+        };
+
+        return redirect()->intended($redirectUrl);
     }
 
     /**

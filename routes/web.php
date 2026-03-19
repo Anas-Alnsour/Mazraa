@@ -32,6 +32,15 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+// Role-based redirect placeholders
+Route::middleware(['auth'])->group(function () {
+    Route::get('/owner/dashboard', function () { return 'Owner Dashboard'; });
+    Route::get('/supplies/dashboard', function () { return 'Supply Company Dashboard'; });
+    Route::get('/transport/dashboard', function () { return 'Transport Company Dashboard'; });
+    Route::get('/delivery/orders', function () { return 'Supply Driver Orders'; });
+    Route::get('/shuttle/trips', function () { return 'Transport Driver Trips'; });
+});
+
 /*
 |--------------------------------------------------------------------------
 | Profile Routes (Authenticated)
