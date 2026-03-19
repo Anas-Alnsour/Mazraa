@@ -9,7 +9,18 @@ class SupplyOrder extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'supply_id', 'quantity', 'total_price', 'status', 'order_id'];
+    protected $fillable = [
+        'user_id',
+        'supply_id',
+        'quantity',
+        'total_price',
+        'status',
+        'order_id',
+        'booking_id',
+        'driver_id',
+        'commission_amount',
+        'net_company_amount',
+    ];
 
     public function user()
     {
