@@ -13,16 +13,22 @@ use App\Models\User;
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Display the consumer login view.
      */
     public function create(): View
     {
-        return view('auth.login');
+        return view('auth.login', ['portal' => false]);
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Display the business/partner portal login view.
      */
+    public function createPortal(): View
+    {
+        return view('auth.login', ['portal' => true]);
+    }
+
+
     /**
      * Handle an incoming authentication request.
      */
@@ -32,23 +38,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // 1. تعريف المستخدم وتوضيح نوعه للمحرر لإخفاء الخطأ
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // 2. استخدام المتغير النظيف
+        // Save role in session for UI/Layout checks if needed
         session(['role' => $user->role]);
 
-        $role = $user->role;
-
-        $redirectUrl = match ($role) {
-            'admin' => '/admin/dashboard',
-            'farm_owner' => '/owner/dashboard',
-            'supply_company' => '/supplies/dashboard',
+        $redirectUrl = match ($user->role) {
+            'admin'             => '/admin',
+            'farm_owner'        => '/owner/dashboard',
+            'supply_company'    => '/supplies/dashboard',
             'transport_company' => '/transport/dashboard',
-            'supply_driver' => '/delivery/orders',
-            'transport_driver' => '/shuttle/trips',
-            default => '/',
+            'supply_driver'     => '/delivery/orders',
+            'transport_driver'  => '/shuttle/trips',
+            'user'              => '/dashboard',
+            default             => '/', // Fallback just in case
         };
 
         return redirect()->intended($redirectUrl);

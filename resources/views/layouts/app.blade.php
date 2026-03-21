@@ -27,19 +27,16 @@
 
                     <div class="hidden lg:flex items-center ml-10 space-x-6 xl:space-x-8">
                         @php
-                            // ستايل الروابط
                             $linkClass = "text-sm font-bold text-gray-600 hover:text-green-600 transition duration-300 py-2 border-b-2 border-transparent hover:border-green-500 whitespace-nowrap";
                             $activeClass = "text-green-700 border-green-600";
                         @endphp
 
                         @if (Auth::check() && Auth::user()->role === 'admin')
-                            {{-- Admin Links --}}
                             <a href="{{ url('/') }}" class="{{ $linkClass }} {{ request()->is('/') ? $activeClass : '' }}">Home</a>
                             <a href="{{ route('admin.farms.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.farms.*') ? $activeClass : '' }}">Manage Farms</a>
                             <a href="{{ route('admin.supplies.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.supplies.*') ? $activeClass : '' }}">Manage Supplies</a>
                             <a href="{{ route('admin.contact.index') }}" class="{{ $linkClass }} {{ request()->routeIs('admin.contact.*') ? $activeClass : '' }}">Contact Messages</a>
                         @else
-                            {{-- User Links (Original Names) --}}
                             <a href="{{ url('/') }}" class="{{ $linkClass }} {{ request()->is('/') ? $activeClass : '' }}">Home</a>
                             <a href="{{ route('explore') }}" class="{{ $linkClass }} {{ request()->routeIs('explore') ? $activeClass : '' }}">Explore Farms</a>
 
@@ -59,7 +56,26 @@
 
                 <div class="hidden lg:flex items-center space-x-4 ml-auto">
                     @auth
-                        <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+                        @php
+                            // Determine dynamic return path based on role
+                            $role = Auth::user()->role;
+                            $dashboardLink = match($role) {
+                                'admin' => '/admin',
+                                'farm_owner' => '/owner/dashboard',
+                                'supply_company' => '/supplies/dashboard',
+                                'transport_company' => '/transport/dashboard',
+                                'supply_driver' => '/delivery/orders',
+                                'transport_driver' => '/shuttle/trips',
+                                default => '/dashboard'
+                            };
+                            $isBusiness = $role !== 'user';
+                        @endphp
+
+                        <a href="{{ url($dashboardLink) }}" class="text-sm font-bold text-green-600 hover:text-green-800 transition">
+                            {{ $isBusiness ? 'Dashboard' : 'My Profile' }}
+                        </a>
+
+                        <div class="flex items-center gap-3 pl-4 border-l border-gray-200 ml-2">
                             <span class="text-sm font-bold text-gray-700 max-w-[150px] truncate">
                                 {{ Auth::user()->name }}
                             </span>
@@ -71,10 +87,73 @@
                             </form>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="text-sm font-bold text-gray-600 hover:text-green-600 transition">Login</a>
-                        <a href="{{ route('register') }}" class="px-5 py-2.5 text-sm font-bold text-white bg-green-600 rounded-full hover:bg-green-700 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5">
-                            Register
-                        </a>
+                        <div class="mr-4">
+                            <x-dropdown align="right" width="64">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center text-sm font-bold text-gray-600 hover:text-green-600 transition focus:outline-none">
+                                        Log in
+                                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                </x-slot>
+
+                                <x-slot name="content">
+                                    <div class="block px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        Consumer Portal
+                                    </div>
+                                    <x-dropdown-link :href="route('login')" class="font-semibold text-green-700 hover:bg-green-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                            User Login
+                                        </div>
+                                    </x-dropdown-link>
+
+                                    <div class="border-t border-gray-100 my-1"></div>
+
+                                    <div class="block px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        Business Portal
+                                    </div>
+                                    <x-dropdown-link :href="route('portal.login')" class="font-semibold text-blue-700 hover:bg-blue-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                            Owner & Company Login
+                                        </div>
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('portal.login')" class="font-semibold text-blue-700 hover:bg-blue-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                            Transport Drivers Login
+                                        </div>
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('portal.login')" class="font-semibold text-blue-700 hover:bg-blue-50">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                            Supply Drivers Login
+                                        </div>
+                                    </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
+
+                        <x-dropdown align="right" width="56">
+                            <x-slot name="trigger">
+                                <button class="px-5 py-2.5 text-sm font-bold text-white bg-green-600 rounded-full hover:bg-green-700 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 inline-flex items-center focus:outline-none">
+                                    Register
+                                    <svg class="ml-1.5 w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </x-slot>
+
+                            <x-slot name="content">
+                                <x-dropdown-link :href="route('register')" class="font-semibold text-green-700 hover:bg-green-50 py-3">
+                                    Register as User
+                                </x-dropdown-link>
+
+                                <div class="border-t border-gray-100"></div>
+
+                                <x-dropdown-link :href="route('partner.register')" class="font-bold text-blue-700 hover:bg-blue-50 py-3">
+                                    List Your Farm
+                                </x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
                     @endauth
                 </div>
 
@@ -116,16 +195,29 @@
 
                 <div class="border-t border-gray-100 mt-4 pt-4">
                     @auth
-                        <div class="flex items-center px-3 mb-3">
-                            <div class="text-base font-medium text-gray-800">Signed in as <span class="font-bold text-green-700">{{ Auth::user()->name }}</span></div>
-                        </div>
+                        @php
+                            $role = Auth::user()->role;
+                            $dashboardLink = match($role) {
+                                'admin' => '/admin',
+                                'farm_owner' => '/owner/dashboard',
+                                'supply_company' => '/supplies/dashboard',
+                                'transport_company' => '/transport/dashboard',
+                                'supply_driver' => '/delivery/orders',
+                                'transport_driver' => '/shuttle/trips',
+                                default => '/dashboard'
+                            };
+                        @endphp
+                        <a href="{{ url($dashboardLink) }}" class="block px-3 py-2 rounded-md text-base font-bold text-green-700 hover:bg-green-50">
+                            {{ $role !== 'user' ? 'Dashboard' : 'My Profile' }}
+                        </a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">Logout</button>
+                            <button type="submit" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-50">Log out</button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Login</a>
-                        <a href="{{ route('register') }}" class="block px-3 py-2 mt-1 rounded-md text-base font-medium text-white bg-green-600 text-center hover:bg-green-700">Register</a>
+                        <a href="{{ route('login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Log in</a>
+                        <a href="{{ route('partner.register') }}" class="block px-3 py-2 mt-1 rounded-md text-base font-bold text-blue-700 bg-blue-50 text-center hover:bg-blue-100 border border-blue-200">List Your Farm</a>
+                        <a href="{{ route('register') }}" class="block px-3 py-2 mt-2 rounded-md text-base font-medium text-white bg-green-600 text-center hover:bg-green-700">Sign up</a>
                     @endauth
                 </div>
             </div>
@@ -153,7 +245,7 @@
         @yield('content')
     </main>
 
-    <footer class="bg-gray-900 text-gray-300 border-t border-gray-800">
+    <footer class="bg-gray-900 text-gray-300 border-t border-gray-800 mt-auto">
         <div class="max-w-7xl mx-auto px-6 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
                 <div class="col-span-1 md:col-span-2">
@@ -170,15 +262,21 @@
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-5 border-b border-gray-700 pb-2">Connect</h3>
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-5 border-b border-gray-700 pb-2">Business & Connect</h3>
                     <div class="text-gray-400 text-sm space-y-3">
                         <p class="flex items-center gap-2"> info@mazraa.com</p>
                         <p class="flex items-center gap-2"> +962 79 123 4567</p>
+                        <div class="pt-4 mt-4 border-t border-gray-700">
+                            <a href="{{ route('portal.login') }}" class="text-blue-400 hover:text-blue-300 font-bold transition flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                Business / Partner Portal
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-xs">
-                © {{ date('Y') }} Mazraa.com — All rights reserved.
+            <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-xs flex flex-col md:flex-row justify-between items-center gap-4">
+                <span>© {{ date('Y') }} Mazraa.com — All rights reserved.</span>
             </div>
         </div>
     </footer>

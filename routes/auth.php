@@ -12,19 +12,23 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
+     // --- [B2C] Consumer Portal ---
+    Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('register', [RegisteredUserController::class, 'store']);
 
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
-
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // --- [B2B] Partner & Business Portal ---
+    Route::get('partner/register', [RegisteredUserController::class, 'createPartner'])->name('partner.register');
+    Route::post('partner/register', [RegisteredUserController::class, 'storePartner']);
+
+    Route::get('portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
+    Route::post('portal/login', [AuthenticatedSessionController::class, 'store']); // Reuses the same login logic
+
+    // ... Keep your existing password reset routes below ...
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
-
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
         ->name('password.email');
 
