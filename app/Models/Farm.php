@@ -9,7 +9,12 @@ class Farm extends Model
 {
     use HasFactory;
 
-protected $fillable = ['name', 'location', 'price_per_night', 'capacity', 'description', 'main_image', 'owner_id', 'rating', 'commission_rate', 'latitude', 'longitude'];
+    // تمت إضافة is_approved هنا لتجنب خطأ الـ Mass Assignment عند الموافقة على المزرعة
+    protected $fillable = [
+        'name', 'location', 'price_per_night', 'capacity',
+        'description', 'main_image', 'owner_id', 'rating',
+        'commission_rate', 'latitude', 'longitude', 'is_approved'
+    ];
 
     public function images()
     {
@@ -19,5 +24,13 @@ protected $fillable = ['name', 'location', 'price_per_night', 'capacity', 'descr
     public function bookings()
     {
         return $this->hasMany(FarmBooking::class);
+    }
+
+    /**
+     * Get the owner of the farm.
+     */
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 }
