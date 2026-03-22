@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SupplyAdminController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\SuperAdminController;
+use App\Http\Controllers\FarmOwnerController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -107,7 +109,7 @@ Route::middleware(['auth', \App\Http\Middleware\IsAdmin::class])
 // --------------------------------------------------------------------------
 // 🏠 Farm Explore & Booking
 // --------------------------------------------------------------------------
-Route::get('/explore', [FarmController::class, 'index'])->name('explore');
+Route::get('/explore', [FarmController::class, 'index'])->name('farms.explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
 Route::post('/farms/{farm}/book', [BookingController::class, 'store'])->name('farms.book')->middleware('auth');
@@ -160,5 +162,15 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
-
+Route::get('/explore', [FarmController::class, 'index'])->name('explore');
+Route::middleware('guest')->group(function () {
+    Route::get('/portal/login', [App\Http\Controllers\Auth\PortalSessionController::class, 'create'])->name('portal.login');
+    Route::post('/portal/login', [App\Http\Controllers\Auth\PortalSessionController::class, 'store']);
+});
+// Farm Owner Protected Routes
+Route::middleware(['auth', 'role:farm_owner'])->prefix('farm-owner')->name('farm_owner.')->group(function () {
+    Route::get('/dashboard', [FarmOwnerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/my-farms', [FarmOwnerController::class, 'myFarms'])->name('farms.index');
+    Route::patch('/bookings/{booking}/status', [FarmOwnerController::class, 'updateBookingStatus'])->name('bookings.updateStatus');
+});
 require __DIR__ . '/auth.php';

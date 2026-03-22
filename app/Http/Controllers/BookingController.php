@@ -6,50 +6,65 @@ use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmBooking;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
     /**
-     * إنشاء حجز جديد
+     * إنشاء حجز جديد (تم التحديث لدعم الشفتات والحسابات المالية)
      */
     public function store(Request $request, Farm $farm)
     {
         $request->validate([
             'start_time' => 'required|date|after_or_equal:today',
             'end_time'   => 'required|date|after:start_time',
-            'event_type' => 'nullable|string|max:255',
+            'event_type' => 'required|string|max:255',
         ]);
 
-        // تحديد مدة الحجز 12 ساعة
-        $start = \Carbon\Carbon::parse($request->start_time);
-        $end   = \Carbon\Carbon::parse($request->end_time);
-
-        // التحقق من عدم تعارض الحجز مع الحجوزات السابقة
-        $conflict = $farm->bookings()
-            ->where(function ($query) use ($start, $end) {
-                $query->whereBetween('start_time', [$start, $end])
-                    ->orWhereBetween('end_time', [$start, $end])
-                    ->orWhere(function ($q) use ($start, $end) {
-                        $q->where('start_time', '<=', $start)
-                            ->where('end_time', '>=', $end);
-                    });
-            })
-            ->exists();
-
-        if ($conflict) {
-            return back()->with('error', 'This time slot is already booked.');
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'You must be logged in to book a farm.');
         }
 
-        // إنشاء الحجز
-        $booking = FarmBooking::create([
+        $start = Carbon::parse($request->start_time);
+        $end   = Carbon::parse($request->end_time);
+
+        // 1. التحقق من عدم تعارض الحجز (Overlap Check الذكي)
+        $conflict = $farm->bookings()
+            ->where('status', '!=', 'cancelled') // نتجاهل الحجوزات الملغية
+            ->where(function ($query) use ($start, $end) {
+                $query->where('start_time', '<', $end)
+                      ->where('end_time', '>', $start);
+            })->exists();
+
+        if ($conflict) {
+            return back()->with('error', 'This shift is already booked. Please choose another one.');
+        }
+
+        // 2. الحسابات المالية (الحسبة الذكية للشفتات)
+        $hours = $start->diffInHours($end);
+        $numberOfShifts = ceil($hours / 12);
+        if ($numberOfShifts < 1) $numberOfShifts = 1;
+
+        $totalPrice = $numberOfShifts * $farm->price_per_night;
+
+        // حساب عمولة المنصة
+        $commissionPercentage = $farm->commission_rate ? ($farm->commission_rate / 100) : 0.10;
+        $netProfit = $totalPrice * $commissionPercentage;
+
+        // 3. إنشاء سجل الحجز
+        FarmBooking::create([
             'farm_id' => $farm->id,
             'user_id' => Auth::id(),
             'start_time' => $start,
             'end_time' => $end,
             'event_type' => $request->event_type,
+            'total_price' => $totalPrice,      // مطلوب من Jules
+            'net_profit' => $netProfit,        // مطلوب من Jules
+            'status' => 'pending',             // مطلوب من Jules
         ]);
 
-        return back()->with('success', 'Your booking has been successfully created!');
+        return redirect()->route('farms.show', $farm->id)
+            ->with('success', 'Booking requested successfully! Total: ' . number_format($totalPrice, 0) . ' JOD');
     }
 
     /**
