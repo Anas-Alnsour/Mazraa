@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     // --- [1] Farm Owner ---
     Route::prefix('owner')->name('owner.')->group(function () {
         Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/bookings', [OwnerDashboardController::class, 'bookings'])->name('bookings.index');
         Route::get('/farms', [OwnerFarmController::class, 'index'])->name('farms.index');
         Route::get('/farms/create', [OwnerFarmController::class, 'create'])->name('farms.create');
         Route::post('/farms', [OwnerFarmController::class, 'store'])->name('farms.store');

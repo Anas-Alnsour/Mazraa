@@ -61,6 +61,33 @@ class OwnerDashboardController extends Controller
             'farms' => $farms // في حال احتجت قائمة المزارع في الدروب داون مثلاً
         ]);
     }
+    /**
+     * عرض جميع الحجوزات الواردة لمزارع المالك (مع الفلترة)
+     */
+    public function bookings(Request $request)
+    {
+        $user = Auth::user();
+
+        // جلب معرفات مزارع المالك
+        $farmIds = Farm::where('owner_id', $user->id)->pluck('id');
+
+        // بناء الاستعلام مع العلاقات
+        $query = FarmBooking::with(['farm', 'user'])
+            ->whereIn('farm_id', $farmIds);
+
+        // تطبيق الفلتر حسب الحالة إذا وجد
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // ترتيب حسب أحدث الحجوزات وعمل Pagination
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // الاحتفاظ بالفلتر في روابط الـ Pagination
+        $bookings->appends($request->all());
+
+        return view('owner.bookings.index', compact('bookings'));
+    }
     // الموافقة على الحجز
 public function approveBooking($id)
 {

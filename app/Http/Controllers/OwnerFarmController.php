@@ -61,9 +61,10 @@ class OwnerFarmController extends Controller
             $validated['main_image'] = $path;
         }
 
-        // 2. إعدادات افتراضية (المهم هنا حالة الـ pending)
+        // 2. إعدادات افتراضية (تمت إضافة is_approved للربط مع لوحة الأدمن)
         $validated['owner_id'] = $user->id;
         $validated['status'] = 'pending';
+        $validated['is_approved'] = false; // 👈 التعديل اللي عملناه عشان شاشة الموافقات
         $validated['commission_rate'] = 10;
         $validated['rating'] = 0.0;
 
@@ -100,51 +101,51 @@ class OwnerFarmController extends Controller
     /**
      * تحديث بيانات المزرعة
      */
-    // داخل OwnerFarmController.php
+    public function update(Request $request, Farm $farm)
+    {
+        if ($farm->owner_id !== Auth::id()) abort(403);
 
-public function update(Request $request, Farm $farm)
-{
-    if ($farm->owner_id !== Auth::id()) abort(403);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'price_per_night' => 'required|numeric',
+            'capacity' => 'required|integer',
+            'description' => 'required|string',
+            'image' => 'nullable|image|max:5120', // الغلاف الجديد
+            'gallery.*' => 'nullable|image|max:5120', // صور المعرض الجديدة
+            'delete_images' => 'nullable|array', // مصفوفة لصور يراد حذفها
+        ]);
 
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'location' => 'required|string|max:255',
-        'price_per_night' => 'required|numeric',
-        'capacity' => 'required|integer',
-        'description' => 'required|string',
-        'image' => 'nullable|image|max:5120', // الغلاف الجديد
-        'gallery.*' => 'nullable|image|max:5120', // صور المعرض الجديدة
-        'delete_images' => 'nullable|array', // مصفوفة لصور يراد حذفها
-    ]);
+        // 1. تحديث البيانات الأساسية
+        if ($request->hasFile('image')) {
+            if ($farm->main_image) {
+                Storage::disk('public')->delete($farm->main_image);
+            }
+            $validated['main_image'] = $request->file('image')->store('farms/covers', 'public');
+        }
+        $farm->update($validated);
 
-    // 1. تحديث البيانات الأساسية
-    if ($request->hasFile('image')) {
-        Storage::disk('public')->delete($farm->main_image);
-        $validated['main_image'] = $request->file('image')->store('farms/covers', 'public');
-    }
-    $farm->update($validated);
-
-    // 2. حذف الصور المختارة من المعرض
-    if ($request->has('delete_images')) {
-        foreach ($request->delete_images as $imageId) {
-            $img = FarmImage::find($imageId);
-            if ($img && $img->farm_id == $farm->id) {
-                Storage::disk('public')->delete($img->image_url);
-                $img->delete();
+        // 2. حذف الصور المختارة من المعرض
+        if ($request->has('delete_images')) {
+            foreach ($request->delete_images as $imageId) {
+                $img = FarmImage::find($imageId);
+                if ($img && $img->farm_id == $farm->id) {
+                    Storage::disk('public')->delete($img->image_url);
+                    $img->delete();
+                }
             }
         }
-    }
 
-    // 3. إضافة صور جديدة للمعرض
-    if ($request->hasFile('gallery')) {
-        foreach ($request->file('gallery') as $file) {
-            $path = $file->store('farms/gallery', 'public');
-            $farm->images()->create(['image_url' => $path]);
+        // 3. إضافة صور جديدة للمعرض
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                $path = $file->store('farms/gallery', 'public');
+                $farm->images()->create(['image_url' => $path]);
+            }
         }
-    }
 
-    return redirect()->route('owner.farms.index')->with('success', 'Farm updated successfully!');
-}
+        return redirect()->route('owner.farms.index')->with('success', 'Farm updated successfully!');
+    }
 
     public function destroy(Farm $farm)
     {
@@ -153,7 +154,9 @@ public function update(Request $request, Farm $farm)
         }
 
         // حذف الصور من التخزين قبل حذف السجل
-        Storage::disk('public')->delete($farm->main_image);
+        if ($farm->main_image) {
+            Storage::disk('public')->delete($farm->main_image);
+        }
         foreach($farm->images as $img) {
             Storage::disk('public')->delete($img->image_url);
         }
