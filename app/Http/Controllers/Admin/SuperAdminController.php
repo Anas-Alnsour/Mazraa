@@ -28,6 +28,8 @@ class SuperAdminController extends Controller
             $queryDate->subMonth();
         } elseif ($timeframe === 'year') {
             $queryDate->subYear();
+        } elseif ($timeframe === 'all') {
+            $queryDate = Carbon::create(2000, 1, 1);
         }
 
         // Aggregate Financial Data based on timeframe
@@ -38,15 +40,13 @@ class SuperAdminController extends Controller
         // Summing up total platform income (commissions combined)
         $totalCommissions = $farmCommissions + $transportCommissions + $supplyCommissions;
 
-        // Assuming a fixed tax rate or calculation for demonstration; adjust to your exact schema if tax is stored per order
-        $taxRate = 0.16; // e.g., 16% VAT
+        $taxRate = 0.16; // 16% VAT
         $taxes = $totalCommissions * $taxRate;
 
-        // Total gross income processed through the platform
-        // 🛠️ تم التعديل هنا ليتوافق مع أسماء الأعمدة الفعلية في قاعدة البيانات
+        // Total gross income processed through the platform (استخدام الأعمدة الصحيحة حسب توثيقك)
         $totalGrossIncome = FarmBooking::where('created_at', '>=', $queryDate)->sum('total_price')
-            + Transport::where('created_at', '>=', $queryDate)->sum('price') // تم تعديل total_price إلى price
-            + SupplyOrder::where('created_at', '>=', $queryDate)->sum('total_price');
++ Transport::where('created_at', '>=', $queryDate)->sum('price')
++ SupplyOrder::where('created_at', '>=', $queryDate)->sum('total_price') ;
 
         $financials = [
             'total_income' => $totalGrossIncome,
@@ -58,9 +58,11 @@ class SuperAdminController extends Controller
         ];
 
         // Fetch verified farms for the map
-        $verifiedFarms = Farm::where('is_approved', true)->get(['id', 'name', 'latitude', 'longitude']);
+        $verifiedFarms = Farm::where('is_approved', true)->get(['id', 'name', 'latitude', 'longitude', 'location']);
 
-        return view('admin.dashboard.index', compact('financials', 'verifiedFarms', 'timeframe'));
+        $totalUsers = User::count();
+
+        return view('admin.dashboard.index', compact('financials', 'verifiedFarms', 'timeframe', 'totalUsers'));
     }
 
     /**
@@ -68,8 +70,7 @@ class SuperAdminController extends Controller
      */
     public function verifications()
     {
-        // Fetch farms that are NOT approved yet
-        // تم تغيير 'user' إلى 'owner' ليتوافق مع الأرجح في بناء الـ Farm model
+        // Fetch farms that are NOT approved yet (استخدام علاقة owner الصحيحة)
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->get();
 
         return view('admin.dashboard.verifications', compact('pendingFarms'));
@@ -85,25 +86,23 @@ class SuperAdminController extends Controller
         ]);
 
         if ($validated['action'] === 'approve') {
-            // الموافقة: تحويل الحالة إلى true
             $farm->update(['is_approved' => true]);
             $message = 'Farm approved successfully.';
         } else {
-            // الرفض: حذف المزرعة بالكامل من النظام
             $farm->delete();
             $message = 'Farm rejected and completely removed from the system.';
         }
 
+        // التوجيه لصفحة الاعتمادات زي ما كانت عندك بالأساس
         return redirect()->route('admin.verifications')->with('success', $message);
     }
+
     /**
      * Display system management settings
      */
     public function system()
     {
-        // Fetch users for system management (e.g., toggling account status)
         $users = User::all();
-        // Placeholder for default commission setting
         $defaultCommission = config('app.default_commission_rate', 10);
 
         return view('admin.dashboard.system', compact('users', 'defaultCommission'));

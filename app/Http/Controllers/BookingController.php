@@ -19,6 +19,10 @@ class BookingController extends Controller
             'start_time' => 'required|date|after_or_equal:today',
             'end_time'   => 'required|date|after:start_time',
             'event_type' => 'required|string|max:255',
+            'requires_transport' => 'nullable|boolean',
+            'transport_cost' => 'nullable|numeric|min:0',
+            'pickup_lat' => 'nullable|numeric',
+            'pickup_lng' => 'nullable|numeric',
         ]);
 
         if (!auth()->check()) {
@@ -28,9 +32,9 @@ class BookingController extends Controller
         $start = Carbon::parse($request->start_time);
         $end   = Carbon::parse($request->end_time);
 
-        // 1. التحقق من عدم تعارض الحجز (Overlap Check الذكي)
+        // 1. Overlap Check
         $conflict = $farm->bookings()
-            ->where('status', '!=', 'cancelled') // نتجاهل الحجوزات الملغية
+            ->where('status', '!=', 'cancelled')
             ->where(function ($query) use ($start, $end) {
                 $query->where('start_time', '<', $end)
                       ->where('end_time', '>', $start);
@@ -40,33 +44,63 @@ class BookingController extends Controller
             return back()->with('error', 'This shift is already booked. Please choose another one.');
         }
 
-        // 2. الحسابات المالية (الحسبة الذكية للشفتات)
+        // 2. Financials Calculation
         $hours = $start->diffInHours($end);
         $numberOfShifts = ceil($hours / 12);
         if ($numberOfShifts < 1) $numberOfShifts = 1;
 
-        $totalPrice = $numberOfShifts * $farm->price_per_night;
+        $farmPrice = $numberOfShifts * $farm->price_per_night;
 
-        // حساب عمولة المنصة
+        // Include dynamic transport cost if added
+        $transportCost = $request->requires_transport ? $request->transport_cost : 0;
+
+        $totalBeforeTax = $farmPrice + $transportCost;
+        $taxAmount = $totalBeforeTax * 0.16; // 16% VAT
+        $finalTotal = $totalBeforeTax + $taxAmount;
+
         $commissionPercentage = $farm->commission_rate ? ($farm->commission_rate / 100) : 0.10;
-        $netProfit = $totalPrice * $commissionPercentage;
 
-        // 3. إنشاء سجل الحجز
-        FarmBooking::create([
+        // التصحيح المعماري: عمولة المنصة وحصة المالك
+        $commissionAmount = $farmPrice * $commissionPercentage;
+        $netOwnerAmount = $farmPrice - $commissionAmount;
+
+        // 3. Create Booking Record
+        $booking = FarmBooking::create([
             'farm_id' => $farm->id,
             'user_id' => Auth::id(),
             'start_time' => $start,
             'end_time' => $end,
             'event_type' => $request->event_type,
-            'total_price' => $totalPrice,      // مطلوب من Jules
-            'net_profit' => $netProfit,        // مطلوب من Jules
-            'status' => 'pending',             // مطلوب من Jules
+            'total_price' => $finalTotal,
+            'tax_amount' => $taxAmount,
+            'commission_amount' => $commissionAmount,
+            'net_owner_amount' => $netOwnerAmount,
+            'status' => 'pending',
         ]);
 
-        return redirect()->route('farms.show', $farm->id)
-            ->with('success', 'Booking requested successfully! Total: ' . number_format($totalPrice, 0) . ' JOD');
-    }
+        // 4. Create Transport Request if toggled
+        if ($request->requires_transport && $request->pickup_lat && $request->pickup_lng) {
+            Transport::create([
+                'user_id' => Auth::id(),
+                'farm_id' => $farm->id,
+                'transport_type' => 'Shuttle',
+                'passengers' => $farm->capacity,
+                'start_and_return_point' => 'Custom User Location',
+                'pickup_lat' => $request->pickup_lat,
+                'pickup_lng' => $request->pickup_lng,
+                'price' => $transportCost,
+                'distance' => 0,
+                'Farm_Arrival_Time' => $start,
+                'Farm_Departure_Time' => $end,
+                'status' => 'pending',
+                'commission_amount' => $transportCost * 0.10, // 10% Platform fee
+                'net_company_amount' => $transportCost * 0.90
+            ]);
+        }
 
+        return redirect()->route('farms.show', $farm->id)
+            ->with('success', 'Booking & Invoice generated successfully! Total Due: ' . number_format($finalTotal, 2) . ' JOD');
+    }
     /**
      * عرض الحجوزات المستقبلية للمستخدم مع دعم الفلترة
      */

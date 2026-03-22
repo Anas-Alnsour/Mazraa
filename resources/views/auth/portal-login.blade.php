@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mazraa Portal | Partner Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Mazraa.com | Partner Portal</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#f9f8f4] min-h-screen flex items-center justify-center font-sans p-4">
 
@@ -12,19 +12,22 @@
         <div class="text-center mb-8">
             <h1 class="text-4xl font-black text-[#1d5c42] tracking-tighter">Mazraa<span class="text-[#b46146]">.com</span></h1>
             <p class="text-sm font-bold text-gray-500 tracking-widest uppercase mt-2">B2B Partner Portal</p>
+            <p class="text-xs text-gray-400 mt-1">Admin, Owners, Logistics & Drivers</p>
         </div>
 
         <div class="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-8">
-            <h2 class="text-2xl font-black text-gray-900 mb-6 text-center">Welcome Back, Partner</h2>
+            <h2 class="text-2xl font-black text-gray-900 mb-6 text-center">Secure Login</h2>
 
             @if($errors->any())
-                <div class="mb-6 bg-red-50 text-red-600 font-bold text-xs p-4 rounded-xl border border-red-100">
+                <div class="mb-6 bg-red-50 text-red-600 font-bold text-xs p-4 rounded-xl border border-red-100 text-center">
                     {{ $errors->first() }}
                 </div>
             @endif
 
             <form method="POST" action="{{ route('portal.login') }}" class="space-y-5">
                 @csrf
+                <input type="hidden" name="portal_login" value="1">
+
                 <div>
                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Email Address</label>
                     <input type="email" name="email" value="{{ old('email') }}" required autofocus class="w-full bg-gray-50 border-none rounded-xl py-4 px-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-[#1d5c42] transition-all outline-none">
@@ -43,7 +46,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-[#183126] hover:bg-[#10231b] text-white font-black py-4 rounded-xl shadow-lg transition-all transform active:scale-95 text-sm uppercase tracking-widest mt-4">
-                    Secure Login
+                    Enter Portal
                 </button>
             </form>
 

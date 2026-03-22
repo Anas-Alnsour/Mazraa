@@ -1,73 +1,94 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between h-20">
             <div class="flex">
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ Auth::user()->role === 'farm_owner' ? route('owner.dashboard') : route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
+                    <a href="{{ url('/') }}" class="text-2xl font-black text-[#1d5c42] tracking-tighter hover:opacity-80 transition">
+                        Mazraa<span class="text-[#b46146]">.com</span>
                     </a>
                 </div>
 
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-<div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-    <a href="{{ route('owner.dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('owner.dashboard') ? 'border-green-400 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
-        Overview
-    </a>
-
-    <a href="{{ route('owner.farms.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('owner.farms.*') ? 'border-green-400 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
-        My Farms
-    </a>
-
-    <a href="{{ route('owner.financials') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('owner.financials') ? 'border-green-400 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
-        Financials
-    </a>
-</div>
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex items-center">
+                    <x-nav-link :href="url('/')" :active="request()->is('/')" class="font-bold text-sm">
+                        Home
+                    </x-nav-link>
+                    <x-nav-link :href="route('explore')" :active="request()->routeIs('explore')" class="font-bold text-sm">
+                        Explore Farms
+                    </x-nav-link>
+                    <x-nav-link href="/contact" :active="request()->is('contact')" class="font-bold text-sm">
+                        Contact
+                    </x-nav-link>
+                    <x-nav-link href="/about" :active="request()->is('about')" class="font-bold text-sm">
+                        About
+                    </x-nav-link>
                 </div>
             </div>
 
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <div class="hidden sm:flex sm:items-center sm:ml-6 gap-3">
+                @guest
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-bold rounded-md text-gray-600 hover:text-[#1d5c42] focus:outline-none transition">
+                                <div>Register</div>
+                                <div class="ml-1">
+                                    <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                </div>
+                            </button>
+                        </x-slot>
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('register')" class="font-bold text-sm">New Customer</x-dropdown-link>
+                            <x-dropdown-link :href="route('partner.register')" class="font-black text-[#1d5c42] border-t border-gray-100">List Your Farm</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
 
-                <div class="mr-4 relative">
-                    <a href="{{ route('owner.dashboard') }}" class="text-gray-400 hover:text-green-600 transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        @if(isset($pendingApprovalCount) && $pendingApprovalCount > 0)
-                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                            </span>
-                        @endif
+                    <x-dropdown align="right" width="60">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-bold rounded-md text-gray-600 hover:text-[#1d5c42] focus:outline-none transition">
+                                <div>Log in</div>
+                                <div class="ml-1">
+                                    <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                </div>
+                            </button>
+                        </x-slot>
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('login')" class="font-bold text-sm">Customer Login</x-dropdown-link>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Admin / Farm Owner</x-dropdown-link>
+                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Supply Co. & Drivers</x-dropdown-link>
+                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Transport Co. & Drivers</x-dropdown-link>
+                        </x-slot>
+                    </x-dropdown>
+
+                    <a href="{{ route('partner.register') }}" class="ml-2 px-5 py-2.5 bg-[#1d5c42] hover:bg-[#154230] text-white text-xs font-black uppercase tracking-widest rounded-full transition-transform active:scale-95 shadow-md">
+                        List Your Farm
                     </a>
-                </div>
+                @endguest
 
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
+                @auth
+                    <a href="{{ Auth::user()->role === 'user' ? route('dashboard') : url(match(Auth::user()->role){'admin'=>'/admin','farm_owner'=>'/owner/dashboard','supply_company'=>'/supplies/dashboard','transport_company'=>'/transport/dashboard','supply_driver'=>'/delivery/orders','transport_driver'=>'/shuttle/trips',default=>'/'}) }}" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-[#1d5c42] transition">
+                        My Dashboard
+                    </a>
 
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile Settings') }}
-                        </x-dropdown-link>
-
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
+                    <x-dropdown align="right" width="48">
+                        <x-slot name="trigger">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-bold rounded-md text-[#1d5c42] bg-green-50 hover:bg-green-100 focus:outline-none transition">
+                                <div>{{ Auth::user()->name }}</div>
+                                <div class="ml-1">
+                                    <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                </div>
+                            </button>
+                        </x-slot>
+                        <x-slot name="content">
+                            <x-dropdown-link :href="route('profile.edit')">{{ __('Profile') }}</x-dropdown-link>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
+                                    {{ __('Log Out') }}
+                                </x-dropdown-link>
+                            </form>
+                        </x-slot>
+                    </x-dropdown>
+                @endauth
             </div>
         </div>
     </div>

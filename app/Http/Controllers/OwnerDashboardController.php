@@ -4,32 +4,27 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Farm;
-use App\Models\FarmBooking; // تأكد أن اسم الموديل عندك FarmBooking وليس Booking
+use App\Models\FarmBooking;
 use Illuminate\Support\Facades\Auth;
 
 class OwnerDashboardController extends Controller
 {
     /**
-     * عرض لوحة تحكم صاحب المزرعة مع الإحصائيات الحقيقية
+     * Display the Farm Owner Dashboard with exact financials and interactive calendar data.
      */
     public function index()
     {
         $user = Auth::user();
 
-        // [1] التحقق من الصلاحيات (Security Check)
         if ($user->role !== 'farm_owner') {
             abort(403, 'Unauthorized access.');
         }
 
-        // [2] جلب مزارع هذا المالك فقط
         $farms = Farm::where('owner_id', $user->id)->get();
         $farmIds = $farms->pluck('id');
 
-        // [3] إحصائيات المزارع
         $totalFarms = $farms->count();
 
-        // [4] الحجوزات النشطة (التي تنتظر الموافقة أو المؤكدة)
-        // عرضنا في التصميم Active Bookings و Pending Approval
         $activeBookingsCount = FarmBooking::whereIn('farm_id', $farmIds)
             ->whereIn('status', ['confirmed', 'pending'])
             ->count();
@@ -38,82 +33,94 @@ class OwnerDashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
-        // [5] حساب صافي الأرباح (Net Revenue)
-        // نحسب فقط الحجوزات المؤكدة (confirmed)
-        $totalRevenue = FarmBooking::whereIn('farm_id', $farmIds)
+        // حسابات مالية دقيقة مبنية على الحجوزات المؤكدة فقط
+        $confirmedBookings = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'confirmed')
-            ->sum('net_profit');
-
-        // [6] جلب آخر 5 نشاطات حجوزات مع بيانات المستخدم والمزرعة
-        $recentBookings = FarmBooking::with(['user', 'farm'])
-            ->whereIn('farm_id', $farmIds)
-            ->latest()
-            ->take(5)
             ->get();
 
-        // [7] تمرير البيانات للـ View
-        return view('owner.dashboard', [
-            'totalFarms' => $totalFarms,
-            'activeBookingsCount' => $activeBookingsCount,
-            'pendingApprovalCount' => $pendingApprovalCount,
-            'totalRevenue' => $totalRevenue,
-            'recentBookings' => $recentBookings,
-            'farms' => $farms // في حال احتجت قائمة المزارع في الدروب داون مثلاً
-        ]);
+        $grossRevenue = $confirmedBookings->sum('total_price');
+        $platformCommission = $confirmedBookings->sum('commission_amount');
+        $taxes = $confirmedBookings->sum('tax_amount');
+        // تم تصحيح اسم العمود حسب التوثيق المعماري
+        $netProfit = $confirmedBookings->sum('net_owner_amount');
+
+        $financials = [
+            'gross' => $grossRevenue,
+            'commission' => $platformCommission,
+            'taxes' => $taxes,
+            'net' => $netProfit
+        ];
+
+        // جلب الحجوزات للتقويم التفاعلي
+        $allBookings = FarmBooking::with(['user', 'farm'])
+            ->whereIn('farm_id', $farmIds)
+            ->get();
+
+        $calendarEvents = $allBookings->map(function ($booking) {
+            $color = match($booking->status) {
+                'confirmed' => '#10b981', // أخضر
+                'pending' => '#f59e0b',   // برتقالي
+                'cancelled' => '#ef4444', // أحمر
+                default => '#6b7280'      // رمادي
+            };
+
+            return [
+                'id' => $booking->id,
+                'title' => $booking->farm->name . ' - ' . ($booking->user->name ?? 'User'),
+                'start' => $booking->check_in_date,
+                'end' => \Carbon\Carbon::parse($booking->check_out_date)->addDay()->format('Y-m-d'),
+                'color' => $color,
+                'extendedProps' => [
+                    'status' => $booking->status,
+                    'customer' => $booking->user->name ?? 'User',
+                    'farm' => $booking->farm->name,
+                    // تم تصحيح اسم العمود هنا أيضاً
+                    'net' => $booking->net_owner_amount
+                ]
+            ];
+        });
+
+        return view('owner.dashboard', compact(
+            'totalFarms',
+            'activeBookingsCount',
+            'pendingApprovalCount',
+            'financials',
+            'calendarEvents'
+        ));
     }
-    /**
-     * عرض جميع الحجوزات الواردة لمزارع المالك (مع الفلترة)
-     */
+
     public function bookings(Request $request)
     {
         $user = Auth::user();
-
-        // جلب معرفات مزارع المالك
         $farmIds = Farm::where('owner_id', $user->id)->pluck('id');
 
-        // بناء الاستعلام مع العلاقات
-        $query = FarmBooking::with(['farm', 'user'])
-            ->whereIn('farm_id', $farmIds);
+        $query = FarmBooking::with(['farm', 'user'])->whereIn('farm_id', $farmIds);
 
-        // تطبيق الفلتر حسب الحالة إذا وجد
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
-        // ترتيب حسب أحدث الحجوزات وعمل Pagination
         $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
-
-        // الاحتفاظ بالفلتر في روابط الـ Pagination
         $bookings->appends($request->all());
 
         return view('owner.bookings.index', compact('bookings'));
     }
-    // الموافقة على الحجز
-public function approveBooking($id)
-{
-    $booking = FarmBooking::findOrFail($id);
 
-    // التحقق من الملكية (لضمان أن المالك لا يوافق على حجز لمزرعة غير تابعة له)
-    if ($booking->farm->owner_id !== auth()->id()) {
-        abort(403);
+    public function approveBooking($id)
+    {
+        $booking = FarmBooking::findOrFail($id);
+        if ($booking->farm->owner_id !== auth()->id()) abort(403);
+
+        $booking->update(['status' => 'confirmed']);
+        return back()->with('success', 'Booking confirmed successfully!');
     }
 
-    $booking->update(['status' => 'confirmed']);
+    public function rejectBooking($id)
+    {
+        $booking = FarmBooking::findOrFail($id);
+        if ($booking->farm->owner_id !== auth()->id()) abort(403);
 
-    return back()->with('success', 'Booking confirmed successfully!');
-}
-
-// رفض الحجز
-public function rejectBooking($id)
-{
-    $booking = FarmBooking::findOrFail($id);
-
-    if ($booking->farm->owner_id !== auth()->id()) {
-        abort(403);
+        $booking->update(['status' => 'cancelled']);
+        return back()->with('error', 'Booking has been rejected.');
     }
-
-    $booking->update(['status' => 'cancelled']);
-
-    return back()->with('error', 'Booking has been rejected.');
-}
 }

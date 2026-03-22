@@ -8,65 +8,83 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
-use App\Models\User;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the consumer login view.
+     * شاشة دخول العملاء العاديين
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.login', ['portal' => false]);
+        return view('auth.login', ['isPortal' => false]);
     }
 
     /**
-     * Display the business/partner portal login view.
+     * شاشة دخول الشركات والملاك (الواجهة الرسمية)
      */
     public function createPortal(): View
     {
-        return view('auth.login', ['portal' => true]);
+        // تم تغييرها لترجع صفحة مستقلة تماماً للشركاء
+        return view('auth.portal-login');
     }
 
-
     /**
-     * Handle an incoming authentication request.
+     * معالجة تسجيل الدخول والتوجيه
      */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
-        $request->session()->regenerate();
-
-        /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Save role in session for UI/Layout checks if needed
+        // --- STRICT B2B / B2C GATEWAY LOGIC ---
+        $isPortalLogin = $request->routeIs('portal.login') || $request->has('portal_login');
+
+        if ($isPortalLogin && $user->role === 'user') {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            throw ValidationException::withMessages([
+                'email' => 'Access Denied: Please use the Customer Login gateway.',
+            ]);
+        }
+
+        if (!$isPortalLogin && $user->role !== 'user') {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            throw ValidationException::withMessages([
+                'email' => 'Access Denied: Please use the Partner Portal gateway.',
+            ]);
+        }
+        // --------------------------------------
+
+        $request->session()->regenerate();
         session(['role' => $user->role]);
 
-        $redirectUrl = match ($user->role) {
+        // توجيه صارم وإجباري (تم تصحيح المسارات لتطابق web.php 100%)
+$redirectUrl = match ($user->role) {
             'admin'             => '/admin',
-            'farm_owner'        => '/owner/dashboard',
+            'farm_owner'        => '/owner/dashboard', 
             'supply_company'    => '/supplies/dashboard',
             'transport_company' => '/transport/dashboard',
             'supply_driver'     => '/delivery/orders',
             'transport_driver'  => '/shuttle/trips',
             'user'              => '/dashboard',
-            default             => '/', // Fallback just in case
+            default             => '/',
         };
 
-        return redirect()->intended($redirectUrl);
+        // إرجاع توجيه إجباري (تم مسح intended)
+        return redirect($redirectUrl);
     }
 
     /**
-     * Destroy an authenticated session.
+     * تسجيل الخروج
      */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
