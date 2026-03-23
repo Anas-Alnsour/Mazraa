@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\OwnerDashboardController;
 use App\Http\Controllers\OwnerFarmController;
+use App\Http\Controllers\TransportDriverController;
+use App\Http\Controllers\TransportVehicleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -140,9 +142,17 @@ Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('su
 
 // --- [5] TRANSPORT COMPANY ---
 Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name('transport.')->group(function () {
+    // 1. لوحة التحكم الرئيسية
     Route::get('/dashboard', [TransportCompanyDashboardController::class, 'index'])->name('dashboard');
-    // مسار تعيين السائق للرحلة
+
+    // 2. مسار تعيين السائق للرحلة (Assign Driver)
     Route::patch('/trips/{trip}/assign-driver', [TransportCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
+
+    // 3. إدارة فريق السائقين (CRUD Drivers)
+    Route::resource('drivers', TransportDriverController::class);
+
+    // 4. إدارة أسطول المركبات والشاحنات (CRUD Vehicles)
+    Route::resource('vehicles', TransportVehicleController::class);
 });
 
 // --- [6] SUPPLY DRIVER ---
