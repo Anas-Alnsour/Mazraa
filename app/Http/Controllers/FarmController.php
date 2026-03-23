@@ -48,10 +48,10 @@ class FarmController extends Controller
     /**
      * عرض صفحة تفاصيل مزرعة محددة للزبون
      */
-public function show(Farm $farm)
+    public function show(Farm $farm)
     {
-        // جلب المزرعة مع صورها
-        $farm->load('images');
+        // جلب المزرعة مع صورها والتواريخ المحجوبة
+        $farm->load(['images', 'blockedDates']);
 
         return view('public_farms.show', compact('farm'));
     }

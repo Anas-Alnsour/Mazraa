@@ -260,6 +260,11 @@
             'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H'),
         ]) : []);
 
+        const blockedDates = @json($farm->blockedDates ? $farm->blockedDates->map(fn($bd) => [
+            'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
+            'shift' => $bd->shift,
+        ]) : []);
+
         const dateInput = document.getElementById('booking_date');
         const shiftsContainer = document.getElementById('shiftsContainer');
         const btnMorning = document.getElementById('btnMorning');
@@ -278,6 +283,7 @@
             btnMorning.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
             btnEvening.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
 
+            // 1. Check existing confirmed/pending bookings
             existingBookings.forEach(booking => {
                 if (booking.date === date) {
                     if (booking.hour === 10) {
@@ -285,6 +291,20 @@
                         btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
                     }
                     if (booking.hour === 22) {
+                        btnEvening.disabled = true;
+                        btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+
+            // 2. Check manually blocked dates by the owner
+            blockedDates.forEach(block => {
+                if (block.date === date) {
+                    if (block.shift === 'morning' || block.shift === 'full_day') {
+                        btnMorning.disabled = true;
+                        btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                    }
+                    if (block.shift === 'evening' || block.shift === 'full_day') {
                         btnEvening.disabled = true;
                         btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
                     }

@@ -117,6 +117,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // --- [3] FARM OWNER ---
 Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')->group(function () {
     Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/toggle-block', [OwnerDashboardController::class, 'toggleBlockShift'])->name('dashboard.toggle_block');
 
     Route::get('/farms', [OwnerFarmController::class, 'index'])->name('farms.index');
     Route::get('/farms/create', [OwnerFarmController::class, 'create'])->name('farms.create');

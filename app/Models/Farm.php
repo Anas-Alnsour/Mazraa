@@ -27,6 +27,14 @@ class Farm extends Model
     }
 
     /**
+     * Get the blocked dates for the farm.
+     */
+    public function blockedDates()
+    {
+        return $this->hasMany(FarmBlockedDate::class);
+    }
+
+    /**
      * Get the owner of the farm.
      */
     public function owner()
