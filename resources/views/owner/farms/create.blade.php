@@ -22,10 +22,55 @@
     </style>
 
     <div class="py-10" x-data="farmGallery()">
-        <div class="max-w-5xl mx-auto">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            @if ($errors->any())
+                <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl relative mb-8 shadow-sm">
+                    <ul class="list-disc pl-5 font-medium">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8" id="farmForm">
                 @csrf
 
+                {{-- 1. Farm Details --}}
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
+                    <div class="flex items-center gap-3 mb-8 border-b pb-4">
+                        <div class="p-2 bg-blue-100 rounded-xl text-blue-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">Basic Details</h3>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Farm Name *</label>
+                            <input type="text" name="name" value="{{ old('name') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="e.g., The Golden Farm">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Description *</label>
+                            <textarea name="description" rows="4" required class="w-full rounded-[2rem] border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-medium text-gray-800" placeholder="Describe the amenities, rules, and vibe of your farm...">{{ old('description') }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Price Per Shift (JOD) *</label>
+                                <input type="number" step="0.01" name="price_per_night" value="{{ old('price_per_night') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="150.00">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Capacity (Guests) *</label>
+                                <input type="number" name="capacity" value="{{ old('capacity') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="e.g., 25">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 2. Farm Photos --}}
                 <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
                     <div class="flex items-center gap-3 mb-8 border-b pb-4">
                         <div class="p-2 bg-green-100 rounded-xl text-green-600">
@@ -37,7 +82,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
                         <div class="space-y-4">
                             <label class="block text-sm font-black text-gray-700 uppercase">Main Cover Image *</label>
-                            <div class="relative group h-72 rounded-[2.5rem] overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center transition-all">
+                            <div class="relative group h-72 rounded-[2.5rem] overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center transition-all hover:bg-gray-100 hover:border-gray-300">
                                 <template x-if="mainPreview">
                                     <div class="relative w-full h-full">
                                         <img :src="mainPreview" class="w-full h-full object-cover cursor-zoom-in" @click="showFull(mainPreview)">
@@ -52,7 +97,7 @@
                                     </div>
                                     <p class="text-[10px] font-black text-gray-400 tracking-widest uppercase">Upload Cover</p>
                                 </div>
-                                <input type="file" name="image" x-ref="mainInput" required class="absolute inset-0 opacity-0 cursor-pointer z-20" @change="updateMain">
+                                <input type="file" name="image" x-ref="mainInput" required accept="image/jpeg,image/png,image/jpg,image/webp" class="absolute inset-0 opacity-0 cursor-pointer z-20" @change="updateMain">
                             </div>
                         </div>
 
@@ -68,7 +113,7 @@
                                     </div>
                                 </template>
                                 <label class="h-32 rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-green-50 hover:border-green-400 transition-all">
-                                    <input type="file" name="gallery[]" multiple class="hidden" @change="updateGallery">
+                                    <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="updateGallery">
                                     <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 </label>
                             </div>
@@ -76,6 +121,7 @@
                     </div>
                 </div>
 
+                {{-- 3. Location & Mapping --}}
                 <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
                     <div class="flex items-center gap-3 mb-8 border-b pb-4">
                         <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
@@ -86,8 +132,8 @@
 
                     <div class="space-y-6">
                         <div class="relative group">
-                            <label for="location" class="block text-sm font-bold text-gray-700 mb-2 px-1">Farm Address / Area Search</label>
-                            <input type="text" name="location" id="location" required
+                            <label for="location" class="block text-sm font-bold text-gray-700 mb-2 px-1">Farm Address / Area Search *</label>
+                            <input type="text" name="location" id="location" value="{{ old('location') }}" required
                                 class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-5 px-8 transition-all font-bold text-gray-800"
                                 placeholder="Search for a city or district...">
                             <div id="search-loading" class="absolute right-6 top-14 hidden">
@@ -97,32 +143,12 @@
 
                         <div id="map"></div>
 
-                        <input type="hidden" name="latitude" id="latitude">
-                        <input type="hidden" name="longitude" id="longitude">
+                        <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                        <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
                     </div>
                 </div>
 
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-black text-gray-700 mb-2">Farm Name *</label>
-                            <input type="text" name="name" required class="w-full rounded-2xl border-gray-100 bg-gray-50 py-5 px-8 focus:bg-white transition-all font-bold" placeholder="The Golden Farm">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-black text-gray-700 mb-2">Price Per Night (JOD)</label>
-                            <input type="number" name="price_per_night" required class="w-full rounded-2xl border-gray-100 bg-gray-50 py-5 px-8 focus:bg-white transition-all font-bold" placeholder="150">
-                        </div>
-                        <div class="md:col-span-3">
-                            <label class="block text-sm font-black text-gray-700 mb-2">Brief Description</label>
-                            <textarea name="description" rows="4" required class="w-full rounded-[2rem] border-gray-100 bg-gray-50 p-8 focus:bg-white transition-all font-medium" placeholder="Describe your rooms, pool, and vibes..."></textarea>
-                        </div>
-                        <div class="md:col-span-1">
-                             <label class="block text-sm font-black text-gray-700 mb-2">Capacity</label>
-                             <input type="number" name="capacity" required class="w-full rounded-2xl border-gray-100 bg-gray-50 py-5 px-8 focus:bg-white transition-all font-bold" placeholder="Max Guests">
-                        </div>
-                    </div>
-                </div>
-
+                {{-- Action Button --}}
                 <div class="flex flex-col md:flex-row items-center justify-between bg-gray-900 rounded-[3rem] p-10 text-white gap-8 shadow-2xl">
                     <div class="text-center md:text-left">
                         <p class="font-black text-2xl leading-tight tracking-tighter uppercase">Launch Listing</p>
@@ -135,6 +161,7 @@
             </form>
         </div>
 
+        {{-- Lightbox for Images --}}
         <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-10 overflow-hidden" @click.self="lightboxOpen = false">
             <button @click="lightboxOpen = false" class="absolute top-10 right-10 text-white hover:text-green-500 transition-colors">
                 <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -166,6 +193,8 @@
                 },
                 removeGallery(index) {
                     this.galleryPreviews.splice(index, 1);
+                    // ملاحظة: الحذف من الواجهة لا يحذف من كائن الـ input file في الـ HTML مباشرة
+                    // ولكن يكفي حالياً للتأثير البصري.
                 },
                 showFull(src) {
                     this.lightboxSrc = src;
@@ -175,10 +204,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            // حل مشكلة تحميل الخريطة في الحاوية المخفية
+            // تحميل الخريطة
             setTimeout(() => {
                 const map = L.map('map', { scrollWheelZoom: false }).setView([31.9454, 35.9284], 10);
-                L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png').addTo(map);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
                 let marker;
                 const latInput = document.getElementById('latitude');

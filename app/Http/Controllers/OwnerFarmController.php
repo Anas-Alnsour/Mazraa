@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 class OwnerFarmController extends Controller
 {
     /**
-     * عرض قائمة مزارع المالك (بما فيها حالة الموافقة)
+     * عرض قائمة مزارع المالك
      */
     public function index()
     {
@@ -22,6 +22,7 @@ class OwnerFarmController extends Controller
         }
 
         $farms = Farm::where('owner_id', $user->id)
+            ->with('images')
             ->latest()
             ->paginate(10);
 
@@ -49,8 +50,8 @@ class OwnerFarmController extends Controller
             'price_per_night' => 'required|numeric|min:0',
             'capacity' => 'required|integer|min:1',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // الغلاف
-            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // المعرض
+            'image' => 'required|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // الغلاف
+            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // المعرض
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
@@ -61,11 +62,11 @@ class OwnerFarmController extends Controller
             $validated['main_image'] = $path;
         }
 
-        // 2. إعدادات افتراضية (تمت إضافة is_approved للربط مع لوحة الأدمن)
+        // 2. إعدادات افتراضية
         $validated['owner_id'] = $user->id;
         $validated['status'] = 'pending';
-        $validated['is_approved'] = false; // 👈 التعديل اللي عملناه عشان شاشة الموافقات
-        $validated['commission_rate'] = 10;
+        $validated['is_approved'] = false;
+        $validated['commission_rate'] = 15; // نسبة العمولة الافتراضية
         $validated['rating'] = 0.0;
 
         $farm = Farm::create($validated);
@@ -82,7 +83,7 @@ class OwnerFarmController extends Controller
         }
 
         return redirect()->route('owner.farms.index')
-            ->with('success', 'Farm request submitted! It will be live after Admin approval.');
+            ->with('success', 'Farm created successfully and is pending admin approval.');
     }
 
     /**
@@ -108,15 +109,17 @@ class OwnerFarmController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'price_per_night' => 'required|numeric',
-            'capacity' => 'required|integer',
+            'price_per_night' => 'required|numeric|min:0',
+            'capacity' => 'required|integer|min:1',
             'description' => 'required|string',
-            'image' => 'nullable|image|max:5120', // الغلاف الجديد
-            'gallery.*' => 'nullable|image|max:5120', // صور المعرض الجديدة
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // الغلاف الجديد
+            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // صور المعرض الجديدة
             'delete_images' => 'nullable|array', // مصفوفة لصور يراد حذفها
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
         ]);
 
-        // 1. تحديث البيانات الأساسية
+        // 1. تحديث البيانات الأساسية وصورة الغلاف
         if ($request->hasFile('image')) {
             if ($farm->main_image) {
                 Storage::disk('public')->delete($farm->main_image);
@@ -140,7 +143,10 @@ class OwnerFarmController extends Controller
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 $path = $file->store('farms/gallery', 'public');
-                $farm->images()->create(['image_url' => $path]);
+                FarmImage::create([
+                    'farm_id' => $farm->id,
+                    'image_url' => $path
+                ]);
             }
         }
 
@@ -164,6 +170,6 @@ class OwnerFarmController extends Controller
         $farm->delete();
 
         return redirect()->route('owner.farms.index')
-            ->with('success', 'Farm deleted successfully.');
+            ->with('success', 'Farm and all its data have been deleted.');
     }
 }
