@@ -28,7 +28,8 @@
                         {{ $farm->location }}
                     </div>
                 </div>
-<a href="{{ route('explore') }}" class="hidden md:flex items-center text-sm font-bold text-gray-500 hover:text-[#1d5c42] transition-colors bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <a href="{{ route('explore') }}" class="hidden md:flex items-center text-sm font-bold text-gray-500 hover:text-[#1d5c42] transition-colors bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Back to Explore
                 </a>
             </div>
@@ -260,6 +261,11 @@
             'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H'),
         ]) : []);
 
+        const blockedDates = @json($farm->blockedDates ? $farm->blockedDates->map(fn($bd) => [
+            'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
+            'shift' => $bd->shift,
+        ]) : []);
+
         const dateInput = document.getElementById('booking_date');
         const shiftsContainer = document.getElementById('shiftsContainer');
         const btnMorning = document.getElementById('btnMorning');
@@ -274,10 +280,12 @@
         });
 
         function checkAvailability(date) {
+            // إعادة تفعيل الأزرار بالبداية
             btnMorning.disabled = false; btnEvening.disabled = false;
             btnMorning.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
             btnEvening.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
 
+            // 1. فحص الحجوزات المؤكدة أو المعلقة
             existingBookings.forEach(booking => {
                 if (booking.date === date) {
                     if (booking.hour === 10) {
@@ -285,6 +293,20 @@
                         btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
                     }
                     if (booking.hour === 22) {
+                        btnEvening.disabled = true;
+                        btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            });
+
+            // 2. فحص الأيام المحجوبة يدوياً من المالك
+            blockedDates.forEach(block => {
+                if (block.date === date) {
+                    if (block.shift === 'morning' || block.shift === 'full_day') {
+                        btnMorning.disabled = true;
+                        btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                    }
+                    if (block.shift === 'evening' || block.shift === 'full_day') {
                         btnEvening.disabled = true;
                         btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
                     }

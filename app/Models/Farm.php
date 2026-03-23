@@ -33,4 +33,13 @@ class Farm extends Model
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
+
+       /**
+     * Get the blocked dates for the farm.
+     */
+    public function blockedDates()
+    {
+        return $this->hasMany(FarmBlockedDate::class);
+    }
+    
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmBooking;
+use App\Models\FarmBlockedDate;
 use Illuminate\Support\Facades\Auth;
 
 class OwnerDashboardController extends Controller
@@ -41,7 +42,6 @@ class OwnerDashboardController extends Controller
         $grossRevenue = $confirmedBookings->sum('total_price');
         $platformCommission = $confirmedBookings->sum('commission_amount');
         $taxes = $confirmedBookings->sum('tax_amount');
-        // تم تصحيح اسم العمود حسب التوثيق المعماري
         $netProfit = $confirmedBookings->sum('net_owner_amount');
 
         $financials = [
@@ -65,28 +65,115 @@ class OwnerDashboardController extends Controller
             };
 
             return [
-                'id' => $booking->id,
+                'id' => 'booking_' . $booking->id,
                 'title' => $booking->farm->name . ' - ' . ($booking->user->name ?? 'User'),
-                'start' => $booking->check_in_date,
-                'end' => \Carbon\Carbon::parse($booking->check_out_date)->addDay()->format('Y-m-d'),
+                'start' => $booking->start_time,
+                'end' => \Carbon\Carbon::parse($booking->end_time)->format('Y-m-d H:i:s'),
                 'color' => $color,
                 'extendedProps' => [
+                    'type' => 'booking',
                     'status' => $booking->status,
                     'customer' => $booking->user->name ?? 'User',
                     'farm' => $booking->farm->name,
-                    // تم تصحيح اسم العمود هنا أيضاً
-                    'net' => $booking->net_owner_amount
+                    'net' => $booking->net_owner_amount // التصحيح هنا ليتوافق مع الداتا بيس
                 ]
             ];
         });
+
+        // جلب الأوقات المحجوبة للتقويم
+        $blockedDates = FarmBlockedDate::whereIn('farm_id', $farmIds)->with('farm')->get();
+
+        $blockedEvents = $blockedDates->map(function ($blocked) {
+            $start = $blocked->date->format('Y-m-d');
+            $end = $blocked->date->format('Y-m-d');
+
+            if ($blocked->shift === 'morning') {
+                $start .= ' 08:00:00';
+                $end .= ' 16:00:00';
+            } elseif ($blocked->shift === 'evening') {
+                $start .= ' 18:00:00';
+                $end .= ' 02:00:00';
+                $end = \Carbon\Carbon::parse($end)->addDay()->format('Y-m-d H:i:s');
+            } else { // full_day
+                $start .= ' 00:00:00';
+                $end .= ' 23:59:59';
+            }
+
+            return [
+                'id' => 'blocked_' . $blocked->id,
+                'title' => 'BLOCKED (' . ucfirst($blocked->shift) . ') - ' . $blocked->farm->name,
+                'start' => $start,
+                'end' => $end,
+                'color' => '#111827', // أسود للأوقات المحجوبة
+                'extendedProps' => [
+                    'type' => 'blocked',
+                    'shift' => $blocked->shift,
+                    'farm' => $blocked->farm->name,
+                    'farm_id' => $blocked->farm_id,
+                    'reason' => $blocked->reason,
+                    'date' => $blocked->date->format('Y-m-d'),
+                ]
+            ];
+        });
+
+        $calendarEvents = $calendarEvents->concat($blockedEvents);
 
         return view('owner.dashboard', compact(
             'totalFarms',
             'activeBookingsCount',
             'pendingApprovalCount',
             'financials',
-            'calendarEvents'
+            'calendarEvents',
+            'farms'
         ));
+    }
+
+    /**
+     * API Endpoint: Toggle Blocked Shift
+     */
+    public function toggleBlockShift(Request $request)
+    {
+        $request->validate([
+            'farm_id' => 'required|exists:farms,id',
+            'date' => 'required|date',
+            'shift' => 'required|in:morning,evening,full_day',
+            'reason' => 'nullable|string|max:255'
+        ]);
+
+        $user = Auth::user();
+
+        $farm = Farm::where('id', $request->farm_id)->where('owner_id', $user->id)->first();
+        if (!$farm) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action or farm not found.'], 403);
+        }
+
+        $existingBlock = FarmBlockedDate::where('farm_id', $farm->id)
+            ->where('date', $request->date)
+            ->where('shift', $request->shift)
+            ->first();
+
+        if ($existingBlock) {
+            $existingBlock->delete();
+            return response()->json([
+                'success' => true,
+                'action' => 'unblocked',
+                'message' => 'Shift unlocked successfully.'
+            ]);
+        } else {
+            $block = FarmBlockedDate::create([
+                'farm_id' => $farm->id,
+                'date' => $request->date,
+                'shift' => $request->shift,
+                'reason' => $request->reason,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'action' => 'blocked',
+                'block' => $block,
+                'message' => 'Shift blocked successfully.'
+            ]);
+        }
     }
 
     public function bookings(Request $request)

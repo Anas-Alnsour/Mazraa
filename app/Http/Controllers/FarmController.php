@@ -38,20 +38,18 @@ class FarmController extends Controller
             $query->where('capacity', '>=', $request->capacity);
         }
 
-        // جلب البيانات مع الصور (Eager Loading) لتسريع الأداء وتجنب N+1 query
         $farms = $query->with('images')->latest()->paginate(12)->withQueryString();
 
-        // التوجه لمجلد الواجهة العامة الذي أنشأناه
         return view('public_farms.explore', compact('farms'));
     }
 
     /**
      * عرض صفحة تفاصيل مزرعة محددة للزبون
      */
-public function show(Farm $farm)
+    public function show(Farm $farm)
     {
-        // جلب المزرعة مع صورها
-        $farm->load('images');
+        // جلب المزرعة مع صورها، حجوزاتها، والتواريخ المحجوبة لمنع التكرار
+        $farm->load(['images', 'bookings', 'blockedDates']);
 
         return view('public_farms.show', compact('farm'));
     }
