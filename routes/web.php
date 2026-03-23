@@ -22,6 +22,7 @@ use App\Http\Controllers\OwnerDashboardController;
 use App\Http\Controllers\OwnerFarmController;
 use App\Http\Controllers\TransportDriverController;
 use App\Http\Controllers\TransportVehicleController;
+use App\Http\Controllers\TransportDispatchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -145,14 +146,16 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
     // 1. لوحة التحكم الرئيسية
     Route::get('/dashboard', [TransportCompanyDashboardController::class, 'index'])->name('dashboard');
 
-    // 2. مسار تعيين السائق للرحلة (Assign Driver)
+    // 2. مسار تعيين السائق للرحلة (القديم - Assign Driver)
     Route::patch('/trips/{trip}/assign-driver', [TransportCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
 
-    // 3. إدارة فريق السائقين (CRUD Drivers)
+    // 3. مسارات السائقين والمركبات
     Route::resource('drivers', TransportDriverController::class);
-
-    // 4. إدارة أسطول المركبات والشاحنات (CRUD Vehicles)
     Route::resource('vehicles', TransportVehicleController::class);
+
+    // 4.  مسارات نظام التوزيع والرحلات الجديد (Dispatch) 
+    Route::resource('dispatch', TransportDispatchController::class)->except(['create', 'store', 'destroy', 'show']);
+    Route::post('dispatch/{id}/accept', [TransportDispatchController::class, 'acceptJob'])->name('dispatch.accept');
 });
 
 // --- [6] SUPPLY DRIVER ---

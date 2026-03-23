@@ -10,13 +10,14 @@ class Transport extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',   // ضفناه جديد
         'user_id',
         'transport_type',
         'passengers',
         'driver_id',
+        'vehicle_id',   // ضفناه جديد
         'farm_id',
         'start_and_return_point',
-        //'destination',
         'distance',
         'price',
         'Farm_Arrival_Time',
@@ -29,25 +30,31 @@ class Transport extends Model
         'net_company_amount',
     ];
 
-    /**
-     * العلاقة مع الزبون اللي حجز الرحلة
-     */
+    protected $casts = [
+        'Farm_Arrival_Time' => 'datetime',
+        'Farm_Departure_Time' => 'datetime',
+    ];
+
+    public function company()
+    {
+        return $this->belongsTo(User::class, 'company_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    /**
-     * العلاقة مع السائق اللي رح يوصل الرحلة
-     */
     public function driver()
     {
         return $this->belongsTo(User::class, 'driver_id');
     }
 
-    /**
-     * العلاقة مع المزرعة المقصودة
-     */
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'vehicle_id');
+    }
+
     public function farm()
     {
         return $this->belongsTo(Farm::class);

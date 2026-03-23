@@ -17,65 +17,47 @@ class TransportCompanyDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        // --- 1. الإحصائيات (الكود القديم تبعك) ---
         $recentTrips = Transport::with(['driver', 'farm', 'user'])
+            ->where('company_id', $user->id)
             ->latest()
             ->get();
 
         $totalTrips = $recentTrips->count();
-        $pendingTrips = $recentTrips->where('status', 'pending')->count();
-        $activeTrips = $recentTrips->whereIn('status', ['assigned', 'in_progress', 'started'])->count();
-
-        $completedTrips = $recentTrips->whereIn('status', ['completed', 'finished', 'delivered']);
-
-        // استخدام price بناءً على الداتا بيس تبعتك
-        $grossRevenue = $completedTrips->sum('price');
-        $platformCommission = $completedTrips->sum('commission_amount');
-        $netProfit = $completedTrips->sum('net_company_amount');
+        $pendingTrips = $recentTrips->where('status', 'accepted')->count(); // صار اسمه accepted بعد القبول
+        $activeTrips = $recentTrips->whereIn('status', ['assigned', 'in_progress'])->count();
+        $completedTrips = $recentTrips->whereIn('status', ['completed', 'finished']);
 
         $financials = [
-            'gross' => $grossRevenue,
-            'commission' => $platformCommission,
-            'net' => $netProfit
+            'gross' => $completedTrips->sum('price'),
+            'commission' => $completedTrips->sum('commission_amount'),
+            'net' => $completedTrips->sum('net_company_amount')
         ];
 
         $drivers = User::where('role', 'transport_driver')
             ->where('company_id', $user->id)
             ->get();
 
+        // --- 2. لوجيك التوزيع (Dispatch) ---
+        // الطلبات المتاحة بالسوق (لسا ما حدا أخذها)
+        $availableJobs = Transport::whereNull('company_id')
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        // طلبات شركتي أنا (اللي قبلتها) عشان أعرضها بالجدول تحت
+        $myJobs = Transport::where('company_id', $user->id)
+            ->latest()
+            ->paginate(10);
+
         return view('transports.dashboard', compact(
-            'recentTrips',
             'totalTrips',
             'pendingTrips',
             'activeTrips',
             'financials',
-            'drivers'
+            'drivers',
+            'availableJobs',
+            'myJobs'
         ));
-    }
-
-    public function assignDriver(Request $request, $tripId)
-    {
-        $user = Auth::user();
-
-        if ($user->role !== 'transport_company') {
-            abort(403);
-        }
-
-        $request->validate([
-            'driver_id' => 'required|exists:users,id'
-        ]);
-
-        $trip = Transport::findOrFail($tripId);
-
-        $driver = User::findOrFail($request->driver_id);
-        if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
-            abort(403, 'Invalid driver selection.');
-        }
-
-        $trip->update([
-            'driver_id' => $driver->id,
-            'status' => 'assigned'
-        ]);
-
-        return back()->with('success', 'Driver assigned successfully. The trip is now scheduled.');
     }
 }
