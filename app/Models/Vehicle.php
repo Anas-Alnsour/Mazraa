@@ -12,6 +12,7 @@ class Vehicle extends Model
 
     protected $fillable = [
         'company_id',
+        'driver_id', // ضفنا السائق هون
         'type',
         'license_plate',
         'capacity',
@@ -21,5 +22,11 @@ class Vehicle extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(User::class, 'company_id');
+    }
+
+    // علاقة المركبة بالسائق
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'driver_id');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,9 @@ class TransportVehicleController extends Controller
 {
     public function index()
     {
-        $vehicles = Vehicle::where('company_id', Auth::id())
+        // سحب المركبات مع السائقين المرتبطين فيها
+        $vehicles = Vehicle::with('driver')
+            ->where('company_id', Auth::id())
             ->latest()
             ->paginate(10);
 
@@ -20,7 +23,12 @@ class TransportVehicleController extends Controller
 
     public function create()
     {
-        return view('transports.vehicles.create');
+        // جلب سائقين الشركة عشان نختار منهم
+        $drivers = User::where('role', 'transport_driver')
+            ->where('company_id', Auth::id())
+            ->get();
+
+        return view('transports.vehicles.create', compact('drivers'));
     }
 
     public function store(Request $request)
@@ -30,10 +38,12 @@ class TransportVehicleController extends Controller
             'license_plate' => 'required|string|max:255|unique:vehicles',
             'capacity' => 'required|integer|min:1',
             'status' => 'required|string|in:available,maintenance,booked',
+            'driver_id' => 'nullable|exists:users,id', // تحقق من السائق
         ]);
 
         Vehicle::create([
             'company_id' => Auth::id(),
+            'driver_id' => $validated['driver_id'],
             'type' => $validated['type'],
             'license_plate' => $validated['license_plate'],
             'capacity' => $validated['capacity'],
@@ -41,7 +51,7 @@ class TransportVehicleController extends Controller
         ]);
 
         return redirect()->route('transport.vehicles.index')
-            ->with('success', 'Vehicle added successfully.');
+            ->with('success', 'Vehicle added and linked to driver successfully.');
     }
 
     public function edit(Vehicle $vehicle)
@@ -50,7 +60,11 @@ class TransportVehicleController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        return view('transports.vehicles.edit', compact('vehicle'));
+        $drivers = User::where('role', 'transport_driver')
+            ->where('company_id', Auth::id())
+            ->get();
+
+        return view('transports.vehicles.edit', compact('vehicle', 'drivers'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
@@ -64,6 +78,7 @@ class TransportVehicleController extends Controller
             'license_plate' => ['required', 'string', 'max:255', Rule::unique('vehicles')->ignore($vehicle->id)],
             'capacity' => 'required|integer|min:1',
             'status' => 'required|string|in:available,maintenance,booked',
+            'driver_id' => 'nullable|exists:users,id',
         ]);
 
         $vehicle->update($validated);
