@@ -23,6 +23,7 @@ use App\Http\Controllers\OwnerFarmController;
 use App\Http\Controllers\TransportDriverController;
 use App\Http\Controllers\TransportVehicleController;
 use App\Http\Controllers\TransportDispatchController;
+use App\Http\Controllers\SupplyItemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,8 +42,7 @@ Route::get('/explore', [FarmController::class, 'index'])->name('explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
 Route::get('/supplies', [SupplyController::class, 'index'])->name('supplies.index');
-Route::get('/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
-
+Route::get('/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show')->where('supply', '[0-9]+');
 // --------------------------------------------------------------------------
 // 🔐 B2B Portal Login
 // --------------------------------------------------------------------------
@@ -139,6 +139,12 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
 // --- [4] SUPPLY COMPANY ---
 Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('supplies.')->group(function () {
     Route::get('/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
+
+    // 👇 هاد السطر اللي كان ناقص عشان تقدر تبعت الطلب للسائق 👇
+    Route::patch('/orders/{order}/assign-driver', [SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
+
+    // مسارات إدارة منتجات التوريد (CRUD Supply Items)
+    Route::resource('items', SupplyItemController::class);
 });
 
 // --- [5] TRANSPORT COMPANY ---
@@ -153,7 +159,7 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
     Route::resource('drivers', TransportDriverController::class);
     Route::resource('vehicles', TransportVehicleController::class);
 
-    // 4.  مسارات نظام التوزيع والرحلات الجديد (Dispatch) 
+    // 4.  مسارات نظام التوزيع والرحلات الجديد (Dispatch)
     Route::resource('dispatch', TransportDispatchController::class)->except(['create', 'store', 'destroy', 'show']);
     Route::post('dispatch/{id}/accept', [TransportDispatchController::class, 'acceptJob'])->name('dispatch.accept');
 });

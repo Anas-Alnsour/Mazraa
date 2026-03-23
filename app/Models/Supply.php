@@ -2,30 +2,30 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // <-- أضف هذا
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth; // <-- أضف هذا
+use Illuminate\Support\Facades\Auth;
 
 class Supply extends Model
 {
-    use HasFactory; // <-- أضف هذا أيضاً
+    use HasFactory;
 
-    protected $fillable = ['name', 'description', 'price', 'stock','image'];
+    protected $fillable = [
+        'company_id',
+        'name',
+        'description',
+        'price',
+        'stock',
+        'image'
+    ];
 
-        // صفحة الطلبات الخاصة بالمستخدم
-        public function myOrders()
+    public function company()
     {
-        $orders = \App\Models\SupplyOrder::with('supply')
-                    ->where('user_id', Auth::id())
-                    ->get();
-
-        return view('orders.my_orders', compact('orders'));
+        return $this->belongsTo(User::class, 'company_id');
     }
 
     public function orders()
-{
-    return $this->hasMany(SupplyOrder::class);
-}
-
-
+    {
+        return $this->hasMany(SupplyOrder::class);
+    }
 }
