@@ -24,6 +24,7 @@ use App\Http\Controllers\TransportDriverController;
 use App\Http\Controllers\TransportVehicleController;
 use App\Http\Controllers\TransportDispatchController;
 use App\Http\Controllers\SupplyItemController;
+use App\Http\Controllers\SupplyDriverController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,8 +42,9 @@ Route::post('/contact', [PageController::class, 'submitContact'])->name('contact
 Route::get('/explore', [FarmController::class, 'index'])->name('explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
-Route::get('/supplies', [SupplyController::class, 'index'])->name('supplies.index');
-Route::get('/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show')->where('supply', '[0-9]+');
+// Publicly accessible Marketplace
+Route::get('/market/supplies', [SupplyController::class, 'index'])->name('supplies.market');
+Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
 // --------------------------------------------------------------------------
 // 🔐 B2B Portal Login
 // --------------------------------------------------------------------------
@@ -67,6 +69,8 @@ Route::middleware('auth')->group(function () {
 // --- [1] CUSTOMERS (B2C) ---
 Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
+    Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
+Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
 
     // Bookings
     Route::post('/farms/{farm}/book', [BookingController::class, 'store'])->name('farms.book');
@@ -78,8 +82,14 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
     Route::delete('/bookings-delete/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
 
-    // Supplies & Cart
+    // 👇 مسارات متجر التوريد المباشر (الجديدة اللي عملناها هسا) 👇
+    Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
     Route::get('/my-supply-orders', [SupplyController::class, 'myOrders'])->name('supplies.my_orders');
+    Route::get('/my-supply-orders/{order}/edit', [SupplyController::class, 'editOrder'])->name('supplies.edit_order');
+    Route::put('/my-supply-orders/{order}', [SupplyController::class, 'updateOrder'])->name('supplies.update_order');
+    Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
+
+    // نظام السلة (القديم تبعك - حافظنا عليه عشان ما ينكسر أي إشي ثاني)
     Route::get('/my-orders', [SupplyOrderController::class, 'myOrders'])->name('orders.my_orders');
     Route::get('/orders/{order}/edit', [SupplyOrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [SupplyOrderController::class, 'update'])->name('orders.update');
@@ -138,13 +148,18 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
 
 // --- [4] SUPPLY COMPANY ---
 Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('supplies.')->group(function () {
+
+    // 1. الداشبورد الرئيسية
     Route::get('/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
 
-    // 👇 هاد السطر اللي كان ناقص عشان تقدر تبعت الطلب للسائق 👇
+    // 2. تعيين السائق للطلب (Dispatching)
     Route::patch('/orders/{order}/assign-driver', [SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
 
-    // مسارات إدارة منتجات التوريد (CRUD Supply Items)
+    // 3. إدارة المنتجات والمخزون (CRUD Supply Items)
     Route::resource('items', SupplyItemController::class);
+
+    // 4. 👇 إدارة فريق السائقين (الجديد - CRUD Drivers) 👇
+    Route::resource('drivers', SupplyDriverController::class);
 });
 
 // --- [5] TRANSPORT COMPANY ---

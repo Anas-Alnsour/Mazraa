@@ -13,8 +13,8 @@ class SupplyOrder extends Model
         'user_id',
         'supply_id',
         'quantity',
-        'total_price',
-        'status',
+        'total_amount', // 👈 تم التعديل هون لتطابق الداتا بيس
+        'status', // pending, accepted, in_way, delivered, cancelled
         'order_id',
         'booking_id',
         'driver_id',
@@ -30,5 +30,15 @@ class SupplyOrder extends Model
     public function supply()
     {
         return $this->belongsTo(Supply::class);
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(User::class, 'driver_id');
+    }
+
+    public function booking()
+    {
+        return $this->belongsTo(FarmBooking::class, 'booking_id');
     }
 }
