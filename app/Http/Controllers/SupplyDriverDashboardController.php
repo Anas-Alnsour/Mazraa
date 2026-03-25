@@ -8,36 +8,67 @@ use Illuminate\Support\Facades\Auth;
 
 class SupplyDriverDashboardController extends Controller
 {
+    // عرض لوحة تحكم السائق والطلبات المسندة له
     public function index()
     {
         $user = Auth::user();
 
-        // Ensure only supply drivers can access this
+        // حماية: التأكد من أن المستخدم هو سائق توريد فقط
         if ($user->role !== 'supply_driver') {
-            abort(403, 'Unauthorized access.');
+            abort(403, 'Unauthorized access. Only Supply Drivers can view this page.');
         }
 
-        // Fetch supply orders specifically assigned to this driver
-        $myOrders = SupplyOrder::with(['user', 'supply', 'farmBooking.farm'])
+        // جلب الطلبات المسندة لهاد السائق
+        $orders = SupplyOrder::with(['user', 'supply.company', 'booking.farm'])
             ->where('driver_id', $user->id)
             ->latest()
-            ->take(15)
             ->get();
 
-        // Calculate basic statistics for this driver
-        $totalDeliveries = SupplyOrder::where('driver_id', $user->id)->count();
-        $pendingDeliveries = SupplyOrder::where('driver_id', $user->id)
-            ->whereIn('status', ['assigned', 'out_for_delivery'])
-            ->count();
-        $completedDeliveries = SupplyOrder::where('driver_id', $user->id)
-            ->whereIn('status', ['completed', 'delivered'])
-            ->count();
+        // تجميع الطلبات حسب رقم الفاتورة (Invoice)
+        $groupedOrders = $orders->groupBy('order_id');
+
+        // حساب الإحصائيات لعرضها بالساعات الذكية للسائق
+        $totalDeliveries = $groupedOrders->count();
+
+        $pendingDeliveries = $groupedOrders->filter(function ($items) {
+            return in_array($items->first()->status, ['assigned', 'in_way', 'out_for_delivery']);
+        })->count();
+
+        $completedDeliveries = $groupedOrders->filter(function ($items) {
+            return in_array($items->first()->status, ['completed', 'delivered']);
+        })->count();
 
         return view('delivery.orders', compact(
-            'myOrders',
+            'groupedOrders',
             'totalDeliveries',
             'pendingDeliveries',
             'completedDeliveries'
         ));
+    }
+
+    // زر إنهاء التوصيل (Mark as Delivered)
+    public function markDelivered(Request $request, $orderId)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'supply_driver') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // جلب كل منتجات الفاتورة المسندة لهاد السائق
+        $items = SupplyOrder::where('order_id', $orderId)
+            ->where('driver_id', $user->id)
+            ->get();
+
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Invoice not found or not assigned to you.');
+        }
+
+        // تحديث حالة كل المنتجات لـ Delivered
+        foreach ($items as $item) {
+            $item->update(['status' => 'delivered']);
+        }
+
+        return back()->with('success', "Invoice {$orderId} has been successfully marked as Delivered!");
     }
 }

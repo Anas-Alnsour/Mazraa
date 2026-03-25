@@ -12,23 +12,24 @@ class TransportDriverDashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Ensure only transport drivers can access this
+        // حماية: التأكد إن اللي فات هو سائق ركاب
         if ($user->role !== 'transport_driver') {
             abort(403, 'Unauthorized access.');
         }
 
-        // Fetch trips specifically assigned to this driver
-        $myTrips = Transport::with(['user', 'farm'])
+        // جلب الرحلات المسندة لهذا السائق تحديداً
+        $myTrips = Transport::with(['user', 'farm', 'vehicle'])
             ->where('driver_id', $user->id)
-            ->latest('Farm_Arrival_Time') // Order by upcoming arrival time
-            ->take(15)
-            ->get();
+            ->orderBy('Farm_Arrival_Time', 'asc')
+            ->paginate(15);
 
-        // Calculate basic statistics for this driver
+        // إحصائيات السائق
         $totalTrips = Transport::where('driver_id', $user->id)->count();
+
         $upcomingTrips = Transport::where('driver_id', $user->id)
             ->whereIn('status', ['assigned', 'in_progress'])
             ->count();
+
         $completedTrips = Transport::where('driver_id', $user->id)
             ->whereIn('status', ['completed', 'finished'])
             ->count();
@@ -39,5 +40,33 @@ class TransportDriverDashboardController extends Controller
             'upcomingTrips',
             'completedTrips'
         ));
+    }
+
+    // تحديث حالة الرحلة (من السائق نفسه)
+    public function updateStatus(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'transport_driver') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $trip = Transport::findOrFail($id);
+
+        if ($trip->driver_id !== $user->id) {
+            abort(403, 'You are not assigned to this trip.');
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|string|in:in_progress,completed'
+        ]);
+
+        $trip->update(['status' => $validated['status']]);
+
+        $message = $validated['status'] === 'in_progress'
+            ? 'Trip started successfully. Drive safely!'
+            : 'Trip marked as completed. Great job!';
+
+        return back()->with('success', $message);
     }
 }

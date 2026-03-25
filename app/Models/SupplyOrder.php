@@ -9,12 +9,12 @@ class SupplyOrder extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+protected $fillable = [
         'user_id',
         'supply_id',
         'quantity',
-        'total_amount', // 👈 تم التعديل هون لتطابق الداتا بيس
-        'status', // pending, accepted, in_way, delivered, cancelled
+        'total_price', 
+        'status',
         'order_id',
         'booking_id',
         'driver_id',

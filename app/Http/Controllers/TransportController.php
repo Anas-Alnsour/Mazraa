@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Driver;
 use App\Models\Transport;
-use App\Models\Farm;    
-use App\Models\User;
+use App\Models\Farm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,143 +11,133 @@ class TransportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth'); // تأكد من تفعيل auth middleware
+        $this->middleware('auth');
     }
 
-   public function index()
-{
-    $baseQuery = Transport::with(['driver','farm'])
-        ->where('user_id', Auth::id())
-        ->latest();
+    // عرض حجوزات المواصلات الخاصة بالزبون
+    public function index()
+    {
+        $transports = Transport::with(['farm', 'company', 'vehicle', 'driver'])
+            ->where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
 
-    $transports  = $baseQuery->get();   // تستخدمه الواجهة الحالية
-    $transports1 = $transports;         // تظل متوفرة لو في أماكن بتعتمد عليها
+        // تركتلك هاد المتغير عشان لو واجهاتك القديمة لسا بتعتمد عليه ما يضرب إيرور
+        $transports1 = clone $transports;
 
-    return view('transports.index', compact('transports','transports1'));
-}
+        return view('transports.index', compact('transports', 'transports1'));
+    }
 
+    // عرض فورم حجز رحلة جديدة
     public function create()
     {
-        $Drivers = Driver::all();
-        $farms = Farm::all();
-       return view('transports.create', compact('Drivers', 'farms'));
+        $farms = Farm::where('is_approved', true)->get();
+        return view('transports.create', compact('farms'));
     }
 
+    // معالجة طلب الحجز
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'transport_type' => 'required|string|max:255',
-        'passengers'     => 'required|integer|min:1',
-        'driver_id'      => 'required|exists:drivers,id',
-     // 'start_point'    => 'required|string|max:255',
-        'start_and_return_point'    => 'required|string|max:255',                         
-     // 'destination'    => 'required|string|max:255',
-        'farm_id' => 'required|exists:farms,id', 
-        'distance'       => 'required|numeric|min:0.1',
-        'price'          => 'required|numeric',
-      //'departure_time' => 'required|date',
-      //'arrival_time'   => 'required|date|after:departure_time',
-        'Farm_Arrival_Time' => 'required|date',
-        'Farm_Departure_Time'   => 'required|date|after:Farm_Arrival_Time',
-        'status'         => 'required|string',
-        'notes'          => 'nullable|string'
-    ]);
+    {
+        $validated = $request->validate([
+            'transport_type'         => 'required|string|max:255',
+            'passengers'             => 'required|integer|min:1|max:50',
+            'start_and_return_point' => 'required|string|max:255',
+            'farm_id'                => 'required|exists:farms,id',
+            'distance'               => 'required|numeric|min:0.1',
+            'Farm_Arrival_Time'      => 'required|date|after:now',
+            'Farm_Departure_Time'    => 'nullable|date|after:Farm_Arrival_Time',
+            'notes'                  => 'nullable|string|max:500'
+        ]);
 
-    $validated['user_id'] = Auth::id();
+        $calculatedPrice = 10 + ($validated['distance'] * $validated['passengers'] * 0.5);
+        $commissionAmount = $calculatedPrice * 0.10;
+        $netCompanyAmount = $calculatedPrice - $commissionAmount;
 
-    Transport::create($validated);
+        Transport::create([
+            'user_id'                => Auth::id(),
+            'company_id'             => null,
+            'driver_id'              => null,
+            'vehicle_id'             => null,
+            'transport_type'         => $validated['transport_type'],
+            'passengers'             => $validated['passengers'],
+            'start_and_return_point' => $validated['start_and_return_point'],
+            'farm_id'                => $validated['farm_id'],
+            'distance'               => $validated['distance'],
+            'price'                  => $calculatedPrice,
+            'commission_amount'      => $commissionAmount,
+            'net_company_amount'     => $netCompanyAmount,
+            'Farm_Arrival_Time'      => $validated['Farm_Arrival_Time'],
+            'Farm_Departure_Time'    => $validated['Farm_Departure_Time'] ?? null,
+            'status'                 => 'pending',
+            'notes'                  => $validated['notes'],
+        ]);
 
-    return redirect()->route('transports.index')->with('success', 'Transport created successfully!');
-}
+        return redirect()->route('transports.index')
+            ->with('success', 'Transport request placed successfully! We are finding a fleet for you.');
+    }
 
-//     public function store(Request $request)
-//     {
-//         $request->validate([
-//             'transport_type' => 'required|string|max:255',
-//             'passengers' => 'required|integer|min:1',
-//             'driver_id' => 'required|exists:users,id',
-//             'start_point' => 'required|string|max:255',
-//             'destination' => 'required|string|max:255',
-//             'distance' => 'required|numeric|min:0.1',
-//             'departure_time' => 'required|date',
-//             'arrival_time' => 'required|date|after:departure_time',
-//             'status' => 'required|string',
-//         ]);
+    // ==========================================
+    // تم إضافة دوال التعديل والتحديث من كودك الأصلي
+    // ==========================================
 
-// Transport::create([
-//     'user_id' => Auth::id(), // <-- هذا مهم
-//     'transport_type' => $request->transport_type,
-//     'passengers' => $request->passengers,
-//     'driver_id' => $request->driver_id,
-//     'start_point' => $request->start_point,
-//     'destination' => $request->destination,
-//     'distance' => $request->distance,
-//     'price' => $request->distance * $request->passengers * 2, // مثال
-//     'departure_time' => $request->departure_time,
-//     'arrival_time' => $request->arrival_time,
-//     'status' => $request->status,
-//     'notes' => $request->notes,
-// ]);
+    public function edit(Transport $transport)
+    {
+        // التأكد إن الطلب للزبون نفسه، وإنه لسا ما تم الموافقة عليه
+        if ($transport->user_id !== Auth::id()) abort(403);
+        if ($transport->status !== 'pending') {
+            return redirect()->route('transports.index')->with('error', 'You cannot edit a request that is already being processed.');
+        }
 
-//         return redirect()->route('transports.index')->with('success', 'Transport created successfully!');
-//     }
+        $farms = Farm::where('is_approved', true)->get();
+        return view('transports.edit', compact('transport', 'farms'));
+    }
 
+    public function update(Request $request, Transport $transport)
+    {
+        if ($transport->user_id !== Auth::id() || $transport->status !== 'pending') {
+            abort(403);
+        }
 
+        $validated = $request->validate([
+            'transport_type'         => 'required|string|max:255',
+            'passengers'             => 'required|integer|min:1|max:50',
+            'start_and_return_point' => 'required|string|max:255',
+            'farm_id'                => 'required|exists:farms,id',
+            'distance'               => 'required|numeric|min:0.1',
+            'Farm_Arrival_Time'      => 'required|date',
+            'Farm_Departure_Time'    => 'nullable|date|after_or_equal:Farm_Arrival_Time',
+            'notes'                  => 'nullable|string|max:500'
+        ]);
 
-    public function edit($id)
-{
-    // الحصول على النقل مع السائق
-    $transport = Transport::with('driver')->findOrFail($id);
+        // إعادة حساب السعر والعمولة في حال غير المسافة أو عدد الركاب
+        $calculatedPrice = 10 + ($validated['distance'] * $validated['passengers'] * 0.5);
+        $commissionAmount = $calculatedPrice * 0.10;
+        $netCompanyAmount = $calculatedPrice - $commissionAmount;
 
-    // الحصول على جميع السائقين
-    $drivers = Driver::all();
-    
-    // الحصول على جميع المزارع
-    $farms = Farm::all();
+        $transport->update([
+            'transport_type'         => $validated['transport_type'],
+            'passengers'             => $validated['passengers'],
+            'start_and_return_point' => $validated['start_and_return_point'],
+            'farm_id'                => $validated['farm_id'],
+            'distance'               => $validated['distance'],
+            'price'                  => $calculatedPrice,
+            'commission_amount'      => $commissionAmount,
+            'net_company_amount'     => $netCompanyAmount,
+            'Farm_Arrival_Time'      => $validated['Farm_Arrival_Time'],
+            'Farm_Departure_Time'    => $validated['Farm_Departure_Time'] ?? null,
+            'notes'                  => $validated['notes'],
+        ]);
 
-    // تمرير المتغيرات إلى الـ View
-    return view('transports.edit', compact('transport', 'drivers', 'farms'));
-}
+        return redirect()->route('transports.index')
+            ->with('success', 'Transport request updated successfully!');
+    }
 
-       public function update(Request $request, Transport $transport)
-{
-    $this->authorize('update', $transport);
-
-    $validated = $request->validate([
-        'transport_type'           => 'required|string|max:255',
-        'passengers'               => 'required|integer|min:1',
-        'driver_id'                => 'required|exists:drivers,id',
-        'farm_id'                  => 'required|exists:farms,id',
-        'start_and_return_point'   => 'required|string|max:255',
-        'distance'                 => 'required|numeric|min:0',
-        'price'                    => 'required|numeric|min:0',
-        'Farm_Arrival_Time'        => 'required|date',
-        'Farm_Departure_Time'      => 'required|date|after_or_equal:Farm_Arrival_Time',
-        'notes'                    => 'nullable|string',
-        'status'                   => 'required|string',
-    ]);
-
-    $transport->update($request->only([
-        'transport_type',
-        'passengers',
-        'driver_id',
-        'farm_id',
-        'start_and_return_point',
-        'distance',
-        'price',
-        'Farm_Arrival_Time',
-        'Farm_Departure_Time',
-        'notes',
-        'status',
-    ]));
-
-    return redirect()->route('transports.index')
-        ->with('success', 'Transport request updated successfully!');
-}  
-
+    // إلغاء/حذف الطلب
     public function destroy(Transport $transport)
     {
-        $this->authorize('delete', $transport);
+        if ($transport->user_id !== Auth::id()) abort(403);
+
+        // أنا خليتها تعمل delete زي كودك الأصلي عشان ما تتراكم طلبات ملغية بالداتا بيس
         $transport->delete();
 
         return redirect()->route('transports.index')->with('success', 'Transport request deleted successfully!');
@@ -157,9 +145,7 @@ class TransportController extends Controller
 
     public function show(Transport $transport)
     {
-        $this->authorize('view', $transport);
+        if ($transport->user_id !== Auth::id()) abort(403);
         return view('transports.show', compact('transport'));
     }
-
-
 }

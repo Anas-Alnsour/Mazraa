@@ -17,14 +17,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-protected $fillable = [
-    'name',
-    'phone',
-    'email',
-    'password',
-    'role',
-    'company_id',
-];
+    protected $fillable = [
+        'name',
+        'phone',
+        'email',
+        'password',
+        'role',
+        'company_id',
+    ];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -49,9 +49,50 @@ protected $fillable = [
         ];
     }
 
-public function favorites()
-{
-    return $this->belongsToMany(\App\Models\Farm::class, 'favorites')->withTimestamps();
-}
+    public function favorites()
+    {
+        return $this->belongsToMany(\App\Models\Farm::class, 'favorites')->withTimestamps();
+    }
 
+    // ==================================================
+    // علاقات الـ Multi-Vendor اللي بتحتاجها لوحة السوبر أدمن
+    // ==================================================
+
+    // 1. علاقة شركة المواصلات برحلاتها
+    public function transportCompanyJobs()
+    {
+        return $this->hasMany(\App\Models\Transport::class, 'company_id');
+    }
+
+// 2. علاقة صاحب المزرعة بالمزارع تبعته
+    public function farms()
+    {
+        return $this->hasMany(\App\Models\Farm::class, 'owner_id'); // 👈 التعديل هون
+    }
+
+    // 3. علاقة شركة التوريد بالمنتجات تبعتها
+    public function supplies()
+    {
+        // ملاحظة: إذا كان موديل التوريد عندك اسمه SupplyItem استبدل كلمة Supply بـ SupplyItem
+        return $this->hasMany(\App\Models\Supply::class, 'company_id');
+    }
+
+    // ==================================================
+    // علاقات نظام التقييم (Reviews & Ratings)
+    // ==================================================
+    public function receivedReviews()
+    {
+        return $this->morphMany(\App\Models\Review::class, 'reviewable');
+    }
+
+    public function givenReviews()
+    {
+        return $this->hasMany(\App\Models\Review::class, 'user_id');
+    }
+
+    public function getCompanyRatingAttribute()
+    {
+        return $this->receivedReviews()->avg('rating') ?: 0;
+    }
+    
 }

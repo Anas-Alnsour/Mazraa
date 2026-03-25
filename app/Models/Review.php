@@ -5,21 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class FinancialTransaction extends Model
+class Review extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'reference_type', // farm_booking, transport, supply, manual_payout
-        'reference_id',
-        'transaction_type', // credit, debit
-        'amount',
-        'description',
+        'reviewable_id',
+        'reviewable_type',
+        'rating',
+        'comment',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reviewable()
+    {
+        return $this->morphTo();
     }
 }

@@ -28,7 +28,7 @@
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">No orders found</h3>
                 <p class="text-gray-500 mb-6">You haven't placed any orders yet.</p>
-                <a href="{{ route('supplies.index') }}" class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition">
+                <a href="{{ route('supplies.market') }}" class="px-6 py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition">
                     Start Shopping
                 </a>
             </div>

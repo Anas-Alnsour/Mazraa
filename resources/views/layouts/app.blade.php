@@ -42,7 +42,7 @@
 
                             @auth
                                 <a href="{{ route('bookings.my_bookings') }}" class="{{ $linkClass }} {{ request()->routeIs('bookings.*') ? $activeClass : '' }}">My Bookings</a>
-                                <a href="{{ route('supplies.index') }}" class="{{ $linkClass }} {{ request()->routeIs('supplies.*') ? $activeClass : '' }}">Order Supplies</a>
+                                <a href="{{ route('supplies.market') }}" class="{{ $linkClass }} {{ request()->routeIs('supplies.*') ? $activeClass : '' }}">Order Supplies</a>
                                 <a href="{{ route('orders.my_orders') }}" class="{{ $linkClass }} {{ request()->routeIs('orders.*') ? $activeClass : '' }}">My Orders</a>
                                 <a href="{{ route('transports.index') }}" class="{{ $linkClass }} {{ request()->routeIs('transports.*') ? $activeClass : '' }}">Transport</a>
                                 <a href="{{ route('favorites.index') }}" class="{{ $linkClass }} {{ request()->routeIs('favorites.*') ? $activeClass : '' }}">Favorites</a>
@@ -184,7 +184,7 @@
                     <a href="{{ route('explore') }}" class="{{ $mobileLink }}">Explore Farms</a>
                     @auth
                         <a href="{{ route('bookings.my_bookings') }}" class="{{ $mobileLink }}">My Bookings</a>
-                        <a href="{{ route('supplies.index') }}" class="{{ $mobileLink }}">Order Supplies</a>
+                        <a href="{{ route('supplies.market') }}" class="{{ $mobileLink }}">Order Supplies</a>
                         <a href="{{ route('orders.my_orders') }}" class="{{ $mobileLink }}">My Orders</a>
                         <a href="{{ route('transports.index') }}" class="{{ $mobileLink }}">Transport</a>
                         <a href="{{ route('favorites.index') }}" class="{{ $mobileLink }}">Favorites</a>

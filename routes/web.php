@@ -26,6 +26,9 @@ use App\Http\Controllers\TransportDispatchController;
 use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -60,6 +63,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
+    Route::delete('/reviews/{review}', [\App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
 // ==========================================================================
@@ -116,6 +121,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/verifications/{farm}', [SuperAdminController::class, 'handleVerification'])->name('verifications.handle');
     Route::get('/system', [SuperAdminController::class, 'system'])->name('system');
     Route::post('/system/update', [SuperAdminController::class, 'updateSystem'])->name('system.update');
+    // Financial Payouts
+    Route::get('/payouts', [SuperAdminController::class, 'payouts'])->name('payouts');
+    Route::post('/payouts/record', [SuperAdminController::class, 'recordPayout'])->name('payouts.record');
 
     // Old resources mapped to admin logic
     Route::resource('farms', FarmAdminController::class);
@@ -181,12 +189,17 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 
 // --- [6] SUPPLY DRIVER ---
 Route::middleware(['auth', 'role:supply_driver'])->prefix('delivery')->name('delivery.')->group(function () {
+    // عرض الطلبات للسائق
     Route::get('/orders', [SupplyDriverDashboardController::class, 'index'])->name('orders');
+
+    // زر تأكيد التوصيل (الجديد)
+    Route::post('/orders/{orderId}/delivered', [SupplyDriverDashboardController::class, 'markDelivered'])->name('mark_delivered');
 });
 
 // --- [7] TRANSPORT DRIVER ---
 Route::middleware(['auth', 'role:transport_driver'])->prefix('shuttle')->name('shuttle.')->group(function () {
     Route::get('/trips', [TransportDriverDashboardController::class, 'index'])->name('trips');
+    Route::patch('/trips/{id}/status', [TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
 });
 
 require __DIR__ . '/auth.php';

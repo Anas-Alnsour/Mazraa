@@ -10,15 +10,17 @@ use Illuminate\Support\Facades\Auth;
 
 class TransportDispatchController extends Controller
 {
-    // تم نقل اللوجيك تبع الـ index لـ TransportCompanyDashboardController
-    public function index()
-    {
-        return redirect()->route('transport.dashboard');
-    }
-
-    // قبول طلب من السوق
+    // ==========================================
+    // ACTION 1: قبول الطلب من السوق
+    // ==========================================
     public function acceptJob($id)
     {
+        $user = Auth::user();
+
+        if ($user->role !== 'transport_company') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $job = Transport::findOrFail($id);
 
         if ($job->company_id !== null) {
@@ -26,33 +28,54 @@ class TransportDispatchController extends Controller
         }
 
         $job->update([
-            'company_id' => Auth::id(),
+            'company_id' => $user->id,
             'status' => 'accepted'
         ]);
 
         return redirect()->route('transport.dispatch.edit', $job->id)
-            ->with('success', 'Job accepted! Please assign a vehicle and driver.');
+            ->with('success', 'Job accepted! Please assign a vehicle and driver from your fleet.');
     }
 
-    // شاشة تعيين السائق والمركبة للطلب
-    public function edit(Transport $dispatch)
+    // ==========================================
+    // ACTION 2: عرض صفحة تعيين السائق والمركبة
+    // ==========================================
+    public function edit($id)
     {
-        if ($dispatch->company_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+        $user = Auth::user();
+
+        if ($user->role !== 'transport_company') {
+            abort(403, 'Unauthorized access.');
         }
 
-        // جلب سائقين ومركبات الشركة
-        $drivers = User::where('company_id', Auth::id())->where('role', 'transport_driver')->get();
-        $vehicles = Vehicle::where('company_id', Auth::id())->where('status', 'available')->get();
+        $dispatch = Transport::with(['farm', 'user'])->findOrFail($id);
+
+        if ($dispatch->company_id !== $user->id) {
+            abort(403, 'You do not own this dispatch job.');
+        }
+
+        // جلب سائقي وسيارات هذه الشركة فقط
+        $drivers = User::where('company_id', $user->id)->where('role', 'transport_driver')->get();
+        // تأكد من وجود موديل Vehicle بالداتا بيس عندك، وإلا استخدم مصفوفة فارغة
+        $vehicles = Vehicle::where('company_id', $user->id)->where('status', 'available')->get();
 
         return view('transports.dispatch.edit', compact('dispatch', 'drivers', 'vehicles'));
     }
 
-    // حفظ تعيين السائق والمركبة
-    public function update(Request $request, Transport $dispatch)
+    // ==========================================
+    // ACTION 3: حفظ تعيين السائق والمركبة
+    // ==========================================
+    public function update(Request $request, $id)
     {
-        if ($dispatch->company_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+        $user = Auth::user();
+
+        if ($user->role !== 'transport_company') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $dispatch = Transport::findOrFail($id);
+
+        if ($dispatch->company_id !== $user->id) {
+            abort(403, 'You do not own this dispatch job.');
         }
 
         $validated = $request->validate([
@@ -61,13 +84,14 @@ class TransportDispatchController extends Controller
             'status' => 'required|string|in:accepted,assigned,in_progress,completed,cancelled',
         ]);
 
+        // التأكد إن السائق والسيارة تابعين لهي الشركة
         $driver = User::findOrFail($validated['driver_id']);
-        if ($driver->company_id !== Auth::id() || $driver->role !== 'transport_driver') {
+        if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
             return back()->withErrors(['driver_id' => 'Invalid driver selected.']);
         }
 
         $vehicle = Vehicle::findOrFail($validated['vehicle_id']);
-        if ($vehicle->company_id !== Auth::id()) {
+        if ($vehicle->company_id !== $user->id) {
             return back()->withErrors(['vehicle_id' => 'Invalid vehicle selected.']);
         }
 
@@ -77,8 +101,13 @@ class TransportDispatchController extends Controller
             'status' => $validated['status'] === 'accepted' ? 'assigned' : $validated['status'],
         ]);
 
-        // 👇 التعديل صار هون: يرجعك لداشبورد الشركة بدل صفحة الديسباتش القديمة 👇
         return redirect()->route('transport.dashboard')
-            ->with('success', 'Dispatch updated successfully.');
+            ->with('success', 'Fleet assignment updated successfully.');
+    }
+
+    // يمكننا إضافة دالة index لاحقاً إذا أردت عرض جميع الـ dispatches في صفحة منفصلة
+    public function index()
+    {
+        return redirect()->route('transport.dashboard');
     }
 }

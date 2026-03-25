@@ -41,5 +41,18 @@ class Farm extends Model
     {
         return $this->hasMany(FarmBlockedDate::class);
     }
-    
+
+    // ==================================================
+    // علاقات نظام التقييم (Reviews)
+    // ==================================================
+    public function reviews()
+    {
+        return $this->morphMany(\App\Models\Review::class, 'reviewable');
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->reviews()->avg('rating') ?: 0;
+    }
+
 }

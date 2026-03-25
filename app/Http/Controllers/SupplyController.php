@@ -25,6 +25,9 @@ class SupplyController extends Controller
     // 2. عرض تفاصيل منتج واحد
     public function show(Supply $supply)
     {
+        // ⭐️ إضافة جلب الشركة مع تقييماتها والزبائن اللي قيموها ⭐️
+        $supply->load(['company.receivedReviews.user']);
+
         return view('supplies.frontend.show', compact('supply'));
     }
 
@@ -56,7 +59,7 @@ class SupplyController extends Controller
             'user_id' => Auth::id(),
             'supply_id' => $supply->id,
             'quantity' => $quantity,
-            'total_amount' => $totalAmount,
+            'total_price' => $totalAmount,
             'status' => 'pending',
             'booking_id' => $request->booking_id,
             'commission_amount' => $commissionAmount,
@@ -78,7 +81,7 @@ class SupplyController extends Controller
         return view('supplies.frontend.my_orders', compact('orders'));
     }
 
-    // 5. تعديل الطلب (تمت إعادتها من كودك الأصلي)
+    // 5. تعديل الطلب
     public function editOrder(SupplyOrder $order)
     {
         if ($order->user_id !== Auth::id()) abort(403);
@@ -88,11 +91,10 @@ class SupplyController extends Controller
             return redirect()->route('supplies.my_orders')->with('error', 'You cannot edit an order that is already being processed.');
         }
 
-        // تم تغيير مسار العرض ليتناسب مع المجلدات الجديدة
         return view('supplies.frontend.edit_order', compact('order'));
     }
 
-    // 6. تحديث الطلب (تمت إعادتها من كودك الأصلي + إضافة حسابات العمولة الجديدة)
+    // 6. تحديث الطلب
     public function updateOrder(Request $request, SupplyOrder $order)
     {
         if ($order->user_id !== Auth::id()) abort(403);
@@ -116,7 +118,7 @@ class SupplyController extends Controller
 
         $order->update([
             'quantity' => $newQuantity,
-            'total_amount' => $newTotalAmount,
+            'total_price' => $newTotalAmount,
             'commission_amount' => $newCommissionAmount,
             'net_company_amount' => $newNetCompanyAmount,
         ]);
@@ -124,7 +126,7 @@ class SupplyController extends Controller
         return redirect()->route('supplies.my_orders')->with('success', 'Order updated successfully!');
     }
 
-    // 7. إلغاء الطلب بالكامل (تمت إعادتها من كودك الأصلي)
+    // 7. إلغاء الطلب بالكامل
     public function destroyOrder(SupplyOrder $order)
     {
         if ($order->user_id !== Auth::id()) abort(403);

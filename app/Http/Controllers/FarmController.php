@@ -48,8 +48,8 @@ class FarmController extends Controller
      */
     public function show(Farm $farm)
     {
-        // جلب المزرعة مع صورها، حجوزاتها، والتواريخ المحجوبة لمنع التكرار
-        $farm->load(['images', 'bookings', 'blockedDates']);
+        // جلب المزرعة مع صورها، حجوزاتها، التواريخ المحجوبة، والتقييمات مع أصحابها ⭐️
+        $farm->load(['images', 'bookings', 'blockedDates', 'owner', 'reviews.user']);
 
         return view('public_farms.show', compact('farm'));
     }
@@ -105,7 +105,7 @@ class FarmController extends Controller
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 $galleryPath = $file->store('farms/gallery', 'public');
-                FarmImage::create([
+                $FarmImage::create([
                     'farm_id' => $farm->id,
                     'image_url' => $galleryPath
                 ]);

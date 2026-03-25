@@ -24,7 +24,7 @@
                 <div>
                     <h1 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-2">{{ $farm->name }}</h1>
                     <div class="flex items-center text-sm font-bold text-gray-500">
-                        <svg class="w-4 h-4 mr-1 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path></svg>
+                        <svg class="w-4 h-4 mr-1 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                         {{ $farm->location }}
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                             </div>
                             <div>
                                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Rating</p>
-                                <p class="font-bold text-gray-900">{{ $farm->rating ?? 'New' }} / 5.0</p>
+                                <p class="font-bold text-gray-900">{{ number_format($farm->average_rating, 1) }} / 5.0</p>
                             </div>
                         </div>
                     </div>
@@ -126,10 +126,18 @@
                         <div id="farm-map" class="w-full h-[300px] rounded-[2rem] border-4 border-white shadow-lg z-0"></div>
                     </div>
                     @endif
+
+                    {{-- ⭐️ Reviews Section --}}
+                    <x-reviews-section
+                        :reviews="$farm->reviews"
+                        :reviewable-id="$farm->id"
+                        reviewable-type="farm"
+                        :average-rating="$farm->average_rating"
+                    />
                 </div>
 
                 <div class="lg:w-1/3">
-                    <div class="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-8 sticky top-8 z-10">
+                    <div class="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 sticky top-8 z-10">
 
                         <div class="flex items-end gap-2 border-b border-gray-100 pb-6 mb-6">
                             <span class="text-4xl font-black text-[#1d5c42]">{{ number_format($farm->price_per_night, 0) }} JOD</span>
@@ -141,7 +149,6 @@
 
                             <input type="hidden" name="start_time" id="start_time">
                             <input type="hidden" name="end_time" id="end_time">
-                            {{-- Transport inputs for backend --}}
                             <input type="hidden" name="requires_transport" id="requires_transport" value="0">
                             <input type="hidden" name="transport_cost" id="transport_cost" value="0">
                             <input type="hidden" name="pickup_lat" id="pickup_lat">
@@ -277,15 +284,21 @@
             if (!selectedDate) return;
             shiftsContainer.classList.remove('hidden');
             checkAvailability(selectedDate);
+
+            // إعادة تصفير الشفت عند تغيير التاريخ
+            selectedShift = false;
+            confirmBookingBtn.disabled = true;
+            document.querySelectorAll('.shift-btn').forEach(btn => {
+                btn.classList.remove('bg-green-50', 'border-green-500');
+                btn.classList.add('border-gray-200', 'bg-white');
+            });
         });
 
         function checkAvailability(date) {
-            // إعادة تفعيل الأزرار بالبداية
             btnMorning.disabled = false; btnEvening.disabled = false;
             btnMorning.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
             btnEvening.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
 
-            // 1. فحص الحجوزات المؤكدة أو المعلقة
             existingBookings.forEach(booking => {
                 if (booking.date === date) {
                     if (booking.hour === 10) {
@@ -299,7 +312,6 @@
                 }
             });
 
-            // 2. فحص الأيام المحجوبة يدوياً من المالك
             blockedDates.forEach(block => {
                 if (block.date === date) {
                     if (block.shift === 'morning' || block.shift === 'full_day') {
@@ -336,19 +348,16 @@
             }
 
             selectedShift = true;
-            confirmBookingBtn.disabled = false;
+            confirmBookingBtn.disabled = false; // تفعيل الزر هنا!
             updateInvoice();
         }
 
-        // --- Map & Transport Logic ---
         document.addEventListener('DOMContentLoaded', function () {
             if(farmLat && farmLng) {
-                // 1. Static Farm Mini-Map
                 var map = L.map('farm-map', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
                 L.marker([farmLat, farmLng]).addTo(map).bindPopup("<b>{{ $farm->name }}</b>").openPopup();
 
-                // 2. Transport Pickup Map
                 const toggle = document.getElementById('toggleTransport');
                 const section = document.getElementById('transportSection');
                 const invRow = document.getElementById('invoiceTransport');
@@ -361,7 +370,6 @@
                         invRow.classList.remove('hidden');
 
                         if(!pickupMap) {
-                            // Default view around Jordan
                             pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 8);
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickupMap);
 
@@ -374,7 +382,6 @@
                                 calculateTransportCost(e.latlng.lat, e.latlng.lng);
                             });
                         }
-                        // Fix map rendering issue when unhidden
                         setTimeout(() => pickupMap.invalidateSize(), 200);
                     } else {
                         section.classList.add('hidden');
@@ -386,20 +393,16 @@
                 });
 
                 function calculateTransportCost(pLat, pLng) {
-                    // Using OSRM Public API to calculate driving distance
                     fetch(`https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${farmLng},${farmLat}?overview=false`)
                         .then(res => res.json())
                         .then(data => {
                             if(data.routes && data.routes.length > 0) {
                                 let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
-                                // Example calculation: 0.5 JOD per KM base rate
                                 transportCost = parseFloat((distanceKm * 0.5).toFixed(2));
-
                                 document.getElementById('distVal').innerText = distanceKm;
                                 document.getElementById('costVal').innerText = transportCost;
                                 document.getElementById('transport_cost').value = transportCost;
                                 document.getElementById('transportCalc').classList.remove('hidden');
-
                                 document.getElementById('invoiceTransportCost').innerText = transportCost.toFixed(2) + ' JOD';
                                 updateInvoice();
                             }

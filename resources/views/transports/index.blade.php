@@ -1,160 +1,141 @@
 @extends('layouts.app')
 
-@section('title', 'Transport Requests')
+@section('title', 'My Transport Bookings')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="bg-gray-50 min-h-screen py-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
-                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Transport Requests</h1>
-                <p class="mt-1 text-gray-500 text-sm">Manage your transportation schedules and logistics.</p>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight">My Transport Bookings</h1>
+                <p class="text-sm font-bold text-gray-400 mt-2 uppercase tracking-widest">Track and manage your farm shuttle requests</p>
             </div>
-
-            <a href="{{ route('transports.create') }}" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-0.5 gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                New Request
+            <a href="{{ route('transports.create') }}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-8 rounded-2xl transition-all shadow-lg transform active:scale-95 text-xs uppercase tracking-widest">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+                Book Shuttle
             </a>
         </div>
 
-        @if (session('success'))
-            <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl flex items-center gap-3 shadow-sm animate-fade-in-up">
-                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <p class="text-green-800 font-medium">{{ session('success') }}</p>
+        @if(session('success'))
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-800 p-5 rounded-r-2xl shadow-sm font-bold mb-10 flex items-center gap-3">
+                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {{ session('success') }}
             </div>
         @endif
 
-        @if ($transports->isEmpty())
-            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm text-center">
-                <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                    <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">No Requests Found</h3>
-                <p class="text-gray-500 mb-6">You haven't created any transport requests yet.</p>
-                <a href="{{ route('transports.create') }}" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md transition">
-                    Create First Request
-                </a>
-            </div>
-        @else
-            <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full whitespace-nowrap">
-                        <thead class="bg-gray-50 border-b border-gray-100">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Details</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Route</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Schedule</th>
-                                <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
-                                <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @foreach ($transports as $transport)
-                                <tr class="hover:bg-gray-50/50 transition">
+        @if($transports->count() > 0)
+            <div class="space-y-6">
+                @foreach($transports as $transport)
+                    @php
+                        $statusConfig = [
+                            'pending' => ['bg-amber-50', 'text-amber-600', 'border-amber-100', 'animate-pulse bg-amber-500'],
+                            'accepted' => ['bg-blue-50', 'text-blue-600', 'border-blue-100', 'bg-blue-500'],
+                            'assigned' => ['bg-indigo-50', 'text-indigo-600', 'border-indigo-100', 'bg-indigo-500'],
+                            'in_progress' => ['bg-purple-50', 'text-purple-600', 'border-purple-100', 'bg-purple-500'],
+                            'completed' => ['bg-emerald-50', 'text-emerald-600', 'border-emerald-100', 'bg-emerald-500'],
+                            'cancelled' => ['bg-red-50', 'text-red-600', 'border-red-100', 'bg-red-500'],
+                        ];
+                        $config = $statusConfig[$transport->status] ?? ['bg-gray-50', 'text-gray-600', 'border-gray-200', 'bg-gray-400'];
+                    @endphp
 
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="bg-blue-50 p-2.5 rounded-lg text-blue-600">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                                            </div>
-                                            <div>
-                                                <p class="font-bold text-gray-900">{{ $transport->transport_type }}</p>
-                                                <p class="text-xs text-gray-500">{{ $transport->passengers }} Passengers</p>
+                    <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-6 lg:p-8 flex flex-col lg:flex-row gap-8 transition-transform hover:-translate-y-1">
 
-                                                {{-- نقلنا اسم السائق هنا بما أننا حذفنا عمود الحالة --}}
-                                                @if(optional($transport->driver)->name)
-                                                    <p class="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                                        Driver: {{ $transport->driver->name }}
-                                                    </p>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-col gap-1">
-                                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                                {{ $transport->start_and_return_point }}
-                                            </div>
-                                            <div class="pl-1 border-l-2 border-gray-200 h-3 ml-1"></div>
-                                            <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                                                <svg class="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
-                                                {{ optional($transport->farm)->name ?? 'Unknown Farm' }}
-                                            </div>
-                                            <p class="text-xs text-gray-400 mt-1 pl-4">{{ $transport->distance }} km</p>
-                                        </div>
-                                    </td>
-
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm">
-                                            <p class="text-gray-900 font-medium">Arr: {{ $transport->Farm_Arrival_Time }}</p>
-                                            <p class="text-gray-500 text-xs">Dep: {{ $transport->Farm_Departure_Time ?? '-' }}</p>
-                                        </div>
-                                    </td>
-
-                                    <td class="px-6 py-4 text-right">
-                                        <span class="text-lg font-bold text-gray-900">{{ number_format($transport->price, 2) }}</span>
-                                        <span class="text-xs font-semibold text-gray-500">JD</span>
-                                    </td>
-
-                                    <td class="px-6 py-4 text-center">
-                                        <div class="flex items-center justify-center gap-2">
-                                            <a href="{{ route('transports.edit', $transport->id) }}" class="p-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition" title="Edit">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </a>
-                                            <form action="{{ route('transports.destroy', $transport->id) }}" method="POST" onsubmit="return confirm('Delete this request?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition" title="Delete">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="md:hidden space-y-4">
-                @foreach ($transports as $transport)
-                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                        <div class="flex justify-between items-start mb-4">
+                        <div class="lg:w-1/4 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-8">
                             <div>
-                                <h3 class="font-bold text-gray-900">{{ optional($transport->farm)->name ?? 'Unknown Farm' }}</h3>
-                                <p class="text-sm text-gray-500">{{ $transport->transport_type }} • {{ $transport->passengers }} Pax</p>
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border {{ $config[0] }} {{ $config[1] }} {{ $config[2] }}">
+                                        <span class="w-1.5 h-1.5 rounded-full mr-2 {{ $config[3] }}"></span>
+                                        {{ str_replace('_', ' ', $transport->status) }}
+                                    </span>
+
+                                    <a href="{{ route('transports.show', $transport->id) }}" class="text-[9px] font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest flex items-center gap-1 transition-colors">
+                                        Details
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                </div>
+                                <h3 class="text-xl font-black text-gray-900">{{ $transport->transport_type }}</h3>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{{ $transport->passengers }} Passengers</p>
                             </div>
-                            <div class="font-bold text-gray-900 text-lg">{{ number_format($transport->price, 2) }} <span class="text-sm font-medium text-gray-500">JD</span></div>
+
+                            <div class="mt-6">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Est. Price</p>
+                                <p class="text-2xl font-black text-blue-600">{{ number_format($transport->price, 2) }} <span class="text-xs text-blue-400">JOD</span></p>
+                            </div>
                         </div>
 
-                        <div class="space-y-2 mb-4">
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                <span class="font-medium">From:</span> {{ $transport->start_and_return_point }}
-                            </div>
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span class="font-medium">Arr:</span> {{ $transport->Farm_Arrival_Time }}
+                        <div class="lg:w-2/4 flex flex-col justify-center">
+                            <div class="relative pl-6 border-l-2 border-dashed border-gray-200 space-y-6">
+                                <div class="relative">
+                                    <div class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white border-[4px] border-blue-500"></div>
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pickup Location</p>
+                                    <p class="text-sm font-bold text-gray-900">{{ $transport->start_and_return_point }}</p>
+                                </div>
+                                <div class="relative">
+                                    <div class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-white border-[4px] border-emerald-500"></div>
+                                    <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Destination Farm</p>
+                                    <p class="text-sm font-bold text-gray-900">{{ $transport->farm->name ?? 'Farm' }}</p>
+                                    <p class="text-xs font-bold text-gray-400 mt-1">Arrival: <span class="text-gray-600">{{ optional($transport->Farm_Arrival_Time)->format('M d, h:i A') }}</span></p>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                            {{-- Action Buttons --}}
-                            <div class="flex gap-2 w-full">
-                                <a href="{{ route('transports.edit', $transport->id) }}" class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-bold text-center">Edit</a>
-                                <form action="{{ route('transports.destroy', $transport->id) }}" method="POST" onsubmit="return confirm('Delete?');" class="flex-1">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="w-full py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold">Delete</button>
-                                </form>
+                        <div class="lg:w-1/4 flex flex-col justify-between items-start lg:items-end">
+                            <div class="w-full bg-gray-50 rounded-2xl p-4 border border-gray-100 mb-4 lg:mb-0">
+                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Assigned Fleet</p>
+                                @if($transport->company)
+                                    <p class="text-sm font-black text-gray-900 truncate">{{ $transport->company->name }}</p>
+                                    @if($transport->vehicle && $transport->driver)
+                                        <p class="text-xs font-bold text-gray-500 mt-1">Driver: <span class="text-gray-900">{{ $transport->driver->name }}</span></p>
+                                        <p class="text-xs font-bold text-gray-500">Plate: <span class="text-gray-900">{{ $transport->vehicle->license_plate }}</span></p>
+                                    @else
+                                        <p class="text-[10px] font-bold text-amber-600 mt-1 uppercase tracking-widest flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            Assigning Driver...
+                                        </p>
+                                    @endif
+                                @else
+                                    <p class="text-[10px] font-bold text-gray-400 italic">Awaiting partner acceptance</p>
+                                @endif
                             </div>
+
+                            @if($transport->status === 'pending')
+                                <div class="flex gap-2 w-full lg:w-auto">
+                                    <a href="{{ route('transports.edit', $transport->id) }}" class="flex-1 lg:flex-none text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 px-5 py-3 rounded-xl transition-all border border-blue-100 hover:border-blue-600 text-center active:scale-95">
+                                        Edit
+                                    </a>
+
+                                    <form action="{{ route('transports.destroy', $transport->id) }}" method="POST" class="flex-1 lg:flex-none" onsubmit="return confirm('Are you sure you want to cancel this transport request?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="w-full text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-white bg-red-50 hover:bg-red-500 px-5 py-3 rounded-xl transition-all border border-red-100 hover:border-red-500 active:scale-95">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endforeach
             </div>
+
+            @if($transports->hasPages())
+                <div class="mt-12 flex justify-center">
+                    {{ $transports->links() }}
+                </div>
+            @endif
+        @else
+            <div class="p-24 text-center bg-white rounded-[3rem] shadow-sm border border-gray-100">
+                <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-50 mb-8 border border-blue-100">
+                    <svg class="h-10 w-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                </div>
+                <h3 class="text-2xl font-black text-gray-900 mb-2">No Transport Bookings Yet</h3>
+                <p class="text-sm font-bold text-gray-400 max-w-md mx-auto uppercase tracking-widest mb-8">You haven't requested any farm shuttle services.</p>
+                <a href="{{ route('transports.create') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest">
+                    Book Your First Shuttle
+                </a>
+            </div>
         @endif
     </div>
+</div>
 @endsection
