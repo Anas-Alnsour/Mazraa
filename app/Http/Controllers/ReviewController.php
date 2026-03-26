@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Farm;
 use App\Models\User;
 use App\Models\Review;
+use App\Models\FarmBooking;
+use App\Models\SupplyOrder;
+use App\Models\Transport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -30,9 +33,43 @@ class ReviewController extends Controller
             abort(404, 'Entity not found.');
         }
 
+        $userId = Auth::id();
+
+        // 🛡️ حماية: التأكد من أن المستخدم قد استخدم الخدمة فعلياً
+        if ($validated['reviewable_type'] === 'farm') {
+            $isVerified = FarmBooking::where('user_id', $userId)
+                ->where('farm_id', $entity->id)
+                ->whereIn('status', ['completed', 'finished']) // 👈 التعديل المعماري
+                ->exists();
+
+            if (!$isVerified) {
+                return back()->with('error', 'You can only review a farm after completing a booking there.');
+            }
+        } elseif ($validated['reviewable_type'] === 'supply_company') {
+            $isVerified = SupplyOrder::where('user_id', $userId)
+                ->whereIn('status', ['completed', 'delivered']) // 👈 التعديل المعماري
+                ->whereHas('supply', function ($query) use ($entity) {
+                    $query->where('company_id', $entity->id);
+                })
+                ->exists();
+
+            if (!$isVerified) {
+                return back()->with('error', 'You can only review a supply company after receiving an order from them.');
+            }
+        } elseif ($validated['reviewable_type'] === 'transport_company') {
+            $isVerified = Transport::where('user_id', $userId)
+                ->where('company_id', $entity->id)
+                ->whereIn('status', ['completed', 'delivered']) // 👈 التعديل المعماري
+                ->exists();
+
+            if (!$isVerified) {
+                return back()->with('error', 'You can only review a transport company after completing a trip with them.');
+            }
+        }
+
         Review::updateOrCreate(
             [
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'reviewable_id' => $validated['reviewable_id'],
                 'reviewable_type' => $modelClass,
             ],
@@ -42,7 +79,7 @@ class ReviewController extends Controller
             ]
         );
 
-        return back()->with('success', 'Thank you! Your review has been saved.');
+        return back()->with('success', 'Thank you! Your verified review has been saved.');
     }
 
     public function destroy(Review $review)

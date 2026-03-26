@@ -34,7 +34,7 @@ class BookingController extends Controller
         $start = Carbon::parse($request->start_time);
         $end   = Carbon::parse($request->end_time);
 
-        // 1. Overlap Check
+// 1. Overlap Check (Existing Bookings)
         $conflict = $farm->bookings()
             ->where('status', '!=', 'cancelled')
             ->where(function ($query) use ($start, $end) {
@@ -44,6 +44,16 @@ class BookingController extends Controller
 
         if ($conflict) {
             return back()->with('error', 'This shift is already booked. Please choose another one.');
+        }
+
+        // 1.5. Blocked Dates Check (Owner Maintenance/Unavailable)
+        // Checks if any date within the booking range intersects with the farm's blocked dates.
+        $blockedConflict = $farm->blockedDates()
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->exists();
+
+        if ($blockedConflict) {
+            return back()->with('error', 'The selected dates intersect with dates blocked by the farm owner. Please choose another date.');
         }
 
         // 2. Financials Calculation

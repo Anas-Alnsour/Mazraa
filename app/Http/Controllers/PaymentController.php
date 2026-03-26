@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
 use App\Notifications\BookingConfirmedNotification;
+use App\Models\SupplyOrder;
 
 class PaymentController extends Controller
 {
@@ -100,4 +101,100 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
     {
         return redirect()->route('explore')->with('error', 'Payment was cancelled. You can try again later.');
     }
+
+    /**
+     * Initialize Stripe Checkout Session for a Grouped Supply Order (Invoice).
+     */
+    public function checkoutSupply(Request $request, $order_id)
+    {
+        // 1. جلب كل المنتجات التابعة لنفس رقم الفاتورة/الطلب
+        $orders = SupplyOrder::where('order_id', $order_id)
+            ->where('user_id', auth()->id())
+            ->where('status', 'pending')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            abort(404, 'Order not found or already paid.');
+        }
+
+        // 2. حساب المجموع الكلي
+        $totalPrice = $orders->sum('total_price');
+
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+        $amountInFils = (int) ($totalPrice * 1000);
+
+        // 3. إنشاء جلسة الدفع في Stripe
+        $checkoutSession = \Stripe\Checkout\Session::create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'jod',
+                    'product_data' => [
+                        'name' => 'Supply Order Invoice: #' . $order_id,
+                        'description' => 'Payment for ' . $orders->count() . ' supply items.',
+                    ],
+                    'unit_amount' => $amountInFils,
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => route('payment.supply.success', ['order_id' => $order_id]) . '?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url' => route('cart.view'), // 👈 التصحيح: الرجوع للسلة في حال الإلغاء
+            'metadata' => [
+                'order_id' => $order_id,
+                'type' => 'supply_order'
+            ]
+        ]);
+
+        return redirect($checkoutSession->url);
+    }
+
+    /**
+     * Handle Successful Payment for a Grouped Supply Order.
+     */
+    public function successSupply(Request $request, $order_id)
+    {
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        try {
+            $session = \Stripe\Checkout\Session::retrieve($request->get('session_id'));
+
+            if ($session->payment_status === 'paid') {
+
+                $orders = SupplyOrder::where('order_id', $order_id)
+                    ->where('user_id', auth()->id())
+                    ->get();
+
+                if ($orders->isEmpty()) {
+                    abort(404, 'Orders not found.');
+                }
+
+                // 1. تحديث حالة الطلبات لتصبح قيد المعالجة
+                foreach ($orders as $order) {
+                    $order->update([
+                        'status' => 'processing', // 👈 التصحيح: processing أفضل للوجستيات التوريد
+                    ]);
+                }
+
+                $totalPrice = $orders->sum('total_price');
+
+                // 2. تسجيل المعاملة في السجل المالي
+                \App\Models\FinancialTransaction::create([
+                    'user_id' => auth()->id(),
+                    'farm_id' => null,
+                    'amount' => $totalPrice,
+                    'transaction_type' => 'payment_in',
+                    'status' => 'completed',
+                    'description' => 'Stripe Supply Payment (Invoice #' . $order_id . ') - Session: ' . $session->id
+                ]);
+
+                return redirect()->route('orders.my_orders')->with('success', 'Supply payment successful! Your order is now being processed.'); // 👈 التصحيح: التوجيه لصفحة طلباتي
+            }
+        } catch (\Exception $e) {
+            return redirect()->route('orders.my_orders')->with('error', 'Payment verification failed.');
+        }
+
+        return redirect()->route('orders.my_orders')->with('error', 'Payment not completed.');
+    }
+    
 }

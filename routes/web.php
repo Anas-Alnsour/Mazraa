@@ -74,7 +74,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 });
-
+// B2B Supply Payments (Stripe)
+    Route::get('/payment/supply/checkout/{order_id}', [\App\Http\Controllers\PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
+    Route::get('/payment/supply/success/{order_id}', [\App\Http\Controllers\PaymentController::class, 'successSupply'])->name('payment.supply.success');
+    
 // ==========================================================================
 // 🚀 ROLE-BASED PROTECTED ROUTES (THE ARCHITECTURE GATEWAYS)
 // ==========================================================================
