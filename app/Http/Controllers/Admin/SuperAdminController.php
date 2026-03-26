@@ -10,6 +10,8 @@ use App\Models\FarmBooking;
 use App\Models\Transport;
 use App\Models\SupplyOrder;
 use Carbon\Carbon;
+use App\Notifications\FarmApprovedNotification;
+use App\Notifications\PayoutProcessedNotification;
 
 class SuperAdminController extends Controller
 {
@@ -98,6 +100,10 @@ class SuperAdminController extends Controller
 
         if ($validated['action'] === 'approve') {
             $farm->update(['is_approved' => true]);
+
+            // 👈 إضافة إشعار الموافقة للمالك
+            $farm->owner->notify(new FarmApprovedNotification($farm));
+
             $message = 'Farm approved successfully and published to the marketplace!';
         } else {
             $farm->delete();
@@ -166,7 +172,8 @@ class SuperAdminController extends Controller
             'reference_id' => 'required|string',
         ]);
 
-        \App\Models\FinancialTransaction::create([
+        // 👈 تم إسناد النتيجة لمتغير $transaction عشان نبعثه بالإشعار
+        $transaction = \App\Models\FinancialTransaction::create([
             'user_id' => $validated['user_id'],
             'reference_type' => 'manual_payout',
             'reference_id' => 0,
@@ -174,6 +181,12 @@ class SuperAdminController extends Controller
             'amount' => $validated['amount'],
             'description' => 'Bank Transfer Ref: ' . $validated['reference_id'],
         ]);
+
+        // 👈 إرسال إشعار بتحويل الأرباح للمورد
+        $vendorUser = User::find($request->user_id);
+        if ($vendorUser) {
+            $vendorUser->notify(new PayoutProcessedNotification($transaction));
+        }
 
         return redirect()->route('admin.payouts')->with('success', 'Payout of ' . number_format($validated['amount'], 2) . ' JOD recorded successfully.');
     }

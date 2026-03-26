@@ -17,27 +17,28 @@ class SupplyCompanyDashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Ensure only supply companies can access this
         if ($user->role !== 'supply_company') {
             abort(403, 'Unauthorized access.');
         }
 
-        // Fetch orders (excluding 'cart' items).
+        // 👈 التعديل الخطير والمهم: جلب طلبات هذه الشركة فقط مع الـ Eager Loading لمنع N+1
         $recentOrders = SupplyOrder::with(['user', 'supply', 'driver'])
+            ->whereHas('supply', function($query) use ($user) {
+                $query->where('company_id', $user->id); // التأكد إن المنتج تابع للشركة الحالية
+            })
             ->where('status', '!=', 'cart')
             ->latest()
             ->get();
 
-        // 1. Calculate Statistics
-        $totalSupplies = Supply::count();
+        // 1. Calculate Statistics (إصلاح حساب المنتجات لتشمل منتجات الشركة فقط)
+        $totalSupplies = Supply::where('company_id', $user->id)->count();
         $totalOrders = $recentOrders->count();
         $pendingOrders = $recentOrders->where('status', 'pending')->count();
 
-        // 2. Financial Reports strictly based on architectural requirements
+        // 2. Financial Reports
         $completedOrders = $recentOrders->whereIn('status', ['completed', 'delivered']);
 
-        // استخدام total_amount بناءً على التعديلات السابقة اللي عملناها
-        $grossSales = $completedOrders->sum('total_amount');
+        $grossSales = $completedOrders->sum('total_price'); // تأكد إنها total_price أو حسب ما هو موجود بالداتا بيس عندك
         $platformCommission = $completedOrders->sum('commission_amount');
         $netProfit = $completedOrders->sum('net_company_amount');
 
@@ -48,7 +49,6 @@ class SupplyCompanyDashboardController extends Controller
         ];
 
         // 3. Driver Management
-        // Fetch drivers created by this company
         $drivers = User::where('role', 'supply_driver')
             ->where('company_id', $user->id)
             ->get();
@@ -80,7 +80,6 @@ class SupplyCompanyDashboardController extends Controller
 
         $order = SupplyOrder::findOrFail($orderId);
 
-        // Ensure the driver belongs to this company
         $driver = User::findOrFail($request->driver_id);
         if ($driver->company_id !== $user->id || $driver->role !== 'supply_driver') {
             abort(403, 'Invalid driver selection.');
@@ -88,7 +87,7 @@ class SupplyCompanyDashboardController extends Controller
 
         $order->update([
             'driver_id' => $driver->id,
-            'status' => 'in_way' // Update status to dispatched/in_way
+            'status' => 'in_way'
         ]);
 
         return back()->with('success', 'Driver assigned successfully. Order is now on the way.');

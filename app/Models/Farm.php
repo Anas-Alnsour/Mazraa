@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // 👈 الاستدعاء موجود
 
 class Farm extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
 
     // تمت إضافة is_approved هنا لتجنب خطأ الـ Mass Assignment عند الموافقة على المزرعة
     protected $fillable = [

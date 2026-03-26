@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmBooking;
+use App\Models\Transport; // 👈 تم إضافته لمنع الأخطاء
+use App\Models\FinancialTransaction; // 👈 تم إضافته للتعامل مع المبالغ المستردة
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class BookingController extends Controller
 {
     /**
-     * إنشاء حجز جديد (تم التحديث لدعم الشفتات والحسابات المالية)
+     * إنشاء حجز جديد
      */
     public function store(Request $request, Farm $farm)
     {
@@ -101,6 +103,7 @@ class BookingController extends Controller
         return redirect()->route('farms.show', $farm->id)
             ->with('success', 'Booking & Invoice generated successfully! Total Due: ' . number_format($finalTotal, 2) . ' JOD');
     }
+
     /**
      * عرض الحجوزات المستقبلية للمستخدم مع دعم الفلترة
      */
@@ -147,15 +150,48 @@ class BookingController extends Controller
     }
 
     /**
-     * إلغاء حجز
+     * إلغاء حجز (تم تحديثها لتشمل قانون الـ 48 ساعة)
      */
     public function destroy(FarmBooking $booking)
     {
+        // 1. فحص الأمان
         if ($booking->user_id !== Auth::id()) {
             abort(403);
         }
 
+        // 2. التأكد من حالة الحجز
+        if (in_array($booking->status, ['cancelled', 'completed'])) {
+            return redirect()->back()->with('error', 'This booking cannot be cancelled.');
+        }
+
+        // 3. قانون الـ 48 ساعة
+        $now = Carbon::now();
+        $startTime = Carbon::parse($booking->start_time);
+        $hoursDifference = $now->diffInHours($startTime, false); // false تسمح بالقيم السالبة
+
+        if ($hoursDifference < 48) {
+            // منع الإلغاء
+            return redirect()->back()->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
+        }
+
+        // 4. تنفيذ الإلغاء
+        $booking->update([
+            'status' => 'cancelled',
+        ]);
+
+        // تطبيق الحذف الناعم (Soft Delete) لإخفائها من الواجهات مع بقائها في السجلات المالية
         $booking->delete();
+
+        // 5. فحص السجل المالي (لعملية الـ Refund)
+        if ($booking->payment_status === 'paid') {
+            FinancialTransaction::where('user_id', Auth::id())
+                ->where('farm_id', $booking->farm_id)
+                ->where('status', 'completed')
+                ->where('transaction_type', 'payment_in')
+                ->update(['status' => 'refund_pending']);
+
+            return back()->with('success', 'Booking cancelled successfully. Your refund is pending processing.');
+        }
 
         return back()->with('success', 'Booking cancelled successfully.');
     }

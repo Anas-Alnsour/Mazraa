@@ -48,6 +48,7 @@ Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show')
 // Publicly accessible Marketplace
 Route::get('/market/supplies', [SupplyController::class, 'index'])->name('supplies.market');
 Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
+
 // --------------------------------------------------------------------------
 // 🔐 B2B Portal Login
 // --------------------------------------------------------------------------
@@ -65,6 +66,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
     Route::delete('/reviews/{review}', [\App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
+    // ==================================================
+    // 💳 Stripe Payment Routes
+    // ==================================================
+    Route::post('/payment/checkout/{booking}', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+    Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 });
 
 // ==========================================================================
@@ -75,7 +83,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::get('/dashboard', function () { return view('dashboard'); })->name('dashboard');
     Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
-Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
+    Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
 
     // Bookings
     Route::post('/farms/{farm}/book', [BookingController::class, 'store'])->name('farms.book');

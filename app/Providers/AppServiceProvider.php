@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\View;
 use App\Models\FarmBooking;
 use App\Models\Farm;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Model; // 👈 إضافة الاستدعاء اللي طلبه Jules
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,7 +26,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share pending bookings count with all relevant layouts
+        // 👈 حماية النظام من الـ N+1 Queries في بيئة التطوير (كود Jules)
+        Model::preventLazyLoading(! app()->isProduction());
+        Model::preventSilentlyDiscardingAttributes(! app()->isProduction());
+        Model::preventAccessingMissingAttributes(! app()->isProduction());
+
+        // Share pending bookings count with all relevant layouts (كودك الأصلي)
         View::composer(['layouts.navigation', 'components.dashboard-layout'], function ($view) {
             if (Auth::check() && Auth::user()->role === 'farm_owner') {
                 $farmIds = Farm::where('owner_id', Auth::id())->pluck('id');
@@ -37,10 +43,7 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-protected $policies = [
-    Transport::class => TransportPolicy::class,
-
-];
-
-
+    protected $policies = [
+        Transport::class => TransportPolicy::class,
+    ];
 }

@@ -38,7 +38,8 @@ class FarmController extends Controller
             $query->where('capacity', '>=', $request->capacity);
         }
 
-        $farms = $query->with('images')->latest()->paginate(12)->withQueryString();
+        // 👈 تطبيق الـ Eager Loading اللي طلبه Jules مع الحفاظ على الفلترة تبعتك
+        $farms = $query->with(['images', 'owner', 'reviews'])->latest()->paginate(12)->withQueryString();
 
         return view('public_farms.explore', compact('farms'));
     }
@@ -48,9 +49,7 @@ class FarmController extends Controller
      */
     public function show(Farm $farm)
     {
-        // جلب المزرعة مع صورها، حجوزاتها، التواريخ المحجوبة، والتقييمات مع أصحابها ⭐️
         $farm->load(['images', 'bookings', 'blockedDates', 'owner', 'reviews.user']);
-
         return view('public_farms.show', compact('farm'));
     }
 
@@ -72,40 +71,35 @@ class FarmController extends Controller
     {
         $user = Auth::user();
 
-        // 1. التحقق من البيانات المدخلة
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'price_per_night' => 'required|numeric|min:0',
             'capacity' => 'required|integer|min:1',
             'description' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // صورة الغلاف
-            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // صور المعرض
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
         ]);
 
-        // 2. رفع وحفظ الصورة الرئيسية (Main Cover)
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('farms/covers', 'public');
             $validated['main_image'] = $path;
         }
 
-        // 3. إعدادات افتراضية للمزرعة الجديدة
         $validated['owner_id'] = $user->id;
-        $validated['status'] = 'pending'; // الحالة الافتراضية
-        $validated['is_approved'] = false; // بانتظار موافقة الأدمن لتظهر في Explore
+        $validated['status'] = 'pending';
+        $validated['is_approved'] = false;
         $validated['commission_rate'] = 10;
         $validated['rating'] = 0.0;
 
-        // 4. إنشاء سجل المزرعة
         $farm = Farm::create($validated);
 
-        // 5. رفع وحفظ صور المعرض (Gallery) إن وجدت
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 $galleryPath = $file->store('farms/gallery', 'public');
-                $FarmImage::create([
+                FarmImage::create([
                     'farm_id' => $farm->id,
                     'image_url' => $galleryPath
                 ]);
@@ -125,7 +119,6 @@ class FarmController extends Controller
             abort(403);
         }
 
-        // حذف الملفات الفيزيائية من التخزين قبل حذف البيانات
         if ($farm->main_image) {
             Storage::disk('public')->delete($farm->main_image);
         }

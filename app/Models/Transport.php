@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // 👈 تمت إضافة الاستدعاء هنا
 
 class Transport extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
 
     protected $fillable = [
         'company_id',   // ضفناه جديد
