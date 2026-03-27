@@ -3,7 +3,6 @@
 @section('title', $farm->name)
 
 @section('content')
-    {{-- Leaflet CSS for the mini-map --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <div class="bg-[#f9f8f4] min-h-screen pb-20 font-sans pt-10">
@@ -20,7 +19,7 @@
                 </div>
             @endif
 
-            <div class="mb-8 flex justify-between items-end">
+            <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-2">{{ $farm->name }}</h1>
                     <div class="flex items-center text-sm font-bold text-gray-500">
@@ -28,10 +27,27 @@
                         {{ $farm->location }}
                     </div>
                 </div>
-                <a href="{{ route('explore') }}" class="hidden md:flex items-center text-sm font-bold text-gray-500 hover:text-[#1d5c42] transition-colors bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Back to Explore
-                </a>
+                <div class="flex items-center gap-3">
+                    {{-- 💖 زر المفضلة --}}
+                    @auth
+                        @php
+                            $isFavorited = auth()->user()->favorites()->where('farm_id', $farm->id)->exists();
+                        @endphp
+                        <form action="{{ $isFavorited ? route('favorites.destroy', $farm->id) : route('favorites.store', $farm->id) }}" method="POST">
+                            @csrf
+                            @if($isFavorited) @method('DELETE') @endif
+                            <button type="submit" title="{{ $isFavorited ? 'Remove from Favorites' : 'Add to Favorites' }}"
+                                class="flex items-center justify-center p-3 rounded-full {{ $isFavorited ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100' : 'bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50' }} transition-all shadow-sm border">
+                                <svg class="w-5 h-5" fill="{{ $isFavorited ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            </button>
+                        </form>
+                    @endauth
+
+                    <a href="{{ route('explore') }}" class="hidden md:flex items-center text-sm font-bold text-gray-500 hover:text-[#1d5c42] transition-colors bg-white px-4 py-2.5 rounded-full border border-gray-200 shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Back to Explore
+                    </a>
+                </div>
             </div>
 
             {{-- Image Gallery --}}
@@ -84,9 +100,7 @@
             </div>
 
             <div class="flex flex-col lg:flex-row gap-12">
-
                 <div class="lg:w-2/3 space-y-10">
-
                     <div class="flex flex-wrap gap-4 border-b border-gray-200 pb-8">
                         <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3">
                             <div class="bg-green-50 p-2 rounded-xl text-[#1d5c42]">
@@ -226,7 +240,7 @@
                                 </div>
                             </div>
 
-                            <button id="confirmBookingBtn" disabled
+                            <button type="submit" id="confirmBookingBtn" disabled
                                 class="w-full bg-[#183126] text-white font-black py-4 rounded-xl shadow-lg hover:bg-[#10231b] hover:shadow-xl transition-all transform active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-widest text-sm mt-4">
                                 Confirm Booking
                             </button>
@@ -240,6 +254,33 @@
     @push('scripts')
     {{-- Leaflet JS & Logic --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    {{-- Safe Data Processing for JS --}}
+    @php
+        $bookingsData = [];
+        if($farm->bookings) {
+            foreach($farm->bookings as $b) {
+                if($b->start_time) {
+                    $bookingsData[] = [
+                        'date' => \Carbon\Carbon::parse($b->start_time)->toDateString(),
+                        'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H'),
+                    ];
+                }
+            }
+        }
+        $blockedData = [];
+        if($farm->blockedDates) {
+            foreach($farm->blockedDates as $bd) {
+                if($bd->date) {
+                    $blockedData[] = [
+                        'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
+                        'shift' => $bd->shift,
+                    ];
+                }
+            }
+        }
+    @endphp
+
     <script>
         const farmPrice = {{ $farm->price_per_night }};
         const farmLat = {{ $farm->latitude ?? 'null' }};
@@ -248,7 +289,6 @@
         let transportCost = 0;
         let selectedShift = false;
 
-        // --- Invoice Calculation ---
         function updateInvoice() {
             if(!selectedShift) return;
 
@@ -262,16 +302,8 @@
             document.getElementById('bookingSummary').classList.remove('hidden');
         }
 
-        // --- Booking Shift Logic ---
-        const existingBookings = @json($farm->bookings ? $farm->bookings->map(fn($b) => [
-            'date' => \Carbon\Carbon::parse($b->start_time)->toDateString(),
-            'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H'),
-        ]) : []);
-
-        const blockedDates = @json($farm->blockedDates ? $farm->blockedDates->map(fn($bd) => [
-            'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
-            'shift' => $bd->shift,
-        ]) : []);
+        const existingBookings = @json($bookingsData);
+        const blockedDates = @json($blockedData);
 
         const dateInput = document.getElementById('booking_date');
         const shiftsContainer = document.getElementById('shiftsContainer');
@@ -282,10 +314,10 @@
         dateInput.addEventListener('change', function() {
             const selectedDate = this.value;
             if (!selectedDate) return;
+
             shiftsContainer.classList.remove('hidden');
             checkAvailability(selectedDate);
 
-            // إعادة تصفير الشفت عند تغيير التاريخ
             selectedShift = false;
             confirmBookingBtn.disabled = true;
             document.querySelectorAll('.shift-btn').forEach(btn => {
@@ -328,7 +360,10 @@
 
         function selectShift(type) {
             const dateVal = dateInput.value;
-            if (!dateVal) return;
+            if (!dateVal) {
+                alert('Please select a date first.');
+                return;
+            }
 
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-green-500');
@@ -348,7 +383,7 @@
             }
 
             selectedShift = true;
-            confirmBookingBtn.disabled = false; // تفعيل الزر هنا!
+            confirmBookingBtn.disabled = false;
             updateInvoice();
         }
 

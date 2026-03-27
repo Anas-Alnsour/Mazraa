@@ -55,6 +55,15 @@ Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name
 Route::middleware('guest')->group(function () {
     Route::get('/portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
     Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
+
+    // 👈 راوتات السائقين الجديدة اللي ضفناها
+    Route::get('/portal/transport-driver/login', function () {
+        return view('auth.transport-driver-login');
+    })->name('transport-driver.login');
+
+    Route::get('/portal/supply-driver/login', function () {
+        return view('auth.supply-driver-login');
+    })->name('supply-driver.login');
 });
 
 // --------------------------------------------------------------------------
@@ -74,10 +83,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 });
+
 // B2B Supply Payments (Stripe)
-    Route::get('/payment/supply/checkout/{order_id}', [\App\Http\Controllers\PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
-    Route::get('/payment/supply/success/{order_id}', [\App\Http\Controllers\PaymentController::class, 'successSupply'])->name('payment.supply.success');
-    
+Route::get('/payment/supply/checkout/{order_id}', [\App\Http\Controllers\PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
+Route::get('/payment/supply/success/{order_id}', [\App\Http\Controllers\PaymentController::class, 'successSupply'])->name('payment.supply.success');
+
 // ==========================================================================
 // 🚀 ROLE-BASED PROTECTED ROUTES (THE ARCHITECTURE GATEWAYS)
 // ==========================================================================

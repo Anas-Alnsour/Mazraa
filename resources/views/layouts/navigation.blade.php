@@ -53,10 +53,11 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('login')" class="font-bold text-sm">Customer Login</x-dropdown-link>
                             <div class="border-t border-gray-100 my-1"></div>
+
                             <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Admin / Farm Owner</x-dropdown-link>
-                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Supply Co. & Drivers</x-dropdown-link>
-                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Transport Co. & Drivers</x-dropdown-link>
-                        </x-slot>
+                            <x-dropdown-link :href="route('supply-driver.login')" class="text-xs font-bold text-gray-600">Supply Co. & Drivers</x-dropdown-link>
+                            <x-dropdown-link :href="route('transport-driver.login')" class="text-xs font-bold text-gray-600">Transport Co. & Drivers</x-dropdown-link>
+                            </x-slot>
                     </x-dropdown>
 
                     <a href="{{ route('partner.register') }}" class="ml-2 px-5 py-2.5 bg-[#1d5c42] hover:bg-[#154230] text-white text-xs font-black uppercase tracking-widest rounded-full transition-transform active:scale-95 shadow-md">
@@ -90,6 +91,55 @@
                     </x-dropdown>
                 @endauth
             </div>
+
+            <div class="-mr-2 flex items-center sm:hidden">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white border-t border-gray-100">
+        <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="url('/')" :active="request()->is('/')">Home</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('explore')" :active="request()->routeIs('explore')">Explore Farms</x-responsive-nav-link>
+            <x-responsive-nav-link href="/contact" :active="request()->is('contact')">Contact</x-responsive-nav-link>
+            <x-responsive-nav-link href="/about" :active="request()->is('about')">About</x-responsive-nav-link>
+        </div>
+
+        <div class="pt-4 pb-1 border-t border-gray-200">
+            @guest
+                <div class="px-4 text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Authentication</div>
+                <x-responsive-nav-link :href="route('login')">Customer Login</x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('portal.login')">Business Portal</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('supply-driver.login')">Supply Driver Login</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transport-driver.login')">Transport Driver Login</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('register')">Register New Account</x-responsive-nav-link>
+            @endguest
+
+            @auth
+                <div class="px-4">
+                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                </div>
+                <div class="mt-3 space-y-1">
+                    <x-responsive-nav-link :href="Auth::user()->role === 'user' ? route('dashboard') : url(match(Auth::user()->role){'admin'=>'/admin','farm_owner'=>'/owner/dashboard','supply_company'=>'/supplies/dashboard','transport_company'=>'/transport/dashboard','supply_driver'=>'/delivery/orders','transport_driver'=>'/shuttle/trips',default=>'/'})">
+                        My Dashboard
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('profile.edit')">{{ __('Profile') }}</x-responsive-nav-link>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();" class="text-red-600 font-bold">
+                            {{ __('Log Out') }}
+                        </x-responsive-nav-link>
+                    </form>
+                </div>
+            @endauth
         </div>
     </div>
 </nav>

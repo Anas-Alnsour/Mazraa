@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="w-full md:w-auto px-2 flex justify-center pb-4 md:pb-0">
-                        <button type="submit" class="w-full md:w-auto whitespace-nowrap bg-[#1d5c42] hover:bg-[#154230] text-white font-bold py-4 px-8 md:py-3 rounded-full shadow-lg transition-all transform active:scale-95 text-sm uppercase tracking-wider">
+                        <button class="w-full md:w-auto whitespace-nowrap bg-[#1d5c42] hover:bg-[#154230] text-white font-bold py-4 px-8 md:py-3 rounded-full shadow-lg transition-all transform active:scale-95 text-sm uppercase tracking-wider">
                             Search
                         </button>
                     </div>
@@ -71,7 +71,27 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 @forelse ($farms as $farm)
-                    <div class="bg-[#fdfdfb] rounded-[2rem] shadow-md hover:shadow-2xl border border-gray-100 overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300 group">
+                    <div class="bg-[#fdfdfb] rounded-[2rem] shadow-md hover:shadow-2xl border border-gray-100 overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-300 group relative">
+
+                        {{-- 💖 زر المفضلة العائم --}}
+                        <div class="absolute top-5 right-5 z-20">
+                            @auth
+                                @php
+                                    $isFavorited = auth()->user()->favorites()->where('farm_id', $farm->id)->exists();
+                                @endphp
+                                <form action="{{ $isFavorited ? route('favorites.destroy', $farm->id) : route('favorites.store', $farm->id) }}" method="POST">
+                                    @csrf
+                                    @if($isFavorited) @method('DELETE') @endif
+                                    <button title="Toggle Favorite" class="p-2.5 rounded-full backdrop-blur-md {{ $isFavorited ? 'bg-white/90 text-red-500' : 'bg-black/30 text-white hover:bg-white/90 hover:text-red-500' }} transition-all shadow-lg border border-white/20">
+                                        <svg class="w-5 h-5" fill="{{ $isFavorited ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('login') }}" class="block p-2.5 rounded-full backdrop-blur-md bg-black/30 text-white hover:bg-white/90 hover:text-red-500 transition-all shadow-lg border border-white/20">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                </a>
+                            @endauth
+                        </div>
 
                         <div class="relative h-64 bg-gray-200 overflow-hidden p-2">
                             <div class="w-full h-full rounded-[1.5rem] overflow-hidden relative">
@@ -85,7 +105,7 @@
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             </div>
 
-                            <div class="absolute top-5 left-5 bg-[#c2a265] text-white px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm border border-white/20">
+                            <div class="absolute top-5 left-5 bg-[#c2a265] text-white px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm border border-white/20 z-10">
                                 <span class="font-black text-sm">{{ number_format($farm->price_per_night, 0) }} JOD</span>
                             </div>
                         </div>
