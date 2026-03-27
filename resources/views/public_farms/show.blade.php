@@ -28,7 +28,6 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    {{-- 💖 زر المفضلة --}}
                     @auth
                         @php
                             $isFavorited = auth()->user()->favorites()->where('farm_id', $farm->id)->exists();
@@ -158,15 +157,31 @@
                             <span class="text-sm font-bold text-gray-400 mb-1">/ Shift</span>
                         </div>
 
-                        <form action="{{ route('farms.book', $farm->id) }}" method="POST" id="bookingForm" class="space-y-5">
+                        {{-- 💡 AlpineJS Form Data for Toggling Modes --}}
+                        <form action="{{ route('farms.book', $farm->id) }}" method="POST" id="bookingForm" class="space-y-5" x-data="{ bookingMode: 'single' }">
                             @csrf
 
+                            <input type="hidden" name="booking_mode" x-model="bookingMode">
                             <input type="hidden" name="start_time" id="start_time">
                             <input type="hidden" name="end_time" id="end_time">
                             <input type="hidden" name="requires_transport" id="requires_transport" value="0">
                             <input type="hidden" name="transport_cost" id="transport_cost" value="0">
                             <input type="hidden" name="pickup_lat" id="pickup_lat">
                             <input type="hidden" name="pickup_lng" id="pickup_lng">
+
+                            {{-- 🌟 The Toggle Switch for Single/Multi Day --}}
+                            <div class="flex p-1 bg-gray-100 rounded-xl mb-2">
+                                <button type="button" @click="bookingMode = 'single'; window.resetBookingForm();"
+                                    :class="bookingMode === 'single' ? 'bg-white shadow-sm text-[#1d5c42]' : 'text-gray-500 hover:text-gray-700'"
+                                    class="flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all focus:outline-none">
+                                    Single Day
+                                </button>
+                                <button type="button" @click="bookingMode = 'multi'; window.resetBookingForm();"
+                                    :class="bookingMode === 'multi' ? 'bg-white shadow-sm text-blue-700' : 'text-gray-500 hover:text-gray-700'"
+                                    class="flex-1 py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all focus:outline-none">
+                                    Multiple Days
+                                </button>
+                            </div>
 
                             <div>
                                 <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Event Type</label>
@@ -178,26 +193,61 @@
                                 </select>
                             </div>
 
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Select Date</label>
-                                <input type="date" name="booking_date" id="booking_date" min="{{ now()->toDateString() }}" required
-                                    class="w-full bg-gray-50 border-none rounded-xl py-4 px-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-[#1d5c42] transition-all outline-none">
+                            {{-- 🌟 MODE 1: SINGLE DAY UI --}}
+                            <div x-show="bookingMode === 'single'" x-transition>
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Select Date</label>
+                                    <input type="date" id="booking_date" min="{{ now()->toDateString() }}"
+                                        class="w-full bg-gray-50 border-none rounded-xl py-4 px-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-[#1d5c42] transition-all outline-none">
+                                </div>
+
+                                <div id="shiftsContainer" class="hidden">
+                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Select Shift</label>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button type="button" id="btnMorning" onclick="selectShift('morning')"
+                                            class="shift-btn border-2 border-gray-200 bg-white p-3 rounded-xl flex flex-col items-center justify-center hover:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <span class="text-sm font-black text-gray-800">☀️ Morning</span>
+                                            <span class="text-[9px] font-bold text-gray-500 mt-1">10AM - 8PM</span>
+                                        </button>
+
+                                        <button type="button" id="btnEvening" onclick="selectShift('evening')"
+                                            class="shift-btn border-2 border-gray-200 bg-white p-3 rounded-xl flex flex-col items-center justify-center hover:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <span class="text-sm font-black text-gray-800">🌙 Evening</span>
+                                            <span class="text-[9px] font-bold text-gray-500 mt-1">10PM - 8AM</span>
+                                        </button>
+
+                                        <button type="button" id="btnFullDay" onclick="selectShift('full_day')"
+                                            class="shift-btn col-span-2 border-2 border-gray-200 bg-white p-3 rounded-xl flex flex-col items-center justify-center hover:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <span class="text-sm font-black text-gray-800">👑 Full Day (Both Shifts)</span>
+                                            <span class="text-[10px] font-bold text-gray-500 mt-1">10:00 AM - 08:00 AM (Next Day)</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div id="shiftsContainer" class="hidden">
-                                <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Select Shift</label>
-                                <div class="space-y-3">
-                                    <button type="button" id="btnMorning" onclick="selectShift('morning')"
-                                        class="shift-btn w-full border-2 border-gray-200 bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <span class="text-sm font-black text-gray-800">☀️ Morning Shift</span>
-                                        <span class="text-[10px] font-bold text-gray-500 mt-1">10:00 AM - 08:00 PM</span>
-                                    </button>
+                            {{-- 🌟 MODE 2: MULTIPLE DAYS UI --}}
+                            <div x-show="bookingMode === 'multi'" x-transition x-cloak>
+                                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4">
+                                    <p class="text-xs text-blue-800 font-black flex items-center gap-2 mb-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Multi-Day Booking
+                                    </p>
+                                    <p class="text-[10px] font-bold text-blue-600 leading-relaxed">
+                                        Selecting multiple days will automatically reserve the <strong class="text-blue-800">Full Day (Both Shifts)</strong> for the entire selected duration.
+                                    </p>
+                                </div>
 
-                                    <button type="button" id="btnEvening" onclick="selectShift('evening')"
-                                        class="shift-btn w-full border-2 border-gray-200 bg-white p-4 rounded-xl flex flex-col items-center justify-center hover:border-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                        <span class="text-sm font-black text-gray-800">🌙 Evening Shift</span>
-                                        <span class="text-[10px] font-bold text-gray-500 mt-1">10:00 PM - 08:00 AM (Next Day)</span>
-                                    </button>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Check-in</label>
+                                        <input type="date" id="multi_start_date" min="{{ now()->toDateString() }}"
+                                            class="w-full bg-gray-50 border-none rounded-xl py-3 px-3 text-xs font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 mb-2">Check-out</label>
+                                        <input type="date" id="multi_end_date" min="{{ now()->toDateString() }}"
+                                            class="w-full bg-gray-50 border-none rounded-xl py-3 px-3 text-xs font-bold text-gray-700 focus:ring-2 focus:ring-blue-500 transition-all outline-none">
+                                    </div>
                                 </div>
                             </div>
 
@@ -222,8 +272,8 @@
                                 <h3 class="font-black text-gray-800 text-sm uppercase mb-4 tracking-widest border-b border-gray-200 pb-2">Comprehensive Invoice</h3>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
-                                        <span class="font-medium text-gray-500">Farm Rental (1 Shift)</span>
-                                        <span class="font-bold text-gray-900">{{ number_format($farm->price_per_night, 2) }} JOD</span>
+                                        <span class="font-medium text-gray-500" id="farmRentalLabel">Farm Rental (1 Shift)</span>
+                                        <span class="font-bold text-gray-900" id="farmRentalDisplay">0.00 JOD</span>
                                     </div>
                                     <div id="invoiceTransport" class="flex justify-between hidden">
                                         <span class="font-medium text-gray-500">Transport Fee</span>
@@ -235,7 +285,7 @@
                                     </div>
                                     <div class="flex justify-between pt-3 border-t border-gray-200 mt-2">
                                         <span class="font-black text-gray-800">Total Due</span>
-                                        <span class="font-black text-green-600 text-lg" id="invoiceTotal">0.00 JOD</span>
+                                        <span class="font-black text-[#1d5c42] text-lg" id="invoiceTotal">0.00 JOD</span>
                                     </div>
                                 </div>
                             </div>
@@ -255,60 +305,98 @@
     {{-- Leaflet JS & Logic --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    {{-- Safe Data Processing for JS --}}
-    @php
+    <?php
         $bookingsData = [];
-        if($farm->bookings) {
+        if(isset($farm->bookings) && $farm->bookings) {
             foreach($farm->bookings as $b) {
                 if($b->start_time) {
                     $bookingsData[] = [
                         'date' => \Carbon\Carbon::parse($b->start_time)->toDateString(),
-                        'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H'),
+                        'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H')
                     ];
                 }
             }
         }
         $blockedData = [];
-        if($farm->blockedDates) {
+        if(isset($farm->blockedDates) && $farm->blockedDates) {
             foreach($farm->blockedDates as $bd) {
                 if($bd->date) {
                     $blockedData[] = [
                         'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
-                        'shift' => $bd->shift,
+                        'shift' => $bd->shift
                     ];
                 }
             }
         }
-    @endphp
+    ?>
 
     <script>
-        const farmPrice = {{ $farm->price_per_night }};
-        const farmLat = {{ $farm->latitude ?? 'null' }};
-        const farmLng = {{ $farm->longitude ?? 'null' }};
+        const farmPrice = <?php echo floatval($farm->price_per_night ?? 0); ?>;
+        const farmLat = <?php echo $farm->latitude ? '"' . $farm->latitude . '"' : 'null'; ?>;
+        const farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
 
         let transportCost = 0;
         let selectedShift = false;
+        let currentShiftType = '';
+        let multiDaysCount = 1;
+
+        // 💡 Function to reset the form when toggling modes
+        window.resetBookingForm = function() {
+            selectedShift = false;
+            currentShiftType = '';
+            document.getElementById('confirmBookingBtn').disabled = true;
+            document.getElementById('bookingSummary').classList.add('hidden');
+
+            // Clear inputs
+            document.getElementById('booking_date').value = '';
+            document.getElementById('multi_start_date').value = '';
+            document.getElementById('multi_end_date').value = '';
+
+            document.getElementById('shiftsContainer').classList.add('hidden');
+            document.querySelectorAll('.shift-btn').forEach(btn => {
+                btn.classList.remove('bg-green-50', 'border-green-500');
+                btn.classList.add('border-gray-200', 'bg-white');
+            });
+        };
 
         function updateInvoice() {
             if(!selectedShift) return;
 
-            let base = farmPrice;
+            let base = 0;
+            let label = '';
+
+            if (currentShiftType === 'multi_day') {
+                base = (farmPrice * 2) * multiDaysCount;
+                label = `Farm Rental (${multiDaysCount} Days)`;
+            } else if (currentShiftType === 'full_day') {
+                base = farmPrice * 2;
+                label = 'Farm Rental (Full Day)';
+            } else {
+                base = farmPrice;
+                label = 'Farm Rental (1 Shift)';
+            }
+
             let totalBeforeTax = base + transportCost;
             let tax = totalBeforeTax * 0.16; // 16% Tax
             let grandTotal = totalBeforeTax + tax;
 
+            document.getElementById('farmRentalLabel').innerText = label;
+            document.getElementById('farmRentalDisplay').innerText = base.toFixed(2) + ' JOD';
             document.getElementById('invoiceTax').innerText = tax.toFixed(2) + ' JOD';
             document.getElementById('invoiceTotal').innerText = grandTotal.toFixed(2) + ' JOD';
+
             document.getElementById('bookingSummary').classList.remove('hidden');
         }
 
-        const existingBookings = @json($bookingsData);
-        const blockedDates = @json($blockedData);
+        const existingBookings = <?php echo json_encode($bookingsData); ?>;
+        const blockedDates = <?php echo json_encode($blockedData); ?>;
 
+        /* --- SINGLE DAY LOGIC --- */
         const dateInput = document.getElementById('booking_date');
         const shiftsContainer = document.getElementById('shiftsContainer');
         const btnMorning = document.getElementById('btnMorning');
         const btnEvening = document.getElementById('btnEvening');
+        const btnFullDay = document.getElementById('btnFullDay');
         const confirmBookingBtn = document.getElementById('confirmBookingBtn');
 
         dateInput.addEventListener('change', function() {
@@ -319,6 +407,7 @@
             checkAvailability(selectedDate);
 
             selectedShift = false;
+            currentShiftType = '';
             confirmBookingBtn.disabled = true;
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-green-500');
@@ -327,35 +416,40 @@
         });
 
         function checkAvailability(date) {
-            btnMorning.disabled = false; btnEvening.disabled = false;
+            btnMorning.disabled = false; btnEvening.disabled = false; btnFullDay.disabled = false;
             btnMorning.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
             btnEvening.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+            btnFullDay.classList.remove('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+
+            let isMorningBooked = false;
+            let isEveningBooked = false;
 
             existingBookings.forEach(booking => {
                 if (booking.date === date) {
-                    if (booking.hour === 10) {
-                        btnMorning.disabled = true;
-                        btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
-                    }
-                    if (booking.hour === 22) {
-                        btnEvening.disabled = true;
-                        btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
-                    }
+                    if (booking.hour === 10) isMorningBooked = true;
+                    if (booking.hour === 22) isEveningBooked = true;
                 }
             });
 
             blockedDates.forEach(block => {
                 if (block.date === date) {
-                    if (block.shift === 'morning' || block.shift === 'full_day') {
-                        btnMorning.disabled = true;
-                        btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
-                    }
-                    if (block.shift === 'evening' || block.shift === 'full_day') {
-                        btnEvening.disabled = true;
-                        btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
-                    }
+                    if (block.shift === 'morning' || block.shift === 'full_day') isMorningBooked = true;
+                    if (block.shift === 'evening' || block.shift === 'full_day') isEveningBooked = true;
                 }
             });
+
+            if (isMorningBooked) {
+                btnMorning.disabled = true;
+                btnMorning.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                btnFullDay.disabled = true;
+                btnFullDay.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+            }
+            if (isEveningBooked) {
+                btnEvening.disabled = true;
+                btnEvening.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+                btnFullDay.disabled = true;
+                btnFullDay.classList.add('bg-gray-100', 'opacity-50', 'cursor-not-allowed');
+            }
         }
 
         function selectShift(type) {
@@ -370,15 +464,23 @@
                 btn.classList.add('border-gray-200', 'bg-white');
             });
 
+            currentShiftType = type;
+
             if (type === 'morning') {
                 btnMorning.classList.add('bg-green-50', 'border-green-500');
                 document.getElementById('start_time').value = dateVal + ' 10:00:00';
                 document.getElementById('end_time').value = dateVal + ' 20:00:00';
-            } else {
+            } else if (type === 'evening') {
                 btnEvening.classList.add('bg-green-50', 'border-green-500');
                 let tomorrow = new Date(dateVal);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 document.getElementById('start_time').value = dateVal + ' 22:00:00';
+                document.getElementById('end_time').value = tomorrow.toISOString().split('T')[0] + ' 08:00:00';
+            } else if (type === 'full_day') {
+                btnFullDay.classList.add('bg-green-50', 'border-green-500');
+                let tomorrow = new Date(dateVal);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('start_time').value = dateVal + ' 10:00:00';
                 document.getElementById('end_time').value = tomorrow.toISOString().split('T')[0] + ' 08:00:00';
             }
 
@@ -387,45 +489,110 @@
             updateInvoice();
         }
 
+        /* --- MULTI DAY LOGIC --- */
+        const multiStartInput = document.getElementById('multi_start_date');
+        const multiEndInput = document.getElementById('multi_end_date');
+
+        function checkMultiDay() {
+            if(multiStartInput.value && multiEndInput.value) {
+                let sDate = new Date(multiStartInput.value);
+                let eDate = new Date(multiEndInput.value);
+
+                if(eDate <= sDate) {
+                    alert('Check-out date must be after Check-in date.');
+                    confirmBookingBtn.disabled = true;
+                    selectedShift = false;
+                    document.getElementById('bookingSummary').classList.add('hidden');
+                    return;
+                }
+
+                // Check if any date in range is blocked (Frontend validation)
+                let isBlocked = false;
+                let currentDate = new Date(sDate);
+                while(currentDate < eDate) {
+                    let checkDateStr = currentDate.toISOString().split('T')[0];
+
+                    // Check bookings
+                    existingBookings.forEach(booking => {
+                        if (booking.date === checkDateStr) isBlocked = true;
+                    });
+                    // Check blocked dates
+                    blockedDates.forEach(block => {
+                        if (block.date === checkDateStr) isBlocked = true;
+                    });
+
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                if(isBlocked) {
+                    alert('One or more days in your selected range are already booked. Please choose different dates.');
+                    confirmBookingBtn.disabled = true;
+                    selectedShift = false;
+                    document.getElementById('bookingSummary').classList.add('hidden');
+                    return;
+                }
+
+                // Calculation
+                let diffTime = Math.abs(eDate - sDate);
+                multiDaysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                document.getElementById('start_time').value = multiStartInput.value + ' 10:00:00';
+                document.getElementById('end_time').value = multiEndInput.value + ' 08:00:00';
+
+                selectedShift = true;
+                currentShiftType = 'multi_day';
+                confirmBookingBtn.disabled = false;
+                updateInvoice();
+            }
+        }
+
+        multiStartInput.addEventListener('change', checkMultiDay);
+        multiEndInput.addEventListener('change', checkMultiDay);
+
+        /* --- TRANSPORT LOGIC --- */
         document.addEventListener('DOMContentLoaded', function () {
-            if(farmLat && farmLng) {
+            if(farmLat && farmLat !== 'null' && farmLng && farmLng !== 'null') {
                 var map = L.map('farm-map', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                L.marker([farmLat, farmLng]).addTo(map).bindPopup("<b>{{ $farm->name }}</b>").openPopup();
+
+                const farmName = <?php echo json_encode($farm->name); ?>;
+                L.marker([farmLat, farmLng]).addTo(map).bindPopup("<b>" + farmName + "</b>").openPopup();
 
                 const toggle = document.getElementById('toggleTransport');
                 const section = document.getElementById('transportSection');
                 const invRow = document.getElementById('invoiceTransport');
                 let pickupMap, pickupMarker;
 
-                toggle.addEventListener('change', function() {
-                    if(this.checked) {
-                        section.classList.remove('hidden');
-                        document.getElementById('requires_transport').value = "1";
-                        invRow.classList.remove('hidden');
+                if(toggle && section) {
+                    toggle.addEventListener('change', function() {
+                        if(this.checked) {
+                            section.classList.remove('hidden');
+                            document.getElementById('requires_transport').value = "1";
+                            if(invRow) invRow.classList.remove('hidden');
 
-                        if(!pickupMap) {
-                            pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 8);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickupMap);
+                            if(!pickupMap) {
+                                pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 8);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickupMap);
 
-                            pickupMap.on('click', function(e) {
-                                if(pickupMarker) pickupMap.removeLayer(pickupMarker);
-                                pickupMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(pickupMap);
+                                pickupMap.on('click', function(e) {
+                                    if(pickupMarker) pickupMap.removeLayer(pickupMarker);
+                                    pickupMarker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(pickupMap);
 
-                                document.getElementById('pickup_lat').value = e.latlng.lat;
-                                document.getElementById('pickup_lng').value = e.latlng.lng;
-                                calculateTransportCost(e.latlng.lat, e.latlng.lng);
-                            });
+                                    document.getElementById('pickup_lat').value = e.latlng.lat;
+                                    document.getElementById('pickup_lng').value = e.latlng.lng;
+                                    calculateTransportCost(e.latlng.lat, e.latlng.lng);
+                                });
+                            }
+                            setTimeout(() => pickupMap.invalidateSize(), 200);
+                        } else {
+                            section.classList.add('hidden');
+                            if(invRow) invRow.classList.add('hidden');
+                            document.getElementById('requires_transport').value = "0";
+                            transportCost = 0;
+                            updateInvoice();
                         }
-                        setTimeout(() => pickupMap.invalidateSize(), 200);
-                    } else {
-                        section.classList.add('hidden');
-                        invRow.classList.add('hidden');
-                        document.getElementById('requires_transport').value = "0";
-                        transportCost = 0;
-                        updateInvoice();
-                    }
-                });
+                    });
+                }
 
                 function calculateTransportCost(pLat, pLng) {
                     fetch(`https://router.project-osrm.org/route/v1/driving/${pLng},${pLat};${farmLng},${farmLat}?overview=false`)
