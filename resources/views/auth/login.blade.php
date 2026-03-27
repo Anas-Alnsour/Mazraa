@@ -119,7 +119,7 @@
                     <p class="text-lg text-gray-300 font-medium leading-relaxed">
                         {{ $isPortal
                             ? 'Manage your farm listings, track supply orders, and dispatch transport fleets securely from your centralized dashboard.'
-                            : 'Experience the ultimate agricultural logistics and booking platform. Connect with top-tier farms, reliable transport, and premium supplies all in one place.' }}
+                            : 'About this escape' }}
                     </p>
                 </div>
             </div>
