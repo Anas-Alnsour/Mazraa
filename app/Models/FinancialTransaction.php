@@ -11,15 +11,22 @@ class FinancialTransaction extends Model
 
     protected $fillable = [
         'user_id',
-        'reference_type', // farm_booking, transport, supply, manual_payout
+        'reference_type',
         'reference_id',
-        'transaction_type', // credit, debit
+        'transaction_type',
         'amount',
         'description',
+        'farm_id', // 👈 ضفناها عشان الكنترولر يقدر يمررها
+        'status',  // 👈 وضفنا حالة الدفعة
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function farm()
+    {
+        return $this->belongsTo(Farm::class, 'farm_id');
     }
 }

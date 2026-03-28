@@ -34,7 +34,7 @@ class BookingController extends Controller
         $start = Carbon::parse($request->start_time);
         $end   = Carbon::parse($request->end_time);
 
-// 1. Overlap Check (Existing Bookings)
+        // 1. Overlap Check (Existing Bookings)
         $conflict = $farm->bookings()
             ->where('status', '!=', 'cancelled')
             ->where(function ($query) use ($start, $end) {
@@ -87,7 +87,7 @@ class BookingController extends Controller
             'tax_amount' => $taxAmount,
             'commission_amount' => $commissionAmount,
             'net_owner_amount' => $netOwnerAmount,
-            'status' => 'pending',
+            'status' => 'pending_payment', // 👈 1. غيرنا الحالة من pending إلى pending_payment
         ]);
 
         // 4. Create Transport Request if toggled
@@ -110,8 +110,8 @@ class BookingController extends Controller
             ]);
         }
 
-        return redirect()->route('farms.show', $farm->id)
-            ->with('success', 'Booking & Invoice generated successfully! Total Due: ' . number_format($finalTotal, 2) . ' JOD');
+        // 5. 👈 التوجيه الجديد: بدلاً من إرجاعه لصفحة المزرعة، نرسله لصفحة الدفع
+        return redirect()->route('payment.select', ['booking' => $booking->id]);
     }
 
     /**
@@ -195,7 +195,7 @@ class BookingController extends Controller
         // 5. فحص السجل المالي (لعملية الـ Refund)
         if ($booking->payment_status === 'paid') {
             FinancialTransaction::where('user_id', Auth::id())
-                ->where('farm_id', $booking->farm_id)
+                ->where('amount', $booking->total_price) // 👈 تم التعديل هون
                 ->where('status', 'completed')
                 ->where('transaction_type', 'payment_in')
                 ->update(['status' => 'refund_pending']);

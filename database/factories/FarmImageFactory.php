@@ -16,7 +16,6 @@ class FarmImageFactory extends Factory
     {
         return [
             'farm_id' => Farm::factory(), // سيتم استبداله لاحقًا عند الاستخدام
-            'image_url' => $this->faker->imageUrl(1200, 800, 'farm', true),
-        ];
+'image_url' => 'https://images.unsplash.com/photo-1590490359683-658d3d23f972?q=80&w=1000&auto=format&fit=crop',        ];
     }
 }

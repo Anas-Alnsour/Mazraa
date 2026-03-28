@@ -6,17 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::create('vehicles', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // The driver
-            $table->string('type'); // e.g., 'Truck', 'Van'
-            $table->string('plate_number')->unique();
-            $table->integer('capacity')->nullable(); // In KG or Number of seats
-            $table->timestamps();
-        });
-    }
+public function up()
+{
+    Schema::create('vehicles', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('company_id')->constrained('users')->onDelete('cascade'); // 👈 هي حقل الشركة
+        $table->foreignId('driver_id')->nullable()->constrained('users')->onDelete('set null'); // 👈 وهي حقل السائق
+        $table->string('type');
+        $table->string('license_plate');
+        $table->integer('capacity');
+        $table->enum('status', ['available', 'maintenance', 'in_use'])->default('available');
+        $table->timestamps();
+    });
+}
 
     public function down(): void
     {

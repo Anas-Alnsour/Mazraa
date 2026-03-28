@@ -7,27 +7,86 @@ use App\Models\FinancialTransaction;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
-use App\Notifications\BookingConfirmedNotification;
+// use App\Notifications\BookingConfirmedNotification; // 👈 عطلنا استدعاء الكلاس مؤقتاً
 use App\Models\SupplyOrder;
 
 class PaymentController extends Controller
 {
     /**
-     * Initialize Stripe Checkout Session for a Farm Booking.
+     * عرض صفحة اختيار طريقة الدفع (Visa or CliQ)
+     */
+    public function selectMethod(FarmBooking $booking)
+    {
+        // التأكد إن الحجز لسا بانتظار الدفع وإن المستخدم هو صاحب الحجز
+        if ($booking->status !== 'pending_payment' || $booking->user_id !== auth()->id()) {
+            return redirect()->route('explore')->with('error', 'Invalid booking or already paid.');
+        }
+
+        // جلب بيانات المزرعة لعرض السعر والصورة في صفحة الدفع
+        $farm = $booking->farm;
+
+        return view('payment.select', compact('booking', 'farm'));
+    }
+
+    // ==========================================
+    // القسم الجديد: الدفع عن طريق محفظة كليك
+    // ==========================================
+
+    /**
+     * 1. توجيه المستخدم لصفحة دفع كليك المخصصة
+     */
+    public function processCliq(Request $request, FarmBooking $booking)
+    {
+        if ($booking->status !== 'pending_payment' || $booking->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        // توجيه لصفحة الكليك اللي صممناها
+        return view('payment.cliq', compact('booking'));
+    }
+
+    /**
+     * 2. استقبال بيانات الدفع من صفحة كليك وتأكيد الحجز
+     */
+    public function confirmCliq(Request $request, FarmBooking $booking)
+    {
+        if ($booking->status !== 'pending_payment' || $booking->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized.');
+        }
+
+        // الفاليديشن للتأكد إن الزبون دخل الـ Alias تبعه
+        $request->validate([
+            'cliq_alias' => 'required|string|max:255',
+        ]);
+
+        // تحديث حالة الحجز (بانتظار التأكيد من الإدارة)
+        $booking->update([
+            'payment_status' => 'pending',
+            'status' => 'pending_verification' // بتستنى الأدمن يشيك الحوالة
+        ]);
+
+        return redirect()->route('bookings.my_bookings')
+            ->with('success', 'Payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
+    }
+
+    // ==========================================
+    // القسم الخاص بـ Stripe (الفيزا)
+    // ==========================================
+
+    /**
+     * Initialize Stripe Checkout Session for a Farm Booking (Visa/Mastercard).
      */
     public function checkout(Request $request, FarmBooking $booking)
     {
-        // حماية: التأكد إن الحجز تابع لنفس الزبون وإنه مش مدفوع مسبقاً
-        if ($booking->user_id !== auth()->id() || $booking->payment_status === 'paid') {
+        // تم تغيير الفحص ليقبل 'pending_payment'
+        if ($booking->user_id !== auth()->id() || $booking->payment_status === 'paid' || $booking->status !== 'pending_payment') {
             abort(403, 'Unauthorized or already paid.');
         }
 
         Stripe::setApiKey(env('STRIPE_SECRET'));
 
-        // في الأردن العملة 3 خانات عشرية (فلس)، فبنضرب بـ 1000 زي ما طلب Stripe
-        $amountInFils = (int) ($booking->total_price * 1000);
+        $amountInFils = (int) (round($booking->total_price, 2) * 1000);
 
-        // تنسيق التواريخ بناءً على العواميد الحقيقية تبعتك
         $startDate = \Carbon\Carbon::parse($booking->start_time)->format('Y-m-d H:i');
         $endDate = \Carbon\Carbon::parse($booking->end_time)->format('Y-m-d H:i');
 
@@ -67,28 +126,29 @@ class PaymentController extends Controller
             $session = Session::retrieve($request->get('session_id'));
 
             if ($session->payment_status === 'paid') {
-                // تحديث حالة الحجز
                 $booking->update([
                     'payment_status' => 'paid',
                     'status' => 'confirmed'
                 ]);
 
-                // تسجيل المعاملة المالية في السيستم تبعنا (عشان السوبر أدمن يشوفها)
                 FinancialTransaction::create([
-                    'user_id' => $booking->user_id,
-                    'farm_id' => $booking->farm_id ?? null,
-                    'amount' => $booking->total_price,
-                    'transaction_type' => 'payment_in',
-                    'status' => 'completed',
-                    'description' => 'Stripe Checkout Session: ' . $session->id
-
+                    'user_id'        => $booking->user_id,
+                    'reference_type' => 'farm_booking', // 👈 نوع العملية
+                    'reference_id'   => $booking->id,   // 👈 رقم الحجز
+                    'amount'         => $booking->total_price,
+                    'transaction_type' => 'credit',     // 👈 حسب تصميم مودلك (credit/debit)
+                    'description'    => 'Stripe Checkout Session: ' . $session->id,
+                    // 'status'      => 'completed', // إذا جدولك ما فيه عمود status شيل هاد السطر
                 ]);
-// إرسال إشعار التأكيد للزبون
-$booking->user->notify(new BookingConfirmedNotification($booking));
+
+                // 👈 هون عملنا التعليق (Comment) عشان يتجاوز الإشعار وما يعطيك Error
+                // $booking->user->notify(new BookingConfirmedNotification($booking));
+
                 return redirect()->route('explore')->with('success', 'Payment successful! Your booking is confirmed.');
             }
         } catch (\Exception $e) {
-            return redirect()->route('explore')->with('error', 'Payment verification failed.');
+            // شلنا ה-dd عشان يرجعك بشكل طبيعي لو صار مشكلة حقيقية مستقبلاً
+            return redirect()->route('explore')->with('error', 'Payment verification failed: ' . $e->getMessage());
         }
 
         return redirect()->route('explore')->with('error', 'Payment not completed.');
@@ -102,12 +162,15 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
         return redirect()->route('explore')->with('error', 'Payment was cancelled. You can try again later.');
     }
 
+    // ==========================================
+    // القسم الخاص بدفع طلبات التوريد (Supply)
+    // ==========================================
+
     /**
      * Initialize Stripe Checkout Session for a Grouped Supply Order (Invoice).
      */
     public function checkoutSupply(Request $request, $order_id)
     {
-        // 1. جلب كل المنتجات التابعة لنفس رقم الفاتورة/الطلب
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
             ->where('status', 'pending')
@@ -117,13 +180,11 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
             abort(404, 'Order not found or already paid.');
         }
 
-        // 2. حساب المجموع الكلي
         $totalPrice = $orders->sum('total_price');
 
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
         $amountInFils = (int) ($totalPrice * 1000);
 
-        // 3. إنشاء جلسة الدفع في Stripe
         $checkoutSession = \Stripe\Checkout\Session::create([
             'payment_method_types' => ['card'],
             'line_items' => [[
@@ -139,7 +200,7 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
             ]],
             'mode' => 'payment',
             'success_url' => route('payment.supply.success', ['order_id' => $order_id]) . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('cart.view'), // 👈 التصحيح: الرجوع للسلة في حال الإلغاء
+            'cancel_url' => route('cart.view'),
             'metadata' => [
                 'order_id' => $order_id,
                 'type' => 'supply_order'
@@ -169,16 +230,14 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
                     abort(404, 'Orders not found.');
                 }
 
-                // 1. تحديث حالة الطلبات لتصبح قيد المعالجة
                 foreach ($orders as $order) {
                     $order->update([
-                        'status' => 'processing', // 👈 التصحيح: processing أفضل للوجستيات التوريد
+                        'status' => 'processing',
                     ]);
                 }
 
                 $totalPrice = $orders->sum('total_price');
 
-                // 2. تسجيل المعاملة في السجل المالي
                 \App\Models\FinancialTransaction::create([
                     'user_id' => auth()->id(),
                     'farm_id' => null,
@@ -188,7 +247,7 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
                     'description' => 'Stripe Supply Payment (Invoice #' . $order_id . ') - Session: ' . $session->id
                 ]);
 
-                return redirect()->route('orders.my_orders')->with('success', 'Supply payment successful! Your order is now being processed.'); // 👈 التصحيح: التوجيه لصفحة طلباتي
+                return redirect()->route('orders.my_orders')->with('success', 'Supply payment successful! Your order is now being processed.');
             }
         } catch (\Exception $e) {
             return redirect()->route('orders.my_orders')->with('error', 'Payment verification failed.');
@@ -196,5 +255,4 @@ $booking->user->notify(new BookingConfirmedNotification($booking));
 
         return redirect()->route('orders.my_orders')->with('error', 'Payment not completed.');
     }
-    
 }

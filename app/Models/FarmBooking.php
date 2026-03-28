@@ -19,9 +19,10 @@ class FarmBooking extends Model
         'commission_amount',
         'tax_amount',
         'net_profit',
-        'net_owner_amount', // 💡 هاد هو الحقل اللي بيعمل المشكلة
+        'net_owner_amount',
+        'payment_status', // 👈 هاد الحقل اللي ضفناه عشان يحل مشكلة الكليك
         'status',
-        'requires_transport', // 💡 وحقول المواصلات ضفناهم كمان
+        'requires_transport',
         'transport_cost',
         'pickup_lat',
         'pickup_lng',

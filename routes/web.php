@@ -25,6 +25,7 @@ use App\Http\Controllers\TransportVehicleController;
 use App\Http\Controllers\TransportDispatchController;
 use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
+use App\Http\Controllers\PaymentController;
 
 
 
@@ -221,6 +222,18 @@ Route::middleware(['auth', 'role:supply_driver'])->prefix('delivery')->name('del
 Route::middleware(['auth', 'role:transport_driver'])->prefix('shuttle')->name('shuttle.')->group(function () {
     Route::get('/trips', [TransportDriverDashboardController::class, 'index'])->name('trips');
     Route::patch('/trips/{id}/status', [TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
+});
+
+Route::middleware('auth')->group(function () {
+    // 1. راوت عرض صفحة اختيار طريقة الدفع
+    Route::get('/payment/select/{booking}', [PaymentController::class, 'selectMethod'])->name('payment.select');
+
+    // 2. راوت الدفع عن طريق الفيزا (استخدمنا نفس دالة checkout اللي كاتبها إنت)
+    Route::post('/payment/process-card/{booking}', [PaymentController::class, 'checkout'])->name('payment.process.card');
+
+    // 3. راوت الدفع عن طريق الكليك
+    Route::post('/payment/process-cliq/{booking}', [PaymentController::class, 'processCliq'])->name('payment.process.cliq');
+    Route::post('/payment/confirm-cliq/{booking}', [PaymentController::class, 'confirmCliq'])->name('payment.confirm.cliq');
 });
 
 require __DIR__ . '/auth.php';
