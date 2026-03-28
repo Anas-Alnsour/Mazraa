@@ -83,6 +83,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/payment/checkout/{booking}', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+    Route::get('/bookings/upgrade/success', [App\Http\Controllers\BookingController::class, 'upgradeSuccess'])->name('bookings.upgrade.success');
+    
 });
 
 // B2B Supply Payments (Stripe)

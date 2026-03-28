@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // 👇 هاي هي الإضافة تبعت سترايب اللي بتخلي النظام يقرأ المفاتيح من الـ .env
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+    ],
+
 ];

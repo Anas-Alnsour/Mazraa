@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmBooking;
-use App\Models\Transport; // 👈 تم إضافته لمنع الأخطاء
-use App\Models\FinancialTransaction; // 👈 تم إضافته للتعامل مع المبالغ المستردة
+use App\Models\Transport;
+use App\Models\FinancialTransaction;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Stripe\Stripe;
+use Stripe\Refund;
+use Stripe\Checkout\Session;
+use Stripe\Exception\ApiErrorException;
 
 class BookingController extends Controller
 {
@@ -47,7 +51,6 @@ class BookingController extends Controller
         }
 
         // 1.5. Blocked Dates Check (Owner Maintenance/Unavailable)
-        // Checks if any date within the booking range intersects with the farm's blocked dates.
         $blockedConflict = $farm->blockedDates()
             ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
             ->exists();
@@ -63,16 +66,12 @@ class BookingController extends Controller
 
         $farmPrice = $numberOfShifts * $farm->price_per_night;
 
-        // Include dynamic transport cost if added
         $transportCost = $request->requires_transport ? $request->transport_cost : 0;
-
         $totalBeforeTax = $farmPrice + $transportCost;
         $taxAmount = $totalBeforeTax * 0.16; // 16% VAT
         $finalTotal = $totalBeforeTax + $taxAmount;
 
         $commissionPercentage = $farm->commission_rate ? ($farm->commission_rate / 100) : 0.10;
-
-        // التصحيح المعماري: عمولة المنصة وحصة المالك
         $commissionAmount = $farmPrice * $commissionPercentage;
         $netOwnerAmount = $farmPrice - $commissionAmount;
 
@@ -87,7 +86,7 @@ class BookingController extends Controller
             'tax_amount' => $taxAmount,
             'commission_amount' => $commissionAmount,
             'net_owner_amount' => $netOwnerAmount,
-            'status' => 'pending_payment', // 👈 1. غيرنا الحالة من pending إلى pending_payment
+            'status' => 'pending_payment',
         ]);
 
         // 4. Create Transport Request if toggled
@@ -105,12 +104,12 @@ class BookingController extends Controller
                 'Farm_Arrival_Time' => $start,
                 'Farm_Departure_Time' => $end,
                 'status' => 'pending',
-                'commission_amount' => $transportCost * 0.10, // 10% Platform fee
+                'commission_amount' => $transportCost * 0.10,
                 'net_company_amount' => $transportCost * 0.90
             ]);
         }
 
-        // 5. 👈 التوجيه الجديد: بدلاً من إرجاعه لصفحة المزرعة، نرسله لصفحة الدفع
+        // 5. Send to Payment Selection
         return redirect()->route('payment.select', ['booking' => $booking->id]);
     }
 
@@ -160,56 +159,6 @@ class BookingController extends Controller
     }
 
     /**
-     * إلغاء حجز (تم تحديثها لتشمل قانون الـ 48 ساعة)
-     */
-public function destroy(FarmBooking $booking)
-    {
-        // 1. فحص الأمان
-        if ($booking->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        // 2. التأكد من حالة الحجز
-        if (in_array($booking->status, ['cancelled', 'completed'])) {
-            return redirect()->route('bookings.my_bookings')->with('error', 'This booking cannot be cancelled.');
-        }
-
-        // 3. قانون الـ 48 ساعة
-        $now = \Carbon\Carbon::now();
-        $startTime = \Carbon\Carbon::parse($booking->start_time);
-        $hoursDifference = $now->diffInHours($startTime, false); // false تسمح بالقيم السالبة
-
-        if ($hoursDifference < 48) {
-            // منع الإلغاء
-            return redirect()->route('bookings.my_bookings')->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
-        }
-
-        // 4. تنفيذ الإلغاء
-        if ($booking->payment_status === 'paid') {
-            // بنغير حالة الحجز لملغي، وبنخلي الدفع مدفوع عشان نعرف نرجعله فلوسه
-            $booking->update([
-                'status' => 'cancelled'
-            ]);
-
-            // تطبيق الحذف الناعم (Soft Delete)
-            $booking->delete();
-
-            return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully. Your refund is pending processing.');
-        }
-
-        // 5. في حال لم يكن مدفوعاً (أو Pending)
-        $booking->update([
-            'status' => 'cancelled'
-        ]);
-
-        // تطبيق الحذف الناعم (Soft Delete)
-        $booking->delete();
-
-        // توجيه المستخدم لصفحة الحجوزات دائماً
-        return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully.');
-    }
-
-    /**
      * عرض تفاصيل الحجز
      */
     public function show(FarmBooking $booking)
@@ -234,13 +183,59 @@ public function destroy(FarmBooking $booking)
     }
 
     /**
-     * تحديث الحجز
+     * إلغاء حجز (استرجاع المبلغ من سترايب)
      */
-    public function update(Request $request, FarmBooking $booking)
+    public function destroy(FarmBooking $booking)
     {
-        if ($booking->user_id !== Auth::id()) {
+        if ($booking->user_id !== auth()->id()) {
             abort(403);
         }
+
+        if (in_array($booking->status, ['cancelled', 'completed'])) {
+            return redirect()->route('bookings.my_bookings')->with('error', 'This booking cannot be cancelled.');
+        }
+
+        $now = Carbon::now();
+        $startTime = Carbon::parse($booking->start_time);
+        $hoursDifference = $now->diffInHours($startTime, false);
+
+        if ($hoursDifference < 48) {
+            return redirect()->route('bookings.my_bookings')->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
+        }
+
+        if ($booking->payment_status === 'paid') {
+            if ($booking->stripe_payment_intent_id) {
+                Stripe::setApiKey(config('services.stripe.secret'));
+                try {
+                    Refund::create([
+                        'payment_intent' => $booking->stripe_payment_intent_id,
+                    ]);
+                } catch (ApiErrorException $e) {
+                    return back()->with('error', 'Refund failed: ' . $e->getMessage());
+                }
+            }
+
+            // لا نعدل payment_status لمنع إيرور الـ ENUM
+            $booking->update([
+                'status' => 'cancelled'
+            ]);
+
+            $booking->delete();
+
+            return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled and refund processed successfully.');
+        }
+
+        $booking->update(['status' => 'cancelled']);
+        $booking->delete();
+
+        return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully.');
+    }
+
+    /**
+     * تحديث الحجز (دفع الفرقية عبر سترايب إذا لزم الأمر)
+     */public function update(Request $request, FarmBooking $booking)
+    {
+        if ($booking->user_id !== Auth::id()) { abort(403); }
 
         $request->validate([
             'start_time' => 'required|date|after:now',
@@ -248,13 +243,133 @@ public function destroy(FarmBooking $booking)
             'event_type' => 'required|string|max:255',
         ]);
 
+        $farm = $booking->farm;
+        $start = Carbon::parse($request->start_time);
+        $end = Carbon::parse($request->end_time);
+
+        // إعادة حساب السعر
+        $isMultiDay = $start->copy()->startOfDay()->diffInDays($end->copy()->startOfDay()) > 1;
+        $isFullDay = (!$isMultiDay && $start->format('H') == '10' && $start->format('Y-m-d') != $end->format('Y-m-d'));
+
+        $basePrice = 0;
+        if ($isMultiDay) {
+            $days = ceil($start->diffInHours($end) / 24);
+            if($days == 0) $days = 1;
+            $basePrice = ($farm->price_per_night * 2) * $days;
+        } elseif ($isFullDay) {
+            $basePrice = $farm->price_per_night * 2;
+        } else {
+            $basePrice = $farm->price_per_night;
+        }
+
+        $transportCost = $booking->transport_cost ?? 0;
+        $totalBeforeTax = $basePrice + $transportCost;
+        $taxAmount = $totalBeforeTax * 0.16;
+        $newTotalPrice = $totalBeforeTax + $taxAmount;
+
+        $difference = $newTotalPrice - $booking->total_price;
+
+        // الحالة 1: السعر الجديد أعلى (UPGRADE - دفع فرقية)
+        if ($difference > 0 && $booking->payment_status === 'paid') {
+            Stripe::setApiKey(config('services.stripe.secret'));
+            try {
+                $checkoutSession = Session::create([
+                    'payment_method_types' => ['card'],
+                    'line_items' => [[
+                        'price_data' => [
+                            'currency' => 'jod',
+                            'product_data' => ['name' => 'Upgrade Booking - ' . $farm->name],
+                            'unit_amount' => (int)(round($difference, 2) * 1000),
+                        ],
+                        'quantity' => 1,
+                    ]],
+                    'mode' => 'payment',
+                    'success_url' => route('bookings.upgrade.success') . '?session_id={CHECKOUT_SESSION_ID}',
+                    'cancel_url' => route('bookings.edit', $booking->id),
+                    'metadata' => [
+                        'booking_id' => $booking->id,
+                        'new_start_time' => $request->start_time,
+                        'new_end_time' => $request->end_time,
+                        'new_event_type' => $request->event_type,
+                        'new_total_price' => $newTotalPrice,
+                    ],
+                ]);
+                return redirect($checkoutSession->url);
+            } catch (ApiErrorException $e) {
+                return back()->with('error', 'Stripe Error: ' . $e->getMessage());
+            }
+        }
+
+        // الحالة 2: السعر الجديد أقل (DOWNGRADE - إرجاع فرقية)
+        if ($difference < 0 && $booking->payment_status === 'paid' && $booking->stripe_payment_intent_id) {
+            $refundAmount = abs($difference);
+            Stripe::setApiKey(config('services.stripe.secret'));
+            try {
+                Refund::create([
+                    'payment_intent' => $booking->stripe_payment_intent_id,
+                    'amount' => (int)(round($refundAmount, 2) * 1000), // إرجاع الفرقية فقط
+                ]);
+            } catch (ApiErrorException $e) {
+                return back()->with('error', 'Partial Refund failed: ' . $e->getMessage());
+            }
+        }
+
+        // تحديث مباشر بالداتابيز (في حال مافي تغيير بالسعر، أو تم إرجاع فرقية)
         $booking->update([
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
             'event_type' => $request->event_type,
+            'total_price' => $newTotalPrice,
         ]);
 
-        return redirect()->route('bookings.show', $booking->id)
-            ->with('success', 'Booking updated successfully!');
+        $message = $difference < 0
+            ? 'Booking updated successfully! A partial refund of ' . abs(round($difference, 2)) . ' JOD has been issued.'
+            : 'Booking updated successfully!';
+
+        return redirect()->route('bookings.show', $booking->id)->with('success', $message);
+    }
+
+    /**
+     * تأكيد الدفع للتحديث (Upgrade Success)
+     */
+    public function upgradeSuccess(Request $request)
+    {
+        $sessionId = $request->query('session_id');
+
+        if (!$sessionId) {
+            return redirect()->route('bookings.my_bookings')->with('error', 'Invalid payment session.');
+        }
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $session = Session::retrieve($sessionId);
+
+            if ($session->payment_status !== 'paid') {
+                return redirect()->route('bookings.my_bookings')->with('error', 'Payment for upgrade was not completed.');
+            }
+
+            // استخراج البيانات اللي خزنّاها قبل الدفع
+            $bookingId = $session->metadata->booking_id;
+            $newStartTime = $session->metadata->new_start_time;
+            $newEndTime = $session->metadata->new_end_time;
+            $newEventType = $session->metadata->new_event_type;
+            $newTotalPrice = $session->metadata->new_total_price;
+
+            $booking = FarmBooking::findOrFail($bookingId);
+
+            // حفظ التحديث بالداتابيز وتحديث السعر الجديد!
+            $booking->update([
+                'start_time' => $newStartTime,
+                'end_time' => $newEndTime,
+                'event_type' => $newEventType,
+                'total_price' => $newTotalPrice,
+            ]);
+
+            return redirect()->route('bookings.show', $booking->id)->with('success', 'Booking upgraded successfully! Payment received.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('bookings.my_bookings')->with('error', 'Error verifying payment: ' . $e->getMessage());
+        }
     }
 }
