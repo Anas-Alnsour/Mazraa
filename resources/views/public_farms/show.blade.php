@@ -266,7 +266,7 @@
                         {{-- 💡 AlpineJS Form Data for Toggling Modes --}}
                         <form action="{{ route('farms.book', $farm->id) }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
-
+                            <input type="hidden" name="booking_date" id="booking_date">
                             <input type="hidden" name="booking_mode" x-model="bookingMode">
                             <input type="hidden" name="start_time" id="start_time">
                             <input type="hidden" name="end_time" id="end_time">
@@ -304,7 +304,7 @@
                                 </div>
                             </div>
 
-                            {{-- 🌟 MODE 1: SINGLE DAY UI --}}
+                            {{-- 🌟 MODE 1: SINGLE DAY UI (Using Custom Flatpickr Calendar) --}}
                             <div x-show="bookingMode === 'single'" x-transition.opacity.duration.300ms>
                                 <div class="mb-4 relative">
                                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Select Date</label>
@@ -327,7 +327,7 @@
                                     </div>
                                 </div>
 
-                                <div id="shiftsContainer" style="display: none;" class="animate-fade-in">
+                                <div id="shiftsContainer" class="hidden animate-fade-in">
                                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Available Shifts</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <button type="button" id="btnMorning" onclick="selectShift('morning')"
@@ -400,7 +400,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="relative p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                                    <div class="relative p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm" id="originalMapContainer">
                                         {{-- Map Container --}}
                                         <div id="pickup-map-wrapper" class="w-full h-[200px] rounded-xl z-0 relative overflow-hidden transition-all duration-300">
                                             <div id="pickup-map" class="w-full h-full"></div>
@@ -553,8 +553,10 @@
                 const localDate = new Date(dayElem.dateObj.getTime() - (dayElem.dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                 if (morningBookedDates.includes(localDate)) {
                     dayElem.classList.add('booked-morning');
+                    dayElem.title = "Morning Booked (Evening available)";
                 } else if (eveningBookedDates.includes(localDate)) {
                     dayElem.classList.add('booked-evening');
+                    dayElem.title = "Evening Booked (Morning available)";
                 }
             }
         };
@@ -565,9 +567,15 @@
             onChange: function(selectedDates, dateStr, instance) {
                 if(dateStr) {
                     document.getElementById('booking_date').value = dateStr;
+
+                    // 💡 Fix: Safely ensure the container is visible and the hidden class is removed
+                    const shiftsContainer = document.getElementById('shiftsContainer');
+                    shiftsContainer.classList.remove('hidden');
+                    shiftsContainer.style.display = ''; // Clear any inline none
+
                     checkAvailability(dateStr);
 
-                    // Reset Shift selection WITHOUT hiding the container!
+                    // Reset Shift selection
                     selectedShift = false;
                     currentShiftType = '';
                     document.getElementById('confirmBookingBtn').disabled = true;
@@ -575,10 +583,13 @@
                     document.querySelectorAll('.shift-btn').forEach(btn => {
                         btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
                         btn.classList.add('border-gray-200', 'bg-white');
-                    });
 
-                    // Explicitly Show the container using style display block
-                    document.getElementById('shiftsContainer').style.display = 'block';
+                        const titleSpan = btn.querySelector('span:first-child');
+                        if(titleSpan) {
+                            titleSpan.classList.remove('text-[#1d5c42]', 'text-indigo-600', 'text-[#c2a265]');
+                            titleSpan.classList.add('text-gray-800');
+                        }
+                    });
                 }
             }
         });
@@ -612,7 +623,11 @@
             multiStartPicker.clear();
             multiEndPicker.clear();
             resetShiftSelection();
-            document.getElementById('shiftsContainer').style.display = 'none';
+
+            // 💡 Fix: Properly hide the container using Tailwind class only
+            const shiftsContainer = document.getElementById('shiftsContainer');
+            shiftsContainer.style.display = ''; // Clear inline styles
+            shiftsContainer.classList.add('hidden');
         };
 
         function resetShiftSelection() {
@@ -626,6 +641,12 @@
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
                 btn.classList.add('border-gray-200', 'bg-white');
+
+                const titleSpan = btn.querySelector('span:first-child');
+                if(titleSpan) {
+                    titleSpan.classList.remove('text-[#1d5c42]', 'text-indigo-600', 'text-[#c2a265]');
+                    titleSpan.classList.add('text-gray-800');
+                }
             });
         }
 
@@ -655,25 +676,39 @@
             const dateVal = document.getElementById('booking_date').value;
             if (!dateVal) return;
 
-            document.querySelectorAll('.shift-btn').forEach(btn => {
-                btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
-                btn.classList.add('border-gray-200', 'bg-white');
-            });
-
+            resetShiftSelection();
             currentShiftType = type;
 
             if (type === 'morning') {
+                btnMorning.classList.remove('border-gray-200', 'bg-white');
                 btnMorning.classList.add('bg-green-50', 'border-[#1d5c42]');
+
+                const span = btnMorning.querySelector('span:first-child');
+                span.classList.remove('text-gray-800');
+                span.classList.add('text-[#1d5c42]');
+
                 document.getElementById('start_time').value = dateVal + ' 10:00:00';
                 document.getElementById('end_time').value = dateVal + ' 20:00:00';
             } else if (type === 'evening') {
+                btnEvening.classList.remove('border-gray-200', 'bg-white');
                 btnEvening.classList.add('bg-indigo-50', 'border-indigo-500');
+
+                const span = btnEvening.querySelector('span:first-child');
+                span.classList.remove('text-gray-800');
+                span.classList.add('text-indigo-600');
+
                 let tomorrow = new Date(dateVal);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 document.getElementById('start_time').value = dateVal + ' 22:00:00';
                 document.getElementById('end_time').value = tomorrow.toISOString().split('T')[0] + ' 08:00:00';
             } else if (type === 'full_day') {
+                btnFullDay.classList.remove('border-gray-200', 'bg-white');
                 btnFullDay.classList.add('bg-amber-50', 'border-[#c2a265]');
+
+                const span = btnFullDay.querySelector('span:first-child');
+                span.classList.remove('text-gray-800');
+                span.classList.add('text-[#c2a265]');
+
                 let tomorrow = new Date(dateVal);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 document.getElementById('start_time').value = dateVal + ' 10:00:00';

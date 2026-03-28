@@ -156,7 +156,7 @@
                                 @if($isMultiDay)
                                     <p class="text-[10px] font-black uppercase tracking-widest text-white/70 mb-1 drop-shadow-sm">Stay Dates</p>
                                     <p class="font-black text-xl tracking-tight leading-none drop-shadow-lg flex items-center gap-1">
-                                        {{ $startDate->format('M d') }} <span class="text-white/50 text-sm font-normal">→</span> {{ $endDate->format('M d, Y') }}
+                                        {{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }} <span class="text-white/50 text-sm font-normal">→</span> {{ \Carbon\Carbon::parse($booking->end_time)->format('M d, Y') }}
                                     </p>
                                 @else
                                     <p class="text-[10px] font-black uppercase tracking-widest text-white/70 mb-1 drop-shadow-sm">Check-in Date</p>
@@ -197,25 +197,22 @@
                                     <p class="text-xs font-bold text-gray-800 capitalize">{{ $booking->event_type ?? 'Standard Stay' }}</p>
                                 </div>
 
-                                {{-- Stay Duration (Only for Multi Day) --}}
-                                @if($isMultiDay)
+                                {{-- Stay Dates --}}
                                 <div class="flex items-center justify-between p-4 border-b border-gray-200/50">
-                                    <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Stay Duration</p>
+                                    <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Stay Dates</p>
                                     <p class="text-xs font-bold text-gray-800 text-right flex items-center gap-1 justify-end">
-                                        {{ $startDate->format('M d') }}
+                                        {{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}
                                         <span class="text-gray-400">➝</span>
-                                        {{ $endDate->format('M d, Y') }}
+                                        {{ \Carbon\Carbon::parse($booking->end_time)->format('M d, Y') }}
                                     </p>
                                 </div>
-                                @endif
-
-                                {{-- Time (Shows for both Single Day and Multi Day) --}}
+                                {{-- Time --}}
                                 <div class="flex items-center justify-between p-4">
                                     <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Time</p>
                                     <p class="text-xs font-bold text-gray-800 text-right flex items-center gap-1 justify-end">
-                                        {{ $startDate->format('h:i A') }}
+                                        {{ \Carbon\Carbon::parse($booking->start_time)->format('h:i A') }}
                                         <span class="text-gray-400">➝</span>
-                                        {{ $endDate->format('h:i A') }}
+                                        {{ \Carbon\Carbon::parse($booking->end_time)->format('h:i A') }}
                                     </p>
                                 </div>
 

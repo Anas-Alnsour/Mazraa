@@ -162,48 +162,51 @@ class BookingController extends Controller
     /**
      * إلغاء حجز (تم تحديثها لتشمل قانون الـ 48 ساعة)
      */
-    public function destroy(FarmBooking $booking)
+public function destroy(FarmBooking $booking)
     {
         // 1. فحص الأمان
-        if ($booking->user_id !== Auth::id()) {
+        if ($booking->user_id !== auth()->id()) {
             abort(403);
         }
 
         // 2. التأكد من حالة الحجز
         if (in_array($booking->status, ['cancelled', 'completed'])) {
-            return redirect()->back()->with('error', 'This booking cannot be cancelled.');
+            return redirect()->route('bookings.my_bookings')->with('error', 'This booking cannot be cancelled.');
         }
 
         // 3. قانون الـ 48 ساعة
-        $now = Carbon::now();
-        $startTime = Carbon::parse($booking->start_time);
+        $now = \Carbon\Carbon::now();
+        $startTime = \Carbon\Carbon::parse($booking->start_time);
         $hoursDifference = $now->diffInHours($startTime, false); // false تسمح بالقيم السالبة
 
         if ($hoursDifference < 48) {
             // منع الإلغاء
-            return redirect()->back()->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
+            return redirect()->route('bookings.my_bookings')->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
         }
 
         // 4. تنفيذ الإلغاء
-        $booking->update([
-            'status' => 'cancelled',
-        ]);
-
-        // تطبيق الحذف الناعم (Soft Delete) لإخفائها من الواجهات مع بقائها في السجلات المالية
-        $booking->delete();
-
-        // 5. فحص السجل المالي (لعملية الـ Refund)
         if ($booking->payment_status === 'paid') {
-            FinancialTransaction::where('user_id', Auth::id())
-                ->where('amount', $booking->total_price) // 👈 تم التعديل هون
-                ->where('status', 'completed')
-                ->where('transaction_type', 'payment_in')
-                ->update(['status' => 'refund_pending']);
+            // بنغير حالة الحجز لملغي، وبنخلي الدفع مدفوع عشان نعرف نرجعله فلوسه
+            $booking->update([
+                'status' => 'cancelled'
+            ]);
 
-            return back()->with('success', 'Booking cancelled successfully. Your refund is pending processing.');
+            // تطبيق الحذف الناعم (Soft Delete)
+            $booking->delete();
+
+            return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully. Your refund is pending processing.');
         }
 
-        return back()->with('success', 'Booking cancelled successfully.');
+        // 5. في حال لم يكن مدفوعاً (أو Pending)
+        $booking->update([
+            'status' => 'cancelled'
+        ]);
+
+        // تطبيق الحذف الناعم (Soft Delete)
+        $booking->delete();
+
+        // توجيه المستخدم لصفحة الحجوزات دائماً
+        return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully.');
     }
 
     /**
