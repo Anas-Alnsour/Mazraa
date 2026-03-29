@@ -20,8 +20,12 @@ class FarmBooking extends Model
         'tax_amount',
         'net_profit',
         'net_owner_amount',
-        'payment_status', // 👈 هاد الحقل اللي ضفناه عشان يحل مشكلة الكليك
+        'payment_status',
         'status',
+        'stripe_payment_intent_id', // 👈 ضروري عشان الاسترجاع (Refund)
+        'stripe_session_id',        // 👈 ضروري عشان تأكيد الدفع
+
+        // 🚌 أعمدة المواصلات
         'requires_transport',
         'transport_cost',
         'pickup_lat',

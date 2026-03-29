@@ -11,10 +11,7 @@
                 <h1 class="text-4xl font-black text-gray-900 tracking-tight">My Transport Bookings</h1>
                 <p class="text-sm font-bold text-gray-400 mt-2 uppercase tracking-widest">Track and manage your farm shuttle requests</p>
             </div>
-            <a href="{{ route('transports.create') }}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 px-8 rounded-2xl transition-all shadow-lg transform active:scale-95 text-xs uppercase tracking-widest">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
-                Book Shuttle
-            </a>
+            {{-- Removed the standalone 'Book Shuttle' button --}}
         </div>
 
         @if(session('success'))
@@ -101,6 +98,7 @@
 
                             @if($transport->status === 'pending')
                                 <div class="flex gap-2 w-full lg:w-auto">
+                                    {{-- Optional: Keep Edit button if you still want users to edit transport details ONLY, or remove it if Edit is only via Farm Booking --}}
                                     <a href="{{ route('transports.edit', $transport->id) }}" class="flex-1 lg:flex-none text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 px-5 py-3 rounded-xl transition-all border border-blue-100 hover:border-blue-600 text-center active:scale-95">
                                         Edit
                                     </a>
@@ -130,9 +128,9 @@
                     <svg class="h-10 w-10 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
                 </div>
                 <h3 class="text-2xl font-black text-gray-900 mb-2">No Transport Bookings Yet</h3>
-                <p class="text-sm font-bold text-gray-400 max-w-md mx-auto uppercase tracking-widest mb-8">You haven't requested any farm shuttle services.</p>
-                <a href="{{ route('transports.create') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-black py-4 px-8 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest">
-                    Book Your First Shuttle
+                <p class="text-sm font-bold text-gray-400 max-w-md mx-auto uppercase tracking-widest mb-8">Transport is now booked directly alongside your farm stays.</p>
+                <a href="{{ route('farms.public.index') }}" class="inline-block bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-4 px-8 rounded-2xl shadow-lg transition-all transform active:scale-95 text-xs uppercase tracking-widest">
+                    Browse Farms
                 </a>
             </div>
         @endif

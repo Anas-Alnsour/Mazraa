@@ -27,9 +27,6 @@ use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
 
-
-
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -46,6 +43,7 @@ Route::post('/contact', [PageController::class, 'submitContact'])->name('contact
 Route::get('/explore', [FarmController::class, 'index'])->name('explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
+
 // Publicly accessible Marketplace
 Route::get('/market/supplies', [SupplyController::class, 'index'])->name('supplies.market');
 Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
@@ -57,7 +55,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
     Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
 
-    // 👈 راوتات السائقين الجديدة اللي ضفناها
+    // راوتات السائقين الجديدة
     Route::get('/portal/transport-driver/login', function () {
         return view('auth.transport-driver-login');
     })->name('transport-driver.login');
@@ -78,18 +76,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/reviews/{review}', [\App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
     // ==================================================
-    // 💳 Stripe Payment Routes
+    // 💳 Stripe Payment Routes (Farm Bookings)
     // ==================================================
     Route::post('/payment/checkout/{booking}', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
     Route::get('/bookings/upgrade/success', [App\Http\Controllers\BookingController::class, 'upgradeSuccess'])->name('bookings.upgrade.success');
-    
 });
-
-// B2B Supply Payments (Stripe)
-Route::get('/payment/supply/checkout/{order_id}', [\App\Http\Controllers\PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
-Route::get('/payment/supply/success/{order_id}', [\App\Http\Controllers\PaymentController::class, 'successSupply'])->name('payment.supply.success');
 
 // ==========================================================================
 // 🚀 ROLE-BASED PROTECTED ROUTES (THE ARCHITECTURE GATEWAYS)
@@ -111,14 +104,14 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
     Route::delete('/bookings-delete/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
 
-    // 👇 مسارات متجر التوريد المباشر (الجديدة اللي عملناها هسا) 👇
+    // مسارات متجر التوريد المباشر
     Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
     Route::get('/my-supply-orders', [SupplyController::class, 'myOrders'])->name('supplies.my_orders');
     Route::get('/my-supply-orders/{order}/edit', [SupplyController::class, 'editOrder'])->name('supplies.edit_order');
     Route::put('/my-supply-orders/{order}', [SupplyController::class, 'updateOrder'])->name('supplies.update_order');
     Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
 
-    // نظام السلة (القديم تبعك - حافظنا عليه عشان ما ينكسر أي إشي ثاني)
+    // نظام السلة
     Route::get('/my-orders', [SupplyOrderController::class, 'myOrders'])->name('orders.my_orders');
     Route::get('/orders/{order}/edit', [SupplyOrderController::class, 'edit'])->name('orders.edit');
     Route::put('/orders/{order}', [SupplyOrderController::class, 'update'])->name('orders.update');
@@ -162,7 +155,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 // --- [3] FARM OWNER ---
 Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')->group(function () {
     Route::get('/dashboard', [OwnerDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/dashboard/toggle-block', [OwnerDashboardController::class, 'toggleBlockShift'])->name('dashboard.toggle_block'); // 👈 الراوت الجديد تبع إغلاق الأيام
+    Route::post('/dashboard/toggle-block', [OwnerDashboardController::class, 'toggleBlockShift'])->name('dashboard.toggle_block');
 
     Route::get('/farms', [OwnerFarmController::class, 'index'])->name('farms.index');
     Route::get('/farms/create', [OwnerFarmController::class, 'create'])->name('farms.create');
@@ -180,43 +173,25 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
 
 // --- [4] SUPPLY COMPANY ---
 Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('supplies.')->group(function () {
-
-    // 1. الداشبورد الرئيسية
     Route::get('/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
-
-    // 2. تعيين السائق للطلب (Dispatching)
     Route::patch('/orders/{order}/assign-driver', [SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
-
-    // 3. إدارة المنتجات والمخزون (CRUD Supply Items)
     Route::resource('items', SupplyItemController::class);
-
-    // 4. 👇 إدارة فريق السائقين (الجديد - CRUD Drivers) 👇
     Route::resource('drivers', SupplyDriverController::class);
 });
 
 // --- [5] TRANSPORT COMPANY ---
 Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name('transport.')->group(function () {
-    // 1. لوحة التحكم الرئيسية
     Route::get('/dashboard', [TransportCompanyDashboardController::class, 'index'])->name('dashboard');
-
-    // 2. مسار تعيين السائق للرحلة (القديم - Assign Driver)
     Route::patch('/trips/{trip}/assign-driver', [TransportCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
-
-    // 3. مسارات السائقين والمركبات
     Route::resource('drivers', TransportDriverController::class);
     Route::resource('vehicles', TransportVehicleController::class);
-
-    // 4.  مسارات نظام التوزيع والرحلات الجديد (Dispatch)
     Route::resource('dispatch', TransportDispatchController::class)->except(['create', 'store', 'destroy', 'show']);
     Route::post('dispatch/{id}/accept', [TransportDispatchController::class, 'acceptJob'])->name('dispatch.accept');
 });
 
 // --- [6] SUPPLY DRIVER ---
 Route::middleware(['auth', 'role:supply_driver'])->prefix('delivery')->name('delivery.')->group(function () {
-    // عرض الطلبات للسائق
     Route::get('/orders', [SupplyDriverDashboardController::class, 'index'])->name('orders');
-
-    // زر تأكيد التوصيل (الجديد)
     Route::post('/orders/{orderId}/delivered', [SupplyDriverDashboardController::class, 'markDelivered'])->name('mark_delivered');
 });
 
@@ -226,16 +201,24 @@ Route::middleware(['auth', 'role:transport_driver'])->prefix('shuttle')->name('s
     Route::patch('/trips/{id}/status', [TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
 });
 
+// ==========================================================================
+// 💳 UNIFIED PAYMENT ROUTES (FOR BOTH FARM BOOKINGS & SUPPLIES)
+// ==========================================================================
 Route::middleware('auth')->group(function () {
-    // 1. راوت عرض صفحة اختيار طريقة الدفع
+    // 🚜 راوتات دفع حجوزات المزارع
     Route::get('/payment/select/{booking}', [PaymentController::class, 'selectMethod'])->name('payment.select');
-
-    // 2. راوت الدفع عن طريق الفيزا (استخدمنا نفس دالة checkout اللي كاتبها إنت)
     Route::post('/payment/process-card/{booking}', [PaymentController::class, 'checkout'])->name('payment.process.card');
-
-    // 3. راوت الدفع عن طريق الكليك
     Route::post('/payment/process-cliq/{booking}', [PaymentController::class, 'processCliq'])->name('payment.process.cliq');
     Route::post('/payment/confirm-cliq/{booking}', [PaymentController::class, 'confirmCliq'])->name('payment.confirm.cliq');
+
+    // 🛒 راوتات دفع المشتريات (السلة)
+    Route::get('/payment/supply/select/{order_id}', [PaymentController::class, 'selectMethodSupply'])->name('payment.select_supply');
+    Route::get('/payment/supply/checkout/{order_id}', [PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
+    Route::get('/payment/supply/success/{order_id}', [PaymentController::class, 'successSupply'])->name('payment.supply.success');
+
+    // 👇 راوتات دفع الكليك للمشتريات 👇
+    Route::get('/payment/supply/cliq/{order_id}', [PaymentController::class, 'processCliqSupply'])->name('payment.supply.cliq');
+    Route::post('/payment/supply/confirm-cliq/{order_id}', [PaymentController::class, 'confirmCliqSupply'])->name('payment.supply.confirm_cliq');
 });
 
 require __DIR__ . '/auth.php';

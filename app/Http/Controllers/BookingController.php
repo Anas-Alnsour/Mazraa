@@ -19,6 +19,9 @@ class BookingController extends Controller
     /**
      * إنشاء حجز جديد
      */
+    /**
+     * إنشاء حجز جديد
+     */
     public function store(Request $request, Farm $farm)
     {
         $request->validate([
@@ -29,6 +32,7 @@ class BookingController extends Controller
             'transport_cost' => 'nullable|numeric|min:0',
             'pickup_lat' => 'nullable|numeric',
             'pickup_lng' => 'nullable|numeric',
+            'transport_passengers' => 'nullable|integer|min:1', // 👈 Validation added
         ]);
 
         if (!auth()->check()) {
@@ -87,15 +91,19 @@ class BookingController extends Controller
             'commission_amount' => $commissionAmount,
             'net_owner_amount' => $netOwnerAmount,
             'status' => 'pending_payment',
+            'requires_transport' => $request->requires_transport ? true : false,
+            'transport_cost' => $transportCost,
+            'pickup_lat' => $request->pickup_lat,
+            'pickup_lng' => $request->pickup_lng,
         ]);
 
-        // 4. Create Transport Request if toggled
+        // 4. Create Transport Request if toggled and Dispatch Driver
         if ($request->requires_transport && $request->pickup_lat && $request->pickup_lng) {
-            Transport::create([
+            $transport = Transport::create([
                 'user_id' => Auth::id(),
                 'farm_id' => $farm->id,
                 'transport_type' => 'Shuttle',
-                'passengers' => $farm->capacity,
+                'passengers' => $request->transport_passengers ?? 1, // 👈 Uses passengers from form
                 'start_and_return_point' => 'Custom User Location',
                 'pickup_lat' => $request->pickup_lat,
                 'pickup_lng' => $request->pickup_lng,
@@ -107,6 +115,9 @@ class BookingController extends Controller
                 'commission_amount' => $transportCost * 0.10,
                 'net_company_amount' => $transportCost * 0.90
             ]);
+
+            // 👈 Immediately trigger Auto-Dispatch Action
+            \App\Services\TransportDispatchAction::dispatchDriver($transport);
         }
 
         // 5. Send to Payment Selection
@@ -185,6 +196,9 @@ class BookingController extends Controller
     /**
      * إلغاء حجز (استرجاع المبلغ من سترايب)
      */
+    /**
+     * إلغاء حجز (استرجاع المبلغ من سترايب)
+     */
     public function destroy(FarmBooking $booking)
     {
         if ($booking->user_id !== auth()->id()) {
@@ -201,6 +215,20 @@ class BookingController extends Controller
 
         if ($hoursDifference < 48) {
             return redirect()->route('bookings.my_bookings')->with('error', 'Cancellations are not permitted within 48 hours of the check-in time. Please contact support.');
+        }
+
+        // إلغاء رحلة المواصلات المرتبطة بهذا الحجز في حال وجدت
+        if ($booking->requires_transport) {
+            $transport = Transport::where('farm_id', $booking->farm_id)
+                ->where('user_id', Auth::id())
+                ->where('status', '!=', 'cancelled')
+                ->latest()
+                ->first();
+
+            if ($transport) {
+                $transport->update(['status' => 'cancelled']);
+                $transport->delete(); // Soft Delete
+            }
         }
 
         if ($booking->payment_status === 'paid') {
@@ -231,9 +259,10 @@ class BookingController extends Controller
         return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully.');
     }
 
-    /**
-     * تحديث الحجز (دفع الفرقية عبر سترايب إذا لزم الأمر)
-     */public function update(Request $request, FarmBooking $booking)
+     /**
+     * تحديث الحجز (دفع الفرقية عبر سترايب إذا لزم الأمر، وإضافة/إزالة المواصلات)
+     */
+    public function update(Request $request, FarmBooking $booking)
     {
         if ($booking->user_id !== Auth::id()) { abort(403); }
 
@@ -241,6 +270,11 @@ class BookingController extends Controller
             'start_time' => 'required|date|after:now',
             'end_time' => 'required|date|after:start_time',
             'event_type' => 'required|string|max:255',
+            'requires_transport' => 'nullable|boolean',
+            'transport_cost' => 'nullable|numeric|min:0',
+            'pickup_lat' => 'nullable|numeric',
+            'pickup_lng' => 'nullable|numeric',
+            'transport_passengers' => 'nullable|integer|min:1',
         ]);
 
         $farm = $booking->farm;
@@ -262,14 +296,15 @@ class BookingController extends Controller
             $basePrice = $farm->price_per_night;
         }
 
-        $transportCost = $booking->transport_cost ?? 0;
+        $transportCost = $request->requires_transport ? $request->transport_cost : 0;
         $totalBeforeTax = $basePrice + $transportCost;
         $taxAmount = $totalBeforeTax * 0.16;
         $newTotalPrice = $totalBeforeTax + $taxAmount;
 
         $difference = $newTotalPrice - $booking->total_price;
+        $requiresTransportFlag = $request->requires_transport ? true : false;
 
-        // الحالة 1: السعر الجديد أعلى (UPGRADE - دفع فرقية)
+        // الحالة 1: السعر الجديد أعلى (UPGRADE - دفع فرقية) - يتضمن إضافة مواصلات جديدة
         if ($difference > 0 && $booking->payment_status === 'paid') {
             Stripe::setApiKey(config('services.stripe.secret'));
             try {
@@ -292,6 +327,12 @@ class BookingController extends Controller
                         'new_end_time' => $request->end_time,
                         'new_event_type' => $request->event_type,
                         'new_total_price' => $newTotalPrice,
+                        // إرسال تفاصيل المواصلات الجديدة مع الدفع إذا تم تفعيلها
+                        'requires_transport' => $requiresTransportFlag,
+                        'transport_cost' => $transportCost,
+                        'pickup_lat' => $request->pickup_lat,
+                        'pickup_lng' => $request->pickup_lng,
+                        'transport_passengers' => $request->transport_passengers ?? 1,
                     ],
                 ]);
                 return redirect($checkoutSession->url);
@@ -300,7 +341,7 @@ class BookingController extends Controller
             }
         }
 
-        // الحالة 2: السعر الجديد أقل (DOWNGRADE - إرجاع فرقية)
+        // الحالة 2: السعر الجديد أقل (DOWNGRADE - إرجاع فرقية) - يتضمن إزالة المواصلات
         if ($difference < 0 && $booking->payment_status === 'paid' && $booking->stripe_payment_intent_id) {
             $refundAmount = abs($difference);
             Stripe::setApiKey(config('services.stripe.secret'));
@@ -314,12 +355,70 @@ class BookingController extends Controller
             }
         }
 
-        // تحديث مباشر بالداتابيز (في حال مافي تغيير بالسعر، أو تم إرجاع فرقية)
+        // معالجة حالة المواصلات إذا تم إلغاؤها (تغيير من true إلى false)
+        if ($booking->requires_transport && !$requiresTransportFlag) {
+            // البحث عن الرحلة المرتبطة وحذفها باستخدام SoftDelete
+            $existingTransport = Transport::where('farm_id', $farm->id)
+                ->where('user_id', Auth::id())
+                ->where('status', '!=', 'cancelled')
+                ->latest()
+                ->first();
+
+            if ($existingTransport) {
+                $existingTransport->update(['status' => 'cancelled']);
+                $existingTransport->delete(); // Soft Delete
+            }
+        }
+
+        // معالجة حالة مزامنة التواريخ في حال وجود مواصلات ولم تتغير قيمتها (تعديل وقت المزرعة فقط)
+        if ($booking->requires_transport && $requiresTransportFlag) {
+            $existingTransport = Transport::where('farm_id', $farm->id)
+                ->where('user_id', Auth::id())
+                ->where('status', '!=', 'cancelled')
+                ->latest()
+                ->first();
+
+            if ($existingTransport) {
+                $existingTransport->update([
+                    'Farm_Arrival_Time' => $start,
+                    'Farm_Departure_Time' => $end,
+                ]);
+            }
+        }
+
+        // معالجة حالة إضافة مواصلات جديدة لكن (لا يوجد فرق مالي للسترايب) مثلاً كان الدفع لم يتم بعد
+        if (!$booking->requires_transport && $requiresTransportFlag && $booking->payment_status !== 'paid') {
+            $transport = Transport::create([
+                'user_id' => Auth::id(),
+                'farm_id' => $farm->id,
+                'transport_type' => 'Shuttle',
+                'passengers' => $request->transport_passengers ?? 1,
+                'start_and_return_point' => 'Custom User Location',
+                'pickup_lat' => $request->pickup_lat,
+                'pickup_lng' => $request->pickup_lng,
+                'price' => $transportCost,
+                'distance' => 0,
+                'Farm_Arrival_Time' => $start,
+                'Farm_Departure_Time' => $end,
+                'status' => 'pending',
+                'commission_amount' => $transportCost * 0.10,
+                'net_company_amount' => $transportCost * 0.90
+            ]);
+
+            // تشغيل محرك البحث الآلي عن سائق
+            \App\Services\TransportDispatchAction::dispatchDriver($transport);
+        }
+
+        // تحديث مباشر بالداتابيز (في حال مافي تغيير بالسعر، أو تم إرجاع فرقية، أو لم يتم الدفع مسبقاً)
         $booking->update([
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_time' => $start,
+            'end_time' => $end,
             'event_type' => $request->event_type,
             'total_price' => $newTotalPrice,
+            'requires_transport' => $requiresTransportFlag,
+            'transport_cost' => $transportCost,
+            'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
+            'pickup_lng' => $requiresTransportFlag ? $request->pickup_lng : null,
         ]);
 
         $message = $difference < 0
@@ -328,7 +427,6 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.show', $booking->id)->with('success', $message);
     }
-
     /**
      * تأكيد الدفع للتحديث (Upgrade Success)
      */
@@ -356,15 +454,57 @@ class BookingController extends Controller
             $newEventType = $session->metadata->new_event_type;
             $newTotalPrice = $session->metadata->new_total_price;
 
+            $requiresTransport = filter_var($session->metadata->requires_transport ?? false, FILTER_VALIDATE_BOOLEAN);
+            $transportCost = $session->metadata->transport_cost ?? 0;
+            $pickupLat = $session->metadata->pickup_lat ?? null;
+            $pickupLng = $session->metadata->pickup_lng ?? null;
+            $passengers = $session->metadata->transport_passengers ?? 1;
+
             $booking = FarmBooking::findOrFail($bookingId);
 
-            // حفظ التحديث بالداتابيز وتحديث السعر الجديد!
+            // حفظ التحديث بالداتابيز وتحديث السعر الجديد وحالة المواصلات
             $booking->update([
-                'start_time' => $newStartTime,
-                'end_time' => $newEndTime,
+                'start_time' => Carbon::parse($newStartTime),
+                'end_time' => Carbon::parse($newEndTime),
                 'event_type' => $newEventType,
                 'total_price' => $newTotalPrice,
+                'requires_transport' => $requiresTransport,
+                'transport_cost' => $requiresTransport ? $transportCost : 0,
+                'pickup_lat' => $requiresTransport ? $pickupLat : null,
+                'pickup_lng' => $requiresTransport ? $pickupLng : null,
             ]);
+
+            // التأكد إذا المواصلات تم طلبها حديثاً بعد الدفع ليتم إنشاؤها وإرسال السائق
+            if ($requiresTransport && $pickupLat && $pickupLng) {
+                // التأكد من عدم إنشاء رحلة مزدوجة بالغلط
+                $existingTransport = Transport::where('farm_id', $booking->farm_id)
+                    ->where('user_id', Auth::id())
+                    ->where('status', '!=', 'cancelled')
+                    ->latest()
+                    ->first();
+
+                if (!$existingTransport) {
+                    $transport = Transport::create([
+                        'user_id' => Auth::id(),
+                        'farm_id' => $booking->farm_id,
+                        'transport_type' => 'Shuttle',
+                        'passengers' => $passengers,
+                        'start_and_return_point' => 'Custom User Location',
+                        'pickup_lat' => $pickupLat,
+                        'pickup_lng' => $pickupLng,
+                        'price' => $transportCost,
+                        'distance' => 0,
+                        'Farm_Arrival_Time' => Carbon::parse($newStartTime),
+                        'Farm_Departure_Time' => Carbon::parse($newEndTime),
+                        'status' => 'pending',
+                        'commission_amount' => $transportCost * 0.10,
+                        'net_company_amount' => $transportCost * 0.90
+                    ]);
+
+                    // تشغيل محرك البحث الآلي عن سائق
+                    \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                }
+            }
 
             return redirect()->route('bookings.show', $booking->id)->with('success', 'Booking upgraded successfully! Payment received.');
 
@@ -372,4 +512,5 @@ class BookingController extends Controller
             return redirect()->route('bookings.my_bookings')->with('error', 'Error verifying payment: ' . $e->getMessage());
         }
     }
+
 }

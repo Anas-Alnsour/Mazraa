@@ -12,12 +12,17 @@ use Illuminate\Support\Facades\Auth;
 class SupplyController extends Controller
 {
     // 1. تصفح المتجر (للزبائن)
-    public function index()
+    public function index(Request $request)
     {
-        $supplies = Supply::where('stock', '>', 0)
-            ->with('company')
-            ->latest()
-            ->paginate(12);
+        $query = \App\Models\Supply::query();
+
+        // 👈 فلترة حسب القسم إذا اليوزر كبس على واحد من الأزرار
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category', $request->category);
+        }
+
+        // جلب المنتجات (ويمكنك إضافة with('company') لتقليل الـ Queries)
+        $supplies = $query->with('company')->latest()->paginate(12);
 
         return view('supplies.frontend.index', compact('supplies'));
     }
@@ -71,16 +76,21 @@ class SupplyController extends Controller
     }
 
     // 4. عرض طلباتي (مشترياتي)
-    public function myOrders()
+public function myOrders()
     {
-        $orders = SupplyOrder::with(['supply.company', 'driver'])
-            ->where('user_id', Auth::id())
+        // 💡 التعديل السحري هون: Eager load لـ supply.company
+        $orders = \App\Models\SupplyOrder::with(['supply.company'])
+            ->where('user_id', auth()->id())
             ->latest()
-            ->paginate(10);
+            ->get();
 
-        return view('supplies.frontend.my_orders', compact('orders'));
+        // تجميع الطلبات حسب رقم الفاتورة
+        $groupedOrders = $orders->groupBy(function ($order) {
+            return $order->order_id ?? $order->id;
+        });
+
+        return view('supplies.frontend.my_orders', compact('groupedOrders'));
     }
-
     // 5. تعديل الطلب
     public function editOrder(SupplyOrder $order)
     {

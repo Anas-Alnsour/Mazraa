@@ -10,15 +10,15 @@ use Illuminate\Database\Eloquent\SoftDeletes; // 👈 تمت إضافة الاس
 class Supply extends Model
 {
     use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
-
-    protected $fillable = [
-        'company_id',
-        'name',
-        'description',
-        'price',
-        'stock',
-        'image'
-    ];
+protected $fillable = [
+    'company_id',
+    'name',
+    'description',
+    'category', 
+    'price',
+    'stock',
+    'image',
+];
 
     public function company()
     {

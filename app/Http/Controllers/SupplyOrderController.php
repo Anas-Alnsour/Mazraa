@@ -50,9 +50,9 @@ class SupplyOrderController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Item added to cart! Keep shopping or proceed to checkout.');
+        // 🚀 التعديل السحري هون: التوجيه لصفحة الماركت بليس بدال البقاء بنفس الصفحة
+        return redirect()->route('supplies.market')->with('success', 'Item added to cart! Keep shopping or proceed to checkout.');
     }
-
     public function viewCart()
     {
         $cartItems = SupplyOrder::with('supply.company')
@@ -132,16 +132,18 @@ class SupplyOrderController extends Controller
                 $item->supply->decrement('stock', $item->quantity);
 
                 // تحديث الحالة والعمولات
+                // ملاحظة: بنخلي الحالة pending_payment عشان ما تظهر للشركة إنها انشرت لسا
                 $item->update([
                     'order_id' => $invoiceId,
-                    'status' => 'pending',
+                    'status' => 'pending_payment',
                     'commission_amount' => $commissionAmount,
                     'net_company_amount' => $netCompanyAmount,
                 ]);
             }
         });
 
-        return redirect()->route('orders.my_orders')->with('success', "Order placed successfully! Reference: {$invoiceId}");
+        // 🚀 هون الإبداع: التوجيه لصفحة اختيار الدفع (الخاصة بالمشتريات) بدال صفحة التتبع
+        return redirect()->route('payment.select_supply', ['order_id' => $invoiceId]);
     }
 
     public function placeAll()
@@ -154,10 +156,14 @@ class SupplyOrderController extends Controller
     // 3. تتبع الطلبات وتعديلها (ORDER TRACKING)
     // ==========================================
 
+    /**
+     * عرض طلبات المشتريات الخاصة باليوزر
+     */
     public function myOrders()
     {
-        $orders = SupplyOrder::with(['supply.company', 'driver'])
-            ->where('user_id', Auth::id())
+        // 💡 التعديل هون: Eager load لـ supply.company
+        $orders = \App\Models\SupplyOrder::with(['supply.company'])
+            ->where('user_id', auth()->id())
             ->where('status', '!=', 'cart')
             ->latest()
             ->get();
@@ -166,7 +172,6 @@ class SupplyOrderController extends Controller
             return $order->order_id ?? $order->id;
         });
 
-        // التوجيه لواجهة التتبع الجديدة (Talabat Style)
         return view('supplies.frontend.my_orders', compact('groupedOrders'));
     }
 
