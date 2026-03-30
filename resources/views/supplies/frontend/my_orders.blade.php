@@ -17,7 +17,7 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {{-- 🌟 Header Section --}}
-        <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-6 fade-in-up">
+        <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-6 fade-in-up">
             <div>
                 <h1 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Order <span class="text-[#1d5c42]">Tracking</span></h1>
                 <p class="text-sm font-bold text-gray-400 mt-3 uppercase tracking-widest">Monitor your farm supplies in real-time</p>
@@ -30,6 +30,25 @@
             </div>
         </div>
 
+        {{-- 💡 10-MINUTE CANCELLATION POLICY DISCLAIMER (Jules Banner) --}}
+        <div class="bg-amber-50/80 border border-amber-200 p-6 mb-10 rounded-2xl shadow-sm fade-in-up">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 bg-amber-100 p-2 rounded-xl text-amber-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest mb-1">10-Minute Cancellation Rule</h3>
+                    <div class="text-sm text-amber-800/80 font-medium leading-relaxed">
+                        <p>
+                            To ensure fast dispatching and delivery to your farm, <strong class="text-amber-900">you can only edit or cancel an order within exactly 10 minutes of placing it.</strong> Once this window passes, the order is locked and assigned to a driver.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- 🌟 Flash Messages --}}
         @if(session('success'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-5 rounded-2xl shadow-sm font-bold mb-10 fade-in-up flex items-center gap-4">
@@ -37,6 +56,14 @@
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <p class="text-sm font-bold">{{ session('success') }}</p>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-800 p-5 rounded-2xl shadow-sm font-bold mb-10 fade-in-up flex items-center gap-4">
+                <div class="bg-red-500 p-2 rounded-full text-white shadow-md">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <p class="text-sm font-bold">{{ session('error') }}</p>
             </div>
         @endif
 
@@ -52,7 +79,6 @@
                         $orderDate = $items->first()->created_at;
 
                         // 💡 الـ Business Logic الجديد للتتبع
-                        // بنحدد أي خطوات شغالة بناءً على حالة الطلب الجاية من الداتابيز
                         $isPreparing = in_array($invoiceStatus, ['pending', 'processing', 'accepted', 'ready', 'waiting_driver', 'in_way', 'delivered']);
                         $isWaitingDriver = in_array($invoiceStatus, ['accepted', 'ready', 'waiting_driver', 'in_way', 'delivered']);
                         $isInWay = in_array($invoiceStatus, ['in_way', 'delivered']);
@@ -90,7 +116,7 @@
                                     <div class="w-full text-center py-4 relative z-10 bg-red-50 backdrop-blur-sm rounded-2xl border border-red-100">
                                         <span class="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-red-600">
                                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                                            Order Cancelled / Rejected
+                                            Order Cancelled
                                         </span>
                                     </div>
                                 @else
@@ -180,6 +206,35 @@
                                 <span class="text-3xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($invoiceTotal, 2) }} <span class="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">JOD</span></span>
                             </div>
                         </div>
+
+                        {{-- 💡 10 Minute Cancellation Logic Enforced Frontend --}}
+                        @if(!in_array($invoiceStatus, ['cancelled', 'delivered']))
+                            <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex justify-end items-center gap-4">
+                                @if(now()->diffInMinutes($orderDate) <= 10)
+                                    <span class="text-[10px] font-black text-amber-500 flex items-center gap-2 uppercase tracking-widest">
+                                        <svg class="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {{ 10 - now()->diffInMinutes($orderDate) }} min left to cancel
+                                    </span>
+                                    <form action="{{ route('orders.destroy', $items->first()->id) }}" method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button onclick="return confirm('Are you sure you want to cancel this entire invoice? This action cannot be reversed.');" class="inline-flex items-center px-5 py-2.5 border border-red-200 shadow-sm text-[10px] font-black uppercase tracking-widest rounded-xl text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                            Cancel Invoice
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-[10px] font-black text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        Modification window closed
+                                    </span>
+                                @endif
+                            </div>
+                        @endif
+
                     </div>
                 @endforeach
             </div>

@@ -29,25 +29,26 @@
          @scroll.window="scrolled = (window.pageYOffset > 20)"
          :class="scrolled ? 'pt-2' : 'pt-6'">
 
-        <nav class="pointer-events-auto mx-auto max-w-7xl bg-white/85 backdrop-blur-2xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-full transition-all duration-700 ease-out"
-             :class="scrolled ? 'px-4 py-2 shadow-[0_20px_40px_rgb(0,0,0,0.1)] bg-white/95' : 'px-6 py-3'">
+        <nav class="pointer-events-auto mx-auto max-w-[98%] xl:max-w-7xl 2xl:max-w-[1400px] bg-white/90 backdrop-blur-2xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-full transition-all duration-700 ease-out"
+             :class="scrolled ? 'px-4 py-2 shadow-xl bg-white/95' : 'px-4 xl:px-6 py-3'">
 
             <div x-data="{ mobileMenuOpen: false }" class="flex items-center justify-between">
 
-                {{-- Logo & Desktop Links --}}
-                <div class="flex items-center gap-8">
-                    {{-- Logo --}}
-                    <a href="{{ url('/') }}" class="group flex items-center gap-2 text-2xl md:text-3xl font-black tracking-tighter text-[#0f172a] transition duration-500 hover:opacity-80">
-                        <div class="bg-gradient-to-tr from-[#1d5c42] to-[#2a7a5a] p-1.5 rounded-xl text-white shadow-lg group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
-                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                {{-- 1. Logo (Left Section) --}}
+                <div class="flex items-center justify-start lg:w-1/5 xl:w-1/4">
+                    <a href="{{ url('/') }}" class="group flex items-center gap-2 text-xl md:text-2xl font-black tracking-tighter text-[#0f172a] transition duration-500 hover:opacity-80">
+                        <div class="bg-gradient-to-tr from-[#1d5c42] to-[#2a7a5a] p-1.5 rounded-xl text-white shadow-md group-hover:rotate-6 group-hover:scale-110 transition-all duration-500">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                         </div>
-                        Mazraa<span class="text-[#c2a265]">.com</span>
+                        Mazraa<span class="text-[#c2a265] hidden sm:inline">.com</span>
                     </a>
+                </div>
 
-                    {{-- Desktop Links (Pill Style Hover) --}}
-                    <div class="hidden lg:flex items-center gap-1 bg-gray-100/50 p-1 rounded-full border border-gray-200/50">
+                {{-- 2. Desktop Links (Center Section - Perfectly Centered Pill) --}}
+                <div class="hidden lg:flex items-center justify-center flex-1">
+                    <div class="flex items-center gap-0.5 bg-gray-100/80 p-1.5 rounded-full border border-gray-200/50 shadow-inner">
                         @php
-                            $linkClass = "px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-gray-500 hover:text-[#1d5c42] hover:bg-white hover:shadow-sm transition-all duration-300 whitespace-nowrap";
+                            $linkClass = "px-2.5 xl:px-4 py-2 rounded-full text-[10px] xl:text-xs font-black uppercase tracking-widest text-gray-500 hover:text-[#1d5c42] hover:bg-white hover:shadow-sm transition-all duration-300 whitespace-nowrap";
                             $activeClass = "text-[#1d5c42] bg-white shadow-sm border border-gray-100";
                         @endphp
 
@@ -61,6 +62,7 @@
                             <a href="{{ route('explore') }}" class="{{ $linkClass }} {{ request()->routeIs('explore') ? $activeClass : '' }}">Explore</a>
                             @auth
                                 <a href="{{ route('bookings.my_bookings') }}" class="{{ $linkClass }} {{ request()->routeIs('bookings.*') ? $activeClass : '' }}">Bookings</a>
+                                <a href="{{ route('favorites.index') }}" class="{{ $linkClass }} {{ request()->routeIs('favorites.*') ? $activeClass : '' }}">Favorites</a>
                                 <a href="{{ route('supplies.market') }}" class="{{ $linkClass }} {{ request()->routeIs('supplies.*') ? $activeClass : '' }}">Market</a>
                                 <a href="{{ route('transports.index') }}" class="{{ $linkClass }} {{ request()->routeIs('transports.*') ? $activeClass : '' }}">Transport</a>
                             @endauth
@@ -70,8 +72,8 @@
                     </div>
                 </div>
 
-                {{-- Right Auth Buttons --}}
-                <div class="hidden lg:flex items-center gap-3">
+                {{-- 3. Right Auth Buttons (Right Section) --}}
+                <div class="hidden lg:flex items-center justify-end gap-2 xl:gap-3 lg:w-1/5 xl:w-1/4">
                     @auth
                         @php
                             $role = Auth::user()->role;
@@ -87,18 +89,18 @@
                             $isBusiness = $role !== 'user';
                         @endphp
 
-                        <a href="{{ url($dashboardLink) }}" class="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-[#1d5c42] bg-green-50 rounded-full hover:bg-green-100 hover:shadow-md transition-all duration-300 border border-green-200/50 hover:-translate-y-0.5">
+                        <a href="{{ url($dashboardLink) }}" class="px-4 xl:px-5 py-2.5 text-[10px] xl:text-xs font-black uppercase tracking-widest text-[#1d5c42] bg-green-50 rounded-full hover:bg-green-100 hover:shadow-md transition-all duration-300 border border-green-200/50 hover:-translate-y-0.5 whitespace-nowrap">
                             {{ $isBusiness ? 'Dashboard' : 'Profile' }}
                         </a>
 
                         {{-- User Profile Dropdown --}}
-                        <div class="relative ml-2" x-data="{ profileOpen: false }" @click.away="profileOpen = false">
-                            <button @click="profileOpen = !profileOpen" class="flex items-center gap-3 focus:outline-none pl-4 border-l border-gray-200">
-                                <div class="text-right">
+                        <div class="relative ml-1" x-data="{ profileOpen: false }" @click.away="profileOpen = false">
+                            <button @click="profileOpen = !profileOpen" class="flex items-center gap-2 xl:gap-3 focus:outline-none pl-3 xl:pl-4 border-l border-gray-200">
+                                <div class="text-right hidden xl:block">
                                     <p class="text-xs font-black text-gray-800 leading-tight">{{ explode(' ', Auth::user()->name)[0] }}</p>
                                     <p class="text-[9px] font-black text-[#c2a265] uppercase tracking-widest">{{ str_replace('_', ' ', Auth::user()->role) }}</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1d5c42] to-[#c2a265] text-white flex items-center justify-center font-black shadow-inner border-2 border-white transform transition hover:scale-110 duration-300">
+                                <div class="w-9 h-9 xl:w-10 xl:h-10 rounded-full bg-gradient-to-tr from-[#1d5c42] to-[#c2a265] text-white flex items-center justify-center font-black shadow-inner border-2 border-white transform transition hover:scale-110 duration-300">
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 </div>
                             </button>
@@ -117,7 +119,7 @@
                     @else
                         {{-- Guest Dropdowns --}}
                         <div class="relative" x-data="{ loginOpen: false }" @click.away="loginOpen = false">
-                            <button @click="loginOpen = !loginOpen" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-gray-600 hover:text-[#1d5c42] rounded-full transition-all focus:outline-none hover:bg-gray-50">
+                            <button @click="loginOpen = !loginOpen" class="inline-flex items-center gap-1.5 px-3 xl:px-5 py-2.5 text-[10px] xl:text-xs font-black uppercase tracking-widest text-gray-600 hover:text-[#1d5c42] rounded-full transition-all focus:outline-none hover:bg-gray-50 whitespace-nowrap">
                                 Log in
                                 <svg class="w-4 h-4 transition-transform duration-300" :class="{'rotate-180': loginOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
@@ -145,14 +147,14 @@
                         </div>
 
                         <div class="relative ml-1" x-data="{ regOpen: false }" @click.away="regOpen = false">
-                            <button @click="regOpen = !regOpen" class="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-black uppercase tracking-widest text-white bg-gradient-to-r from-[#1d5c42] to-[#154230] rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 focus:outline-none border border-[#1d5c42]/50">
+                            <button @click="regOpen = !regOpen" class="inline-flex items-center gap-2 px-4 xl:px-6 py-2.5 text-[10px] xl:text-xs font-black uppercase tracking-widest text-white bg-gradient-to-r from-[#1d5c42] to-[#154230] rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 focus:outline-none border border-[#1d5c42]/50 whitespace-nowrap">
                                 Get Started
                                 <svg class="w-4 h-4 transition-transform duration-300 opacity-70" :class="{'rotate-180': regOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="regOpen" x-transition.opacity.duration.200ms x-cloak class="absolute right-0 mt-4 w-60 bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 py-3 z-50 overflow-hidden">
                                 <a href="{{ route('register') }}" class="block px-6 py-3 text-sm font-bold text-[#1d5c42] hover:bg-green-50 transition-colors">Register as User</a>
                                 <div class="border-t border-gray-50 my-1"></div>
-                                <a href="{{ route('partner.register') }}" class="block px-6 py-3 text-sm font-bold text-[#c2a265] hover:bg-amber-50 transition-colors">List Your Farm</a>
+                                <a href="{{ route('become.partner') }}" class="block px-6 py-3 text-sm font-bold text-[#c2a265] hover:bg-amber-50 transition-colors">List Your Farm</a>
                             </div>
                         </div>
                     @endauth
@@ -177,6 +179,14 @@
                 @else
                     <a href="{{ url('/') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Home</a>
                     <a href="{{ route('explore') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-[#1d5c42] bg-green-50">Explore Farms</a>
+
+                    @auth
+                        <a href="{{ route('bookings.my_bookings') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Bookings</a>
+                        <a href="{{ route('favorites.index') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Favorites</a>
+                        <a href="{{ route('supplies.market') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Market</a>
+                        <a href="{{ route('transports.index') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Transport</a>
+                    @endauth
+
                     <a href="{{ route('about') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">About</a>
                     <a href="{{ route('contact') }}" class="block px-4 py-3 rounded-2xl text-sm font-black uppercase text-gray-600 hover:bg-gray-50">Contact</a>
                 @endif

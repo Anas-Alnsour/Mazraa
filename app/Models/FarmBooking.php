@@ -47,4 +47,19 @@ class FarmBooking extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * هل يحق للمستخدم الدفع لشراء المنتجات الآن؟
+     * مسموح فقط: خلال فترة الحجز، أو قبل الحجز بـساعتين كحد أقصى.
+     */
+    public function isWithinSupplyCheckoutWindow(): bool
+    {
+        $now = \Carbon\Carbon::now();
+        // وقت بداية الحجز ناقص ساعتين
+        $twoHoursBeforeStart = \Carbon\Carbon::parse($this->start_time)->subHours(2);
+        $endTime = \Carbon\Carbon::parse($this->end_time);
+
+        return $now->between($twoHoursBeforeStart, $endTime);
+    }
+    
 }

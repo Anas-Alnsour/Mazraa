@@ -27,6 +27,11 @@ use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
 
+// 💡 الكنترولرات الجديدة اللي ضفناها للداشبوردات (عملنالهم Alias عشان ما يتعارضوا مع القدام)
+use App\Http\Controllers\Admin\FinancialController;
+use App\Http\Controllers\Driver\TransportDriverController as DriverDashboardTransportController;
+use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -142,6 +147,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/payouts', [SuperAdminController::class, 'payouts'])->name('payouts');
     Route::post('/payouts/record', [SuperAdminController::class, 'recordPayout'])->name('payouts.record');
 
+    // 💡 راوت المالية الجديد اللي طلبه Jules مدمج هون
+    Route::get('/financials', [FinancialController::class, 'index'])->name('financials');
+
     // Old resources mapped to admin logic
     Route::resource('farms', FarmAdminController::class);
     Route::resource('supplies', SupplyAdminController::class);
@@ -189,16 +197,32 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
     Route::post('dispatch/{id}/accept', [TransportDispatchController::class, 'acceptJob'])->name('dispatch.accept');
 });
 
-// --- [6] SUPPLY DRIVER ---
+// --- [6] SUPPLY DRIVER (Old Routes) ---
 Route::middleware(['auth', 'role:supply_driver'])->prefix('delivery')->name('delivery.')->group(function () {
     Route::get('/orders', [SupplyDriverDashboardController::class, 'index'])->name('orders');
     Route::post('/orders/{orderId}/delivered', [SupplyDriverDashboardController::class, 'markDelivered'])->name('mark_delivered');
 });
 
-// --- [7] TRANSPORT DRIVER ---
+// --- [7] TRANSPORT DRIVER (Old Routes) ---
 Route::middleware(['auth', 'role:transport_driver'])->prefix('shuttle')->name('shuttle.')->group(function () {
     Route::get('/trips', [TransportDriverDashboardController::class, 'index'])->name('trips');
     Route::patch('/trips/{id}/status', [TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
+});
+
+// ==========================================================================
+// 🚀 [8] NEW JULES DRIVER DASHBOARDS
+// ==========================================================================
+
+// --- TRANSPORT DRIVER ROUTES (Jules) ---
+Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
+    Route::get('/dashboard', [DriverDashboardTransportController::class, 'dashboard'])->name('dashboard');
+    Route::patch('/trip/{id}/status', [DriverDashboardTransportController::class, 'updateStatus'])->name('update_status');
+});
+
+// --- SUPPLY DRIVER ROUTES (Jules) ---
+Route::middleware(['auth', 'role:supply_driver'])->prefix('driver/supply')->name('supply.driver.')->group(function () {
+    Route::get('/dashboard', [DriverDashboardSupplyController::class, 'dashboard'])->name('dashboard');
+    Route::patch('/order/{id}/status', [DriverDashboardSupplyController::class, 'updateStatus'])->name('update_status');
 });
 
 // ==========================================================================
@@ -220,5 +244,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/supply/cliq/{order_id}', [PaymentController::class, 'processCliqSupply'])->name('payment.supply.cliq');
     Route::post('/payment/supply/confirm-cliq/{order_id}', [PaymentController::class, 'confirmCliqSupply'])->name('payment.supply.confirm_cliq');
 });
+
+// ==========================================================================
+// 🤝 BECOME A PARTNER / PORTAL LOGIN (Public - No Redirects)
+// ==========================================================================
+// هاد الراوت بيفتح صفحة portal-login تبعتك، ومفتوح للكل عشان ما يعملك Redirect للداشبورد
+Route::get('/become-partner', function () {
+    return view('auth.portal-login');
+})->withoutMiddleware(['auth', 'guest'])->name('become.partner');
 
 require __DIR__ . '/auth.php';

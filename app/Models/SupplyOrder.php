@@ -13,7 +13,7 @@ protected $fillable = [
         'user_id',
         'supply_id',
         'quantity',
-        'total_price', 
+        'total_price',
         'status',
         'order_id',
         'booking_id',
@@ -41,4 +41,14 @@ protected $fillable = [
     {
         return $this->belongsTo(FarmBooking::class, 'booking_id');
     }
+
+    /**
+     * هل يحق للمستخدم تعديل أو إلغاء الطلب؟
+     * مسموح فقط خلال 10 دقائق من إنشاء الطلب.
+     */
+    public function canBeModifiedOrCancelled(): bool
+    {
+        return $this->created_at->diffInMinutes(\Carbon\Carbon::now()) <= 10;
+    }
+    
 }

@@ -173,9 +173,20 @@
                         <a href="{{ route('explore') }}" class="px-10 py-5 bg-[#c2a265] hover:bg-[#a3854d] text-[#020617] rounded-full font-black uppercase tracking-widest transition-transform hover:scale-105 shadow-xl w-full sm:w-auto">
                             Explore Escapes
                         </a>
-                        <a href="{{ route('partner.register') }}" class="px-10 py-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full font-black uppercase tracking-widest transition-transform hover:scale-105 shadow-xl backdrop-blur-md w-full sm:w-auto">
-                            List Your Farm
-                        </a>
+
+{{-- 💡 التوجيه الذكي --}}
+                        @if(auth()->check() && auth()->user()->role === 'farm_owner')
+                            {{-- إذا صاحب مزرعة، وديه يضيف مزرعة --}}
+                            <a href="{{ route('owner.farms.create') }}" class="px-10 py-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full font-black uppercase tracking-widest transition-transform hover:scale-105 shadow-xl backdrop-blur-md w-full sm:w-auto">
+                                Add Your Farm
+                            </a>
+                        @else
+                            {{-- إذا مش مسجل، أو مسجل كزبون عادي، وديه لصفحة الشراكة المفتوحة --}}
+                            <a href="{{ route('become.partner') }}" class="px-10 py-5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-full font-black uppercase tracking-widest transition-transform hover:scale-105 shadow-xl backdrop-blur-md w-full sm:w-auto">
+                                List Your Farm
+                            </a>
+                        @endif
+
                     </div>
                 </div>
             </div>

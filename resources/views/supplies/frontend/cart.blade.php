@@ -37,6 +37,26 @@
             @endif
         </div>
 
+        {{-- 💡 STRICT TIMING POLICY DISCLAIMER (دمج كود Jules بطريقة أنيقة) --}}
+        <div class="bg-blue-50/80 border border-blue-100 p-6 mb-8 rounded-2xl shadow-sm fade-in-up">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 bg-blue-100 p-2 rounded-xl text-blue-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black text-blue-900 uppercase tracking-widest mb-1">Strict Checkout Policy</h3>
+                    <div class="text-sm text-blue-800/80 font-medium leading-relaxed">
+                        <p>
+                            You may add items to your cart at any time. However, to ensure fresh and prompt delivery,
+                            <strong class="text-blue-900">checkout and payment are strictly allowed ONLY during your farm booking duration, or exactly 2 hours before your booking starts.</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- 🌟 Flash Messages --}}
         @if(session('error'))
             <div class="bg-red-50 border border-red-200 text-red-800 p-5 rounded-2xl shadow-sm font-bold mb-8 fade-in-up flex items-center gap-4">
@@ -48,8 +68,8 @@
         @endif
 
         @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-800 p-5 rounded-2xl shadow-sm font-bold mb-8 fade-in-up flex items-center gap-4">
-                <div class="bg-green-500 p-2 rounded-full text-white shadow-md">
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-5 rounded-2xl shadow-sm font-bold mb-8 fade-in-up flex items-center gap-4">
+                <div class="bg-emerald-500 p-2 rounded-full text-white shadow-md">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <p class="text-sm font-bold">{{ session('success') }}</p>
@@ -185,7 +205,6 @@
                                 Secure Encrypted Checkout
                             </div>
                             <div class="flex gap-3 opacity-60">
-                                {{-- Fake Payment Badges --}}
                                 <div class="w-10 h-6 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-[8px] font-black text-gray-500">VISA</div>
                                 <div class="w-10 h-6 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-[8px] font-black text-gray-500">MC</div>
                                 <div class="w-10 h-6 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-[8px] font-black text-gray-500">CLIQ</div>
