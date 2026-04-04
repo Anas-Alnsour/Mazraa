@@ -21,7 +21,7 @@ class SupplyCompanyDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        // 👈 التعديل الخطير والمهم: جلب طلبات هذه الشركة فقط مع الـ Eager Loading لمنع N+1
+        // جلب طلبات هذه الشركة فقط مع الـ Eager Loading لمنع N+1
         $recentOrders = SupplyOrder::with(['user', 'supply', 'driver'])
             ->whereHas('supply', function($query) use ($user) {
                 $query->where('company_id', $user->id); // التأكد إن المنتج تابع للشركة الحالية
@@ -38,7 +38,7 @@ class SupplyCompanyDashboardController extends Controller
         // 2. Financial Reports
         $completedOrders = $recentOrders->whereIn('status', ['completed', 'delivered']);
 
-        $grossSales = $completedOrders->sum('total_price'); // تأكد إنها total_price أو حسب ما هو موجود بالداتا بيس عندك
+        $grossSales = $completedOrders->sum('total_price');
         $platformCommission = $completedOrders->sum('commission_amount');
         $netProfit = $completedOrders->sum('net_company_amount');
 
@@ -53,7 +53,8 @@ class SupplyCompanyDashboardController extends Controller
             ->where('company_id', $user->id)
             ->get();
 
-        return view('supplies.dashboard', compact(
+        // 💡 التعديل هون: غيرنا المسار ليتطابق مع مكان الملف الحقيقي في مشروعك
+        return view('admin.supplies.dashboard', compact(
             'recentOrders',
             'totalSupplies',
             'totalOrders',

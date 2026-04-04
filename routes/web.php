@@ -13,8 +13,6 @@ use App\Http\Controllers\TransportController;
 use App\Http\Controllers\Admin\FarmAdminController;
 use App\Http\Controllers\SupplyCompanyDashboardController;
 use App\Http\Controllers\TransportCompanyDashboardController;
-use App\Http\Controllers\SupplyDriverDashboardController;
-use App\Http\Controllers\TransportDriverDashboardController;
 use App\Http\Controllers\Admin\ContactAdminController;
 use App\Http\Controllers\Admin\SupplyAdminController;
 use App\Http\Controllers\Admin\SuperAdminController;
@@ -28,6 +26,8 @@ use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\FinancialController;
+
+// 💡 الكنترولرات الجديدة للداشبوردات (عملنالهم Alias عشان ما يتعارضوا مع القدام)
 use App\Http\Controllers\Driver\TransportDriverController as DriverDashboardTransportController;
 use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
 
@@ -53,13 +53,13 @@ Route::get('/market/supplies', [SupplyController::class, 'index'])->name('suppli
 Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name('supplies.show');
 
 // --------------------------------------------------------------------------
-// 🔐 B2B Portal Login
+// 🔐 B2B Portal Login & Registration
 // --------------------------------------------------------------------------
 Route::middleware('guest')->group(function () {
     Route::get('/portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
     Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
 
-    // راوتات السائقين الجديدة
+// راوتات السائقين المخصصة (دخول)
     Route::get('/portal/transport-driver/login', function () {
         return view('auth.transport-driver-login');
     })->name('transport-driver.login');
@@ -71,7 +71,6 @@ Route::middleware('guest')->group(function () {
     // راوتات تسجيل شريك جديد (صاحب مزرعة)
     Route::get('/partner/register', [PartnerRegisteredUserController::class, 'create'])->name('partner.register');
     Route::post('/partner/register', [PartnerRegisteredUserController::class, 'store'])->name('partner.register.store');
-
 });
 
 // --------------------------------------------------------------------------
@@ -180,28 +179,22 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
 
-    // 💡 راوت المالية مع المنطق البرمجي (البزنس لوجيك) - تم تعديل end_date إلى end_time
+    // 💡 راوت المالية مع المنطق البرمجي (البزنس لوجيك)
     Route::get('/financials', function() {
         $userId = auth()->id();
-        // بنجيب كل أرقام المزارع اللي بيملكها هاد اليوزر
         $farmIds = \App\Models\Farm::where('owner_id', $userId)->pluck('id');
 
-        // 🟢 الرصيد المتاح للسحب: (الحجوزات المؤكدة + انتهى وقتها)
         $availableBalance = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'confirmed')
-            ->where('end_time', '<', now()) // 👈 التعديل هون
+            ->where('end_time', '<', now())
             ->sum('total_price');
 
-        // 🟡 الرصيد المعلق: (الحجوزات المؤكدة أو قيد الانتظار + لسا ما انتهى وقتها)
         $pendingRevenue = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
             ->whereIn('status', ['confirmed', 'pending'])
-            ->where('end_time', '>=', now()) // 👈 التعديل هون
+            ->where('end_time', '>=', now())
             ->sum('total_price');
 
-        // الرصيد الكلي
         $lifetimeEarnings = $availableBalance;
-
-        // الترانزاكشنز (لو في جدول، أو منبعتها فاضية مؤقتاً)
         $transactions = collect();
 
         return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
@@ -220,7 +213,6 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
         $callback = function() {
             $file = fopen('php://output', 'w');
             fputcsv($file, ['Date', 'Description', 'Amount (JOD)', 'Status', 'Reference ID']);
-            // سطر بيانات وهمي عشان تتأكد إنه نزل صح
             fputcsv($file, [date('Y-m-d'), 'Test Booking Revenue', '150.00', 'Cleared', '#TEST-9999']);
             fclose($file);
         };
@@ -248,20 +240,8 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
     Route::post('dispatch/{id}/accept', [TransportDispatchController::class, 'acceptJob'])->name('dispatch.accept');
 });
 
-// --- [6] SUPPLY DRIVER (Old Routes) ---
-Route::middleware(['auth', 'role:supply_driver'])->prefix('delivery')->name('delivery.')->group(function () {
-    Route::get('/orders', [SupplyDriverDashboardController::class, 'index'])->name('orders');
-    Route::post('/orders/{orderId}/delivered', [SupplyDriverDashboardController::class, 'markDelivered'])->name('mark_delivered');
-});
-
-// --- [7] TRANSPORT DRIVER (Old Routes) ---
-Route::middleware(['auth', 'role:transport_driver'])->prefix('shuttle')->name('shuttle.')->group(function () {
-    Route::get('/trips', [TransportDriverDashboardController::class, 'index'])->name('trips');
-    Route::patch('/trips/{id}/status', [TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
-});
-
 // ==========================================================================
-// 🚀 [8] NEW JULES DRIVER DASHBOARDS
+// 🚀 [8] NEW JULES DRIVER DASHBOARDS (Cleaned up from Old Routes)
 // ==========================================================================
 
 // --- TRANSPORT DRIVER ROUTES (Jules) ---

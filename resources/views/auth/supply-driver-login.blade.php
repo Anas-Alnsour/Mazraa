@@ -54,18 +54,18 @@
              ========================================== --}}
         <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#020617]">
 
-            {{-- Background Image (Local Image as you requested) --}}
-            <img src="{{ asset('backgrounds/home.JPG') }}"
-                 alt="Supply Background"
-                 class="absolute inset-0 w-full h-full object-cover opacity-40 animate-slow-zoom grayscale-[20%]">
+            {{-- Animated Background Image - Logistics/Warehouse Theme --}}
+            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000&auto=format&fit=crop"
+                 alt="Supply Logistics Background"
+                 class="absolute inset-0 w-full h-full object-cover opacity-50 animate-slow-zoom">
 
-            {{-- Deep Gradient Overlay (Teal/Dark Slate Tint) --}}
+            {{-- Deep Gradient Overlay (Dark Gray/Teal Tint) --}}
             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/70 to-transparent"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-[#020617]/80 to-transparent"></div>
 
-            {{-- Glowing Orbs (Supply Colors: Teal/Cyan) --}}
+            {{-- Glowing Orbs (Supply Colors: Teal/Emerald) --}}
             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[120px] animate-float pointer-events-none z-0"></div>
-            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-[120px] animate-float pointer-events-none z-0" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-600/20 rounded-full blur-[120px] animate-float pointer-events-none z-0" style="animation-delay: 2s;"></div>
 
             {{-- Floating Badge --}}
             <div class="absolute top-12 left-12 glass-panel rounded-full px-6 py-2.5 flex items-center gap-3 animate-float z-10" style="animation-duration: 4s;">
@@ -74,7 +74,7 @@
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
                 </span>
                 <span class="text-white text-xs font-black uppercase tracking-widest">
-                    Supply Chain Network
+                    Supply Delivery Network
                 </span>
             </div>
 
@@ -85,20 +85,20 @@
 
                     <div class="mb-8 flex items-center gap-4">
                         <div class="p-3.5 bg-white/10 rounded-2xl border border-white/20 shadow-inner backdrop-blur-md">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110-4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                         </div>
                         <h2 class="text-3xl font-black text-white tracking-tighter">Mazraa<span class="text-teal-400">.com</span></h2>
                     </div>
 
                     <h1 class="text-5xl font-black text-white mb-6 leading-[1.1] tracking-tight drop-shadow-md">
-                        Supply <br>
+                        Delivery <br>
                         <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-                            Delivery.
+                            Operations.
                         </span>
                     </h1>
 
                     <p class="text-lg text-gray-200 font-medium leading-relaxed drop-shadow-md">
-                        Track supply orders, navigate to farms, and confirm drop-offs instantly from your dashboard.
+                        View your assigned deliveries, navigate routes, and update order statuses in real-time.
                     </p>
                 </div>
             </div>
@@ -124,10 +124,10 @@
 
                 {{-- Mobile Logo (Only visible on small screens) --}}
                 <div class="lg:hidden mb-12 flex items-center gap-3 transition-all duration-700 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                    <div class="bg-gradient-to-r from-teal-500 to-cyan-600 p-2.5 rounded-xl text-white shadow-lg">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110-4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    <div class="bg-gradient-to-r from-teal-500 to-emerald-600 p-2.5 rounded-xl text-white shadow-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                     </div>
-                    <span class="text-3xl font-black tracking-tighter text-gray-900">Mazraa<span class="text-teal-600">.com</span></span>
+                    <span class="text-3xl font-black tracking-tighter text-gray-900">Mazraa<span class="text-teal-500">.com</span></span>
                 </div>
 
                 {{-- Headers --}}
@@ -144,8 +144,9 @@
 
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
-                    {{-- Hidden input if needed to identify supply driver login --}}
-                    <input type="hidden" name="supply_driver_login" value="1">
+
+                    {{-- 💡 السر هنا: تأكدنا إن الـ Name هو portal_login --}}
+                    <input type="hidden" name="portal_login" value="1">
 
                     {{-- Email Input --}}
                     <div class="group transition-all duration-700 delay-200 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
@@ -198,7 +199,7 @@
                     {{-- Submit Button --}}
                     <div class="pt-6 transition-all duration-700 delay-500 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
                         <button type="submit"
-                            class="relative w-full flex justify-center py-5 px-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-cyan-600 hover:to-teal-700 shadow-[0_10px_25px_rgba(20,184,166,0.4)] focus:outline-none transition-all duration-300 ease-out overflow-hidden group hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
+                            class="relative w-full flex justify-center py-5 px-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-[0_10px_25px_rgba(20,184,166,0.4)] focus:outline-none transition-all duration-300 ease-out overflow-hidden group hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
                             <span class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></span>
                             <span class="relative z-10 flex items-center gap-2">
                                 Sign In

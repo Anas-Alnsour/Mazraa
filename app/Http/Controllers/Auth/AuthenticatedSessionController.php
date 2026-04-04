@@ -62,19 +62,19 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
         session(['role' => $user->role]);
 
-        // توجيه صارم وإجباري (تم تصحيح المسارات لتطابق web.php 100%)
-$redirectUrl = match ($user->role) {
+        // توجيه صارم وإجباري بناءً على الداشبوردات الجديدة
+        $redirectUrl = match ($user->role) {
             'admin'             => '/admin',
-            'farm_owner'        => '/owner/dashboard', 
+            'farm_owner'        => '/owner/dashboard',
             'supply_company'    => '/supplies/dashboard',
             'transport_company' => '/transport/dashboard',
-            'supply_driver'     => '/delivery/orders',
-            'transport_driver'  => '/shuttle/trips',
+            'supply_driver'     => '/driver/supply/dashboard',       // 👈 التعديل الصحيح للسائق
+            'transport_driver'  => '/driver/transport/dashboard',    // 👈 التعديل الصحيح للسائق
             'user'              => '/dashboard',
             default             => '/',
         };
 
-        // إرجاع توجيه إجباري (تم مسح intended)
+        // إرجاع توجيه إجباري
         return redirect($redirectUrl);
     }
 

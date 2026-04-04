@@ -124,7 +124,9 @@
                                 Partner Portal
                                 <svg class="w-3 h-3 transition-transform duration-300" :class="{'rotate-180': partnerOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
-                            <div x-show="partnerOpen" x-transition.opacity.duration.200ms x-cloak class="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 py-3 z-50 overflow-hidden">
+                            <div x-show="partnerOpen" x-transition.opacity.duration.200ms x-cloak class="absolute right-0 mt-4 w-72 bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 py-3 z-50 overflow-hidden">
+
+                                {{-- Farm Owners Section --}}
                                 <div class="px-5 pb-2 pt-1 text-[9px] font-black text-gray-400 uppercase tracking-widest">Farm Owners</div>
 
                                 <a href="{{ route('partner.register') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-[#1d5c42] hover:bg-green-50 transition-colors group">
@@ -138,6 +140,23 @@
                                 </a>
 
                                 <div class="border-t border-gray-100 my-2"></div>
+
+                                {{-- B2B Companies Section --}}
+                                <div class="px-5 pb-2 pt-1 text-[9px] font-black text-gray-400 uppercase tracking-widest">B2B Companies</div>
+
+                                <a href="{{ route('portal.login') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-indigo-50 transition-colors group">
+                                    <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-500 group-hover:text-white transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                                    Supply Company Login
+                                </a>
+
+                                <a href="{{ route('portal.login') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-rose-50 transition-colors group">
+                                    <div class="p-1.5 bg-rose-50 text-rose-600 rounded-lg group-hover:bg-rose-500 group-hover:text-white transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                                    Transport Company Login
+                                </a>
+
+                                <div class="border-t border-gray-100 my-2"></div>
+
+                                {{-- Fleet & Logistics Section --}}
                                 <div class="px-5 pb-2 pt-1 text-[9px] font-black text-gray-400 uppercase tracking-widest">Fleet & Logistics</div>
 
                                 <a href="{{ route('transport-driver.login') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-amber-50 transition-colors group">
@@ -207,8 +226,15 @@
                         {{-- New Clear Mobile Layout for B2B / B2C --}}
                         <div class="mb-4 bg-amber-50/50 rounded-2xl p-2 border border-amber-100/50">
                             <div class="text-[10px] font-black text-[#c2a265] uppercase tracking-widest px-2 mb-2 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> For Business Partners</div>
+
+                            {{-- Farm Owners --}}
                             <a href="{{ route('partner.register') }}" class="block px-4 py-3 rounded-xl text-sm font-black uppercase text-[#1d5c42] hover:bg-green-50">List Your Farm (Sign Up)</a>
-                            <a href="{{ route('portal.login') }}" class="block px-4 py-3 rounded-xl text-sm font-black uppercase text-gray-700 hover:bg-gray-100">Partner Login</a>
+                            <a href="{{ route('portal.login') }}" class="block px-4 py-3 rounded-xl text-sm font-black uppercase text-gray-700 hover:bg-gray-100">Owner Login</a>
+
+                            {{-- B2B Companies --}}
+                            <div class="border-t border-amber-100 my-2 mx-2"></div>
+                            <a href="{{ route('portal.login') }}" class="block px-4 py-2.5 rounded-xl text-xs font-black uppercase text-indigo-700 hover:bg-indigo-50">Supply Company Login</a>
+                            <a href="{{ route('portal.login') }}" class="block px-4 py-2.5 rounded-xl text-xs font-black uppercase text-rose-700 hover:bg-rose-50">Transport Company Login</a>
                         </div>
 
                         <div class="mb-2 px-2">

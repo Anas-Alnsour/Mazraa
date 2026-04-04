@@ -142,11 +142,10 @@
 
                 <x-auth-session-status class="mb-6" :status="session('status')" />
 
-                {{-- Update action route as needed if it differs from default login --}}
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
-                    {{-- Hidden input if needed to identify driver login --}}
-                    <input type="hidden" name="transport_driver_login" value="1">
+                    {{-- 💡 التعديل هنا: غيرت الاسم ليكون portal_login --}}
+                    <input type="hidden" name="portal_login" value="1">
 
                     {{-- Email Input --}}
                     <div class="group transition-all duration-700 delay-200 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
