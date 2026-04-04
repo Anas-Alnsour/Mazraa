@@ -1,260 +1,198 @@
-<x-dashboard-layout>
+<x-owner-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-black text-3xl text-gray-900 tracking-tight tracking-tighter">Farm Builder</h2>
-                <p class="text-sm text-green-600 font-bold mt-1 uppercase tracking-widest">Interactive Dashboard v2.5</p>
-            </div>
-            <a href="{{ route('owner.farms.index') }}" class="group bg-white hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-6 rounded-2xl border border-gray-200 shadow-sm transition-all flex items-center gap-2">
-                <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back
+        <div class="flex items-center gap-4">
+            <a href="{{ route('owner.farms.index') }}" class="p-2 text-gray-400 hover:bg-gray-100 hover:text-[#020617] rounded-full transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
+            <div>
+                <h1 class="text-2xl font-extrabold text-[#020617] tracking-tight">List a New Farm</h1>
+                <p class="text-sm text-gray-500 mt-1">Fill out the details below to add a new property to your portfolio.</p>
+            </div>
         </div>
     </x-slot>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        [x-cloak] { display: none !important; }
-        #map { height: 500px; width: 100%; border-radius: 2rem; z-index: 1 !important; }
-        .leaflet-container { z-index: 1 !important; }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
-    </style>
+    <div class="pb-24">
+        <!-- Main Form -->
+        <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="max-w-5xl mx-auto space-y-8">
+            @csrf
 
-    <div class="py-10" x-data="farmGallery()">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-
+            <!-- Form Validation Errors (Global) -->
             @if ($errors->any())
-                <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl relative mb-8 shadow-sm">
-                    <ul class="list-disc pl-5 font-medium">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <div class="p-4 rounded-xl bg-red-50 border border-red-200 shadow-sm animate-fade-in-up">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div>
+                            <h3 class="text-sm font-bold text-red-800">Please fix the following errors:</h3>
+                            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             @endif
 
-            <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8" id="farmForm">
-                @csrf
-
-                {{-- 1. Farm Details --}}
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
-                    <div class="flex items-center gap-3 mb-8 border-b pb-4">
-                        <div class="p-2 bg-blue-100 rounded-xl text-blue-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">Basic Details</h3>
+            <!-- Section 1: General Information -->
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-[#020617] flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#c2a265]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        General Information
+                    </h3>
+                </div>
+                <div class="p-6 sm:p-8 space-y-6">
+                    <div>
+                        <label for="name" class="block text-sm font-bold text-gray-700 mb-2">Farm Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="name" name="name" value="{{ old('name') }}" placeholder="e.g., Sunset Valley Oasis" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium" required>
+                        @error('name') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="space-y-6">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Farm Name *</label>
-                            <input type="text" name="name" value="{{ old('name') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="e.g., The Golden Farm">
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Description *</label>
-                            <textarea name="description" rows="4" required class="w-full rounded-[2rem] border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-medium text-gray-800" placeholder="Describe the amenities, rules, and vibe of your farm...">{{ old('description') }}</textarea>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Price Per Shift (JOD) *</label>
-                                <input type="number" step="0.01" name="price_per_night" value="{{ old('price_per_night') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="150.00">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2 px-1">Capacity (Guests) *</label>
-                                <input type="number" name="capacity" value="{{ old('capacity') }}" required class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-4 px-6 transition-all font-bold text-gray-800" placeholder="e.g., 25">
-                            </div>
-                        </div>
+                    <div>
+                        <label for="description" class="block text-sm font-bold text-gray-700 mb-2">Description <span class="text-red-500">*</span></label>
+                        <textarea id="description" name="description" rows="5" placeholder="Describe the atmosphere, features, and unique selling points..." class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium resize-y" required>{{ old('description') }}</textarea>
+                        <p class="mt-2 text-xs text-gray-500">Highlight what makes your farm special to attract more bookings.</p>
+                        @error('description') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                     </div>
                 </div>
+            </div>
 
-                {{-- 2. Farm Photos --}}
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
-                    <div class="flex items-center gap-3 mb-8 border-b pb-4">
-                        <div class="p-2 bg-green-100 rounded-xl text-green-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">Farm Photos Gallery</h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <div class="space-y-4">
-                            <label class="block text-sm font-black text-gray-700 uppercase">Main Cover Image *</label>
-                            <div class="relative group h-72 rounded-[2.5rem] overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center transition-all hover:bg-gray-100 hover:border-gray-300">
-                                <template x-if="mainPreview">
-                                    <div class="relative w-full h-full">
-                                        <img :src="mainPreview" class="w-full h-full object-cover cursor-zoom-in" @click="showFull(mainPreview)">
-                                        <button type="button" @click="mainPreview = null; $refs.mainInput.value = ''" class="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-colors z-30">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    </div>
-                                </template>
-                                <div x-show="!mainPreview" class="text-center">
-                                    <div class="mx-auto w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
-                                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    </div>
-                                    <p class="text-[10px] font-black text-gray-400 tracking-widest uppercase">Upload Cover</p>
+            <!-- Section 2: Pricing & Accommodations -->
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-[#020617] flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Pricing & Capacity
+                    </h3>
+                </div>
+                <div class="p-6 sm:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Database Column: price_per_night -->
+                        <div>
+                            <label for="price_per_night" class="block text-sm font-bold text-gray-700 mb-2">Price Per Night (JOD) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 font-bold">JD</span>
                                 </div>
-                                <input type="file" name="image" x-ref="mainInput" required accept="image/jpeg,image/png,image/jpg,image/webp" class="absolute inset-0 opacity-0 cursor-pointer z-20" @change="updateMain">
+                                <input type="number" step="0.01" min="0" id="price_per_night" name="price_per_night" value="{{ old('price_per_night') }}" placeholder="0.00" class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium" required>
                             </div>
+                            @error('price_per_night') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
                         </div>
 
-                        <div class="space-y-4">
-                            <label class="block text-sm font-black text-gray-700 uppercase">Additional Photos (<span x-text="galleryPreviews.length"></span>)</label>
-                            <div class="grid grid-cols-2 gap-4 h-72 overflow-y-auto custom-scrollbar pr-2">
-                                <template x-for="(item, index) in galleryPreviews" :key="index">
-                                    <div class="relative h-32 rounded-3xl overflow-hidden group shadow-sm border border-gray-100">
-                                        <img :src="item.src" class="w-full h-full object-cover cursor-zoom-in" @click="showFull(item.src)">
-                                        <button type="button" @click="removeGallery(index)" class="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white p-1.5 rounded-full hover:bg-red-500 transition-colors">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    </div>
-                                </template>
-                                <label class="h-32 rounded-3xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:bg-green-50 hover:border-green-400 transition-all">
-                                    <input type="file" name="gallery[]" multiple accept="image/jpeg,image/png,image/jpg,image/webp" class="hidden" @change="updateGallery">
-                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <div>
+                            <label for="capacity" class="block text-sm font-bold text-gray-700 mb-2">Max Guests <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                </div>
+                                <input type="number" min="1" id="capacity" name="capacity" value="{{ old('capacity') }}" placeholder="10" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium" required>
+                            </div>
+                            @error('capacity') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="rooms" class="block text-sm font-bold text-gray-700 mb-2">Total Rooms <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                </div>
+                                <input type="number" min="1" id="rooms" name="rooms" value="{{ old('rooms') }}" placeholder="3" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium" required>
+                            </div>
+                            @error('rooms') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Location -->
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-[#020617] flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Location Details
+                    </h3>
+                </div>
+                <div class="p-6 sm:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="region" class="block text-sm font-bold text-gray-700 mb-2">Governorate / Region <span class="text-red-500">*</span></label>
+                            <select id="region" name="region" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium appearance-none" required>
+                                <option value="" disabled {{ old('region') ? '' : 'selected' }}>Select Region</option>
+                                <option value="Amman" {{ old('region') == 'Amman' ? 'selected' : '' }}>Amman</option>
+                                <option value="Zarqa" {{ old('region') == 'Zarqa' ? 'selected' : '' }}>Zarqa</option>
+                                <option value="Irbid" {{ old('region') == 'Irbid' ? 'selected' : '' }}>Irbid</option>
+                                <option value="Aqaba" {{ old('region') == 'Aqaba' ? 'selected' : '' }}>Aqaba</option>
+                                <option value="Madaba" {{ old('region') == 'Madaba' ? 'selected' : '' }}>Madaba</option>
+                                <option value="Jerash" {{ old('region') == 'Jerash' ? 'selected' : '' }}>Jerash</option>
+                                <option value="Ajloun" {{ old('region') == 'Ajloun' ? 'selected' : '' }}>Ajloun</option>
+                                <option value="Salt" {{ old('region') == 'Salt' ? 'selected' : '' }}>Salt / Balqa</option>
+                                <option value="Karak" {{ old('region') == 'Karak' ? 'selected' : '' }}>Karak</option>
+                                <option value="Tafilah" {{ old('region') == 'Tafilah' ? 'selected' : '' }}>Tafilah</option>
+                                <option value="Maan" {{ old('region') == 'Maan' ? 'selected' : '' }}>Ma'an</option>
+                                <option value="Mafraq" {{ old('region') == 'Mafraq' ? 'selected' : '' }}>Mafraq</option>
+                            </select>
+                            @error('region') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label for="city" class="block text-sm font-bold text-gray-700 mb-2">City / Area <span class="text-red-500">*</span></label>
+                            <input type="text" id="city" name="city" value="{{ old('city') }}" placeholder="e.g., Dead Sea, Sweimeh" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-colors text-[#020617] font-medium" required>
+                            @error('city') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Media -->
+            <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-lg font-bold text-[#020617] flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Media Gallery
+                    </h3>
+                </div>
+                <div class="p-6 sm:p-8">
+                    <!-- Expected database handler assumes single main_image, but you can update controller for arrays if needed -->
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Primary Farm Image <span class="text-red-500">*</span></label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-2xl hover:border-[#1d5c42]/50 hover:bg-gray-50 transition-colors group relative cursor-pointer overflow-hidden">
+                        <div class="space-y-2 text-center relative z-10">
+                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
+                                <svg class="w-8 h-8 text-gray-400 group-hover:text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            </div>
+                            <div class="flex flex-col items-center text-sm text-gray-600">
+                                <label for="main_image" class="relative cursor-pointer rounded-md font-bold text-[#1d5c42] hover:text-[#154531] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#1d5c42]">
+                                    <span>Upload a file</span>
+                                    <input id="main_image" name="main_image" type="file" class="sr-only" accept="image/*" required>
                                 </label>
+                                <p class="pl-1">or drag and drop</p>
                             </div>
+                            <p class="text-xs text-gray-500 font-medium">PNG, JPG, WEBP up to 5MB</p>
                         </div>
                     </div>
+                    @error('main_image') <p class="mt-2 text-xs text-red-500 font-medium">{{ $message }}</p> @enderror
                 </div>
+            </div>
 
-                {{-- 3. Location & Mapping --}}
-                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 sm:p-10">
-                    <div class="flex items-center gap-3 mb-8 border-b pb-4">
-                        <div class="p-2 bg-amber-100 rounded-xl text-amber-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <h3 class="text-xl font-black text-gray-800 uppercase tracking-tight">Location & Mapping</h3>
-                    </div>
+            <!-- Sticky Action Bar -->
+            <div class="fixed bottom-0 inset-x-0 sm:static sm:bottom-auto sm:inset-x-auto z-20 bg-white sm:bg-transparent border-t border-gray-200 sm:border-t-0 p-4 sm:p-0 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] sm:shadow-none flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4 mt-8">
+                <a href="{{ route('owner.farms.index') }}" class="w-full sm:w-auto px-6 py-3.5 bg-white sm:bg-white hover:bg-gray-50 text-gray-700 text-sm font-bold rounded-xl transition-all border border-gray-200 shadow-sm text-center">
+                    Cancel
+                </a>
+                <button class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1d5c42] hover:bg-[#154531] text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-[#1d5c42]/20 hover:shadow-xl hover:-translate-y-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Send for Approval
+                </button>
+            </div>
 
-                    <div class="space-y-6">
-                        <div class="relative group">
-                            <label for="location" class="block text-sm font-bold text-gray-700 mb-2 px-1">Farm Address / Area Search *</label>
-                            <input type="text" name="location" id="location" value="{{ old('location') }}" required
-                                class="w-full rounded-2xl border-gray-200 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 py-5 px-8 transition-all font-bold text-gray-800"
-                                placeholder="Search for a city or district...">
-                            <div id="search-loading" class="absolute right-6 top-14 hidden">
-                                <svg class="animate-spin h-5 w-5 text-green-500" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            </div>
-                        </div>
-
-                        <div id="map"></div>
-
-                        <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
-                        <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
-                    </div>
-                </div>
-
-                {{-- Action Button --}}
-                <div class="flex flex-col md:flex-row items-center justify-between bg-gray-900 rounded-[3rem] p-10 text-white gap-8 shadow-2xl">
-                    <div class="text-center md:text-left">
-                        <p class="font-black text-2xl leading-tight tracking-tighter uppercase">Launch Listing</p>
-                        <p class="text-gray-400 text-sm mt-1">Review your location and gallery before publishing.</p>
-                    </div>
-                    <button type="submit" class="w-full md:w-auto bg-green-500 hover:bg-green-400 text-white font-black py-6 px-20 rounded-2xl shadow-[0_10px_40px_rgba(34,197,94,0.3)] transition-all transform hover:-translate-y-1 active:scale-95 text-lg">
-                        SAVE FARM
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        {{-- Lightbox for Images --}}
-        <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-10 overflow-hidden" @click.self="lightboxOpen = false">
-            <button @click="lightboxOpen = false" class="absolute top-10 right-10 text-white hover:text-green-500 transition-colors">
-                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
-            <img :src="lightboxSrc" class="max-w-full max-h-full rounded-2xl shadow-2xl object-contain animate-fade-in">
-        </div>
+        </form>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Script to preview selected file name (Optional visual enhancement) -->
     <script>
-        function farmGallery() {
-            return {
-                mainPreview: null,
-                galleryPreviews: [],
-                lightboxOpen: false,
-                lightboxSrc: '',
-                updateMain(e) {
-                    const file = e.target.files[0];
-                    if (file) this.mainPreview = URL.createObjectURL(file);
-                },
-                updateGallery(e) {
-                    const files = Array.from(e.target.files);
-                    files.forEach(file => {
-                        this.galleryPreviews.push({
-                            file: file,
-                            src: URL.createObjectURL(file)
-                        });
-                    });
-                },
-                removeGallery(index) {
-                    this.galleryPreviews.splice(index, 1);
-                    // ملاحظة: الحذف من الواجهة لا يحذف من كائن الـ input file في الـ HTML مباشرة
-                    // ولكن يكفي حالياً للتأثير البصري.
-                },
-                showFull(src) {
-                    this.lightboxSrc = src;
-                    this.lightboxOpen = true;
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            // تحميل الخريطة
-            setTimeout(() => {
-                const map = L.map('map', { scrollWheelZoom: false }).setView([31.9454, 35.9284], 10);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-                let marker;
-                const latInput = document.getElementById('latitude');
-                const lngInput = document.getElementById('longitude');
-                const locInput = document.getElementById('location');
-                const loading = document.getElementById('search-loading');
-
-                map.on('click', async function(e) {
-                    const { lat, lng } = e.latlng;
-                    updateMarker(lat, lng);
-
-                    try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                        const data = await response.json();
-                        if(data.display_name) locInput.value = data.display_name;
-                    } catch (err) { console.error("Reverse failed"); }
-                });
-
-                let timer;
-                locInput.addEventListener('input', function() {
-                    clearTimeout(timer);
-                    loading.classList.remove('hidden');
-                    timer = setTimeout(async () => {
-                        const query = locInput.value;
-                        if(query.length < 3) { loading.classList.add('hidden'); return; }
-
-                        try {
-                            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
-                            const data = await response.json();
-                            if(data.length > 0) {
-                                const { lat, lon } = data[0];
-                                map.setView([lat, lon], 14);
-                                updateMarker(parseFloat(lat), parseFloat(lon));
-                            }
-                        } catch (err) { console.error("Search failed"); }
-                        loading.classList.add('hidden');
-                    }, 800);
-                });
-
-                function updateMarker(lat, lng) {
-                    if (marker) marker.setLatLng([lat, lng]);
-                    else marker = L.marker([lat, lng]).addTo(map);
-                    latInput.value = lat.toFixed(6);
-                    lngInput.value = lng.toFixed(6);
-                    map.panTo([lat, lng]);
-                }
-            }, 500);
+        document.getElementById('main_image').addEventListener('change', function(e) {
+            var fileName = e.target.files[0].name;
+            var textContainer = e.target.closest('.space-y-2').querySelector('.text-xs');
+            textContainer.innerHTML = '<span class="text-[#1d5c42] font-bold">Selected: </span>' + fileName;
         });
     </script>
-</x-dashboard-layout>
+</x-owner-layout>

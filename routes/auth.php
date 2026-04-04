@@ -37,6 +37,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+        // Partner Registration Routes
+    Route::get('partner/register', [App\Http\Controllers\Auth\RegisteredUserController::class, 'createPartner'])
+                ->name('partner.register');
+
+    Route::post('partner/register', [App\Http\Controllers\Auth\RegisteredUserController::class, 'storePartner'])
+                ->name('partner.register.store');
 });
 
 Route::middleware('auth')->group(function () {

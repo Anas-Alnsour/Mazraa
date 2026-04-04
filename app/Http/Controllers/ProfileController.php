@@ -57,4 +57,15 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    /**
+     * Display the owner's dedicated profile form.
+     */
+    public function ownerEdit(Request $request): \Illuminate\View\View
+    {
+        return view('owner.profile.edit', [
+            'user' => $request->user(),
+        ]);
+    }
+
 }

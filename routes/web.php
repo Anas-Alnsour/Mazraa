@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\PartnerRegisteredUserController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FarmController;
@@ -26,8 +27,6 @@ use App\Http\Controllers\TransportDispatchController;
 use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
-
-// 💡 الكنترولرات الجديدة اللي ضفناها للداشبوردات (عملنالهم Alias عشان ما يتعارضوا مع القدام)
 use App\Http\Controllers\Admin\FinancialController;
 use App\Http\Controllers\Driver\TransportDriverController as DriverDashboardTransportController;
 use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
@@ -68,6 +67,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/portal/supply-driver/login', function () {
         return view('auth.supply-driver-login');
     })->name('supply-driver.login');
+
+    // راوتات تسجيل شريك جديد (صاحب مزرعة)
+    Route::get('/partner/register', [PartnerRegisteredUserController::class, 'create'])->name('partner.register');
+    Route::post('/partner/register', [PartnerRegisteredUserController::class, 'store'])->name('partner.register.store');
+
 });
 
 // --------------------------------------------------------------------------
@@ -176,7 +180,54 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
 
-    Route::get('/financials', function() { return view('owner.financials'); })->name('financials');
+    // 💡 راوت المالية مع المنطق البرمجي (البزنس لوجيك) - تم تعديل end_date إلى end_time
+    Route::get('/financials', function() {
+        $userId = auth()->id();
+        // بنجيب كل أرقام المزارع اللي بيملكها هاد اليوزر
+        $farmIds = \App\Models\Farm::where('owner_id', $userId)->pluck('id');
+
+        // 🟢 الرصيد المتاح للسحب: (الحجوزات المؤكدة + انتهى وقتها)
+        $availableBalance = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
+            ->where('status', 'confirmed')
+            ->where('end_time', '<', now()) // 👈 التعديل هون
+            ->sum('total_price');
+
+        // 🟡 الرصيد المعلق: (الحجوزات المؤكدة أو قيد الانتظار + لسا ما انتهى وقتها)
+        $pendingRevenue = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('end_time', '>=', now()) // 👈 التعديل هون
+            ->sum('total_price');
+
+        // الرصيد الكلي
+        $lifetimeEarnings = $availableBalance;
+
+        // الترانزاكشنز (لو في جدول، أو منبعتها فاضية مؤقتاً)
+        $transactions = collect();
+
+        return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
+    })->name('financials');
+
+    // 💡 راوت تصدير الـ CSV للتست
+    Route::get('/financials/export-csv', function () {
+        $filename = "mazraa_financial_report_" . date('Y-m-d') . ".csv";
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Date', 'Description', 'Amount (JOD)', 'Status', 'Reference ID']);
+            // سطر بيانات وهمي عشان تتأكد إنه نزل صح
+            fputcsv($file, [date('Y-m-d'), 'Test Booking Revenue', '150.00', 'Cleared', '#TEST-9999']);
+            fclose($file);
+        };
+        return response()->stream($callback, 200, $headers);
+    })->name('financials.export');
+
+    Route::get('/profile', [ProfileController::class, 'ownerEdit'])->name('profile.edit');
 });
 
 // --- [4] SUPPLY COMPANY ---
