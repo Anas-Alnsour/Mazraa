@@ -37,7 +37,7 @@
             @endif
         </div>
 
-        {{-- 💡 STRICT TIMING POLICY DISCLAIMER (دمج كود Jules بطريقة أنيقة) --}}
+        {{-- 💡 STRICT TIMING POLICY DISCLAIMER --}}
         <div class="bg-blue-50/80 border border-blue-100 p-6 mb-8 rounded-2xl shadow-sm fade-in-up">
             <div class="flex items-start gap-4">
                 <div class="flex-shrink-0 bg-blue-100 p-2 rounded-xl text-blue-600">
@@ -100,22 +100,30 @@
                                     <div class="flex-1 w-full flex flex-col sm:flex-row justify-between h-full gap-6">
                                         <div class="flex flex-col justify-between">
                                             <div>
-                                                @if($item->supply->category)
+                                                @if($item->supply && $item->supply->category)
                                                     <span class="inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-[#c2a265]/10 text-[#c2a265] border border-[#c2a265]/20 mb-3">
                                                         {{ $item->supply->category }}
                                                     </span>
                                                 @endif
-                                                <a href="{{ route('supplies.show', $item->supply->id) }}" class="block text-2xl font-black text-gray-900 hover:text-[#1d5c42] transition-colors line-clamp-1 tracking-tight">
+                                                <span class="block text-2xl font-black text-gray-900 line-clamp-1 tracking-tight">
                                                     {{ $item->supply->name ?? 'Product Unavailable' }}
-                                                </a>
-                                                <p class="text-[10px] font-bold text-gray-400 mt-1.5 uppercase tracking-widest flex items-center gap-1.5">
+                                                </span>
+
+                                                {{-- 💡 Farm Destination Display --}}
+                                                @if($item->booking && $item->booking->farm)
+                                                    <span class="inline-block mt-2 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-md border border-emerald-100">
+                                                        Delivering to: {{ $item->booking->farm->name }}
+                                                    </span>
+                                                @endif
+
+                                                <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                                     By {{ $item->supply->company->name ?? 'Vendor' }}
                                                 </p>
                                             </div>
 
                                             <div class="mt-6 flex flex-wrap items-center gap-4">
-                                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100" x-data="{ qty: {{ $item->quantity }}, max: {{ $item->supply->stock }} }">
+                                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100" x-data="{ qty: {{ $item->quantity }}, max: {{ $item->supply->stock ?? 1 }} }">
                                                     @csrf
                                                     @method('PUT')
                                                     <input type="hidden" name="quantity" x-model="qty">
@@ -143,7 +151,10 @@
                                         </div>
 
                                         <div class="mt-4 sm:mt-0 flex flex-row sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-gray-100 pt-4 sm:pt-0">
-                                            <p class="text-3xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($item->total_price, 2) }} <span class="text-[10px] text-gray-400 uppercase tracking-widest">JOD</span></p>
+                                            <div class="text-left sm:text-right flex flex-col sm:items-end ml-20 sm:ml-0 mb-4">
+                                                <span class="text-2xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($item->total_price, 2) }}</span>
+                                                <span class="text-[9px] text-gray-400 uppercase tracking-widest font-black">JOD Total</span>
+                                            </div>
 
                                             <form action="{{ route('cart.remove', $item->id) }}" method="POST">
                                                 @csrf

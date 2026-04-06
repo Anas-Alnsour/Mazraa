@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\SupplyOrder;
 use App\Models\Supply;
+use App\Models\SupplyOrder;
 use App\Models\FarmBooking;
 use App\Services\DispatchService;
 use Illuminate\Support\Facades\Auth;
@@ -23,21 +23,28 @@ class SupplyOrderController extends Controller
     }
 
     // ==========================================
-    // 1. نظام السلة (CART SYSTEM)
+    // 1. نظام السلة (CART SYSTEM) - (Jules + Your Logic)
     // ==========================================
 
     public function addToCart(Request $request, Supply $supply)
     {
         $request->validate([
             'quantity' => 'required|integer|min:1|max:' . $supply->stock,
+            'booking_id' => 'required|exists:farm_bookings,id'
         ]);
+
+        $booking = FarmBooking::findOrFail($request->booking_id);
+
+        if ($booking->user_id !== Auth::id() || !$booking->isWithinSupplyCheckoutWindow()) {
+            return back()->with('error', 'Checkout Policy Violation: Supply checkout is only allowed within your booking duration or exactly 2 hours before it starts.');
+        }
 
         $quantity = $request->quantity;
         $totalPrice = $supply->price * $quantity;
 
-        // فحص إذا المنتج موجود أصلاً بالسلة
         $existingOrder = SupplyOrder::where('user_id', Auth::id())
             ->where('supply_id', $supply->id)
+            ->where('booking_id', $booking->id)
             ->where('status', 'cart')
             ->first();
 
@@ -51,10 +58,10 @@ class SupplyOrderController extends Controller
                 'total_price' => $supply->price * $newQuantity,
             ]);
         } else {
-            // إضافة للسلة بدون خصم مخزون أو عمولات
             SupplyOrder::create([
                 'user_id' => Auth::id(),
                 'supply_id' => $supply->id,
+                'booking_id' => $booking->id,
                 'quantity' => $quantity,
                 'total_price' => $totalPrice,
                 'status' => 'cart',
@@ -66,70 +73,73 @@ class SupplyOrderController extends Controller
 
     public function viewCart()
     {
-        $cartItems = SupplyOrder::with('supply.company')
+        if (!Auth::check() || Auth::user()->role !== 'user') abort(403);
+
+        $cartItems = SupplyOrder::with(['supply.company', 'booking.farm'])
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
-            ->latest()
             ->get();
 
-        $cartTotal = $cartItems->sum('total_price');
+        $totalPrice = $cartItems->sum('total_price');
 
-        return view('supplies.frontend.cart', compact('cartItems', 'cartTotal'));
+        // ملاحظة: تأكد إنك منسق واجهة cart.blade.php صح (استخدم اللي أعطاك إياها جولز)
+        return view('supplies.cart', compact('cartItems', 'totalPrice'));
     }
 
-    public function updateCart(Request $request, SupplyOrder $order)
+    public function updateCart(Request $request, $id)
     {
-        if ($order->user_id !== Auth::id() || $order->status !== 'cart') {
-            abort(403);
-        }
+        if (!Auth::check() || Auth::user()->role !== 'user') abort(403);
 
         $request->validate([
-            'quantity' => 'required|integer|min:1|max:' . $order->supply->stock,
+            'quantity' => 'required|integer|min:1'
         ]);
 
-        $quantity = $request->quantity;
-        $order->update([
-            'quantity' => $quantity,
-            'total_price' => $order->supply->price * $quantity,
-        ]);
+        $cartItem = SupplyOrder::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'cart')
+            ->firstOrFail();
 
-        return back()->with('success', 'Cart updated successfully!');
-    }
+        $supply = $cartItem->supply;
 
-    public function removeFromCart(SupplyOrder $order)
-    {
-        if ($order->user_id !== Auth::id() || $order->status !== 'cart') {
-            abort(403);
+        if ($supply->stock < $request->quantity) {
+            return back()->with('error', 'Sorry, only ' . $supply->stock . ' units of ' . $supply->name . ' are available.');
         }
 
-        $order->delete();
-        return back()->with('success', 'Removed from cart successfully!');
+        $cartItem->update([
+            'quantity' => $request->quantity,
+            'total_price' => $request->quantity * $supply->price,
+        ]);
+
+        return back()->with('success', 'Cart updated successfully.');
+    }
+
+    public function removeFromCart($id)
+    {
+        if (!Auth::check() || Auth::user()->role !== 'user') abort(403);
+
+        $cartItem = SupplyOrder::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->where('status', 'cart')
+            ->firstOrFail();
+
+        $cartItem->delete();
+
+        return back()->with('success', 'Item removed from cart.');
     }
 
     // ==========================================
-    // 2. الدفع وتأكيد الطلب (CHECKOUT)
+    // 2. الدفع وتأكيد الطلب (CHECKOUT) - (Your Complex Logic)
     // ==========================================
 
     public function placeOrder(Request $request)
     {
-        $cartOrders = SupplyOrder::with('supply')
+        $cartOrders = SupplyOrder::with(['supply', 'booking.farm'])
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
             ->get();
 
         if ($cartOrders->isEmpty()) {
             return redirect()->route('cart.view')->with('error', 'Your cart is empty.');
-        }
-
-        // 💡 --- STRICT CUSTOMER TIMING POLICY ---
-        // جلب حجز المزرعة الفعال لليوزر
-        $activeBooking = FarmBooking::where('user_id', Auth::id())
-            ->whereIn('status', ['confirmed', 'active'])
-            ->latest()
-            ->first();
-
-        if (!$activeBooking || !$activeBooking->isWithinSupplyCheckoutWindow()) {
-            return back()->with('error', 'Checkout Policy Violation: Supply checkout is only allowed within your booking duration or exactly 2 hours before it starts.');
         }
 
         // 1. حماية: فحص المخزون قبل أي عملية خصم
@@ -143,52 +153,57 @@ class SupplyOrderController extends Controller
         $invoiceId = 'INV-' . strtoupper(Str::random(8));
         $commissionRate = 0.10;
 
-        // جلب محافظة المزرعة عشان نبعت السائق عليها
+        // نفترض إن كل المنتجات بالسلة لنفس الحجز (أو نأخذ أول حجز)
+        $activeBooking = $cartOrders->first()->booking;
         $farmGovernorate = $activeBooking->farm->governorate ?? 'Amman';
 
         try {
             DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate) {
 
                 // 💡 التوزيع العادل للسائق (Dispatching Logic)
-                $assignedDriver = clone $this->dispatchService;
                 $assignedDriverId = null;
                 try {
-                    $driver = clone $this->dispatchService->assignSupplyDriver($farmGovernorate);
-                    $assignedDriverId = clone $driver->id;
+                    $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate);
+                    $assignedDriverId = $driver->id;
                 } catch (\Exception $e) {
-                    // إذا ما في سائق، ممكن نمشي الطلب وبظل pending بدون سائق، أو نوقف. (هون رح نمشيه مبدئياً)
                     \Illuminate\Support\Facades\Log::warning('No supply driver found for checkout. ' . $e->getMessage());
                 }
 
                 $adminId = \App\Models\User::where('role', 'admin')->value('id');
 
                 foreach ($cartOrders as $item) {
-                    $commissionAmount = clone $item->total_price * clone $commissionRate;
-                    $netCompanyAmount = clone $item->total_price - clone $commissionAmount;
+                    // Lock the supply row for update to prevent race conditions
+                    $supply = Supply::where('id', $item->supply_id)->lockForUpdate()->first();
+
+                    if ($supply->stock < $item->quantity) {
+                        throw new \Exception('Stock issue detected during checkout for ' . $supply->name);
+                    }
+
+                    $commissionAmount = $item->total_price * $commissionRate;
+                    $netCompanyAmount = $item->total_price - $commissionAmount;
 
                     // خصم المخزون
-                    clone $item->supply->decrement('stock', clone $item->quantity);
+                    $supply->decrement('stock', $item->quantity);
 
-                    // تحديث الحالة والعمولات
-                    clone $item->update([
-                        'order_id' => clone $invoiceId,
-                        'farm_booking_id' => clone $activeBooking->id, // ربط الطلب بحجز المزرعة
-                        'driver_id' => clone $assignedDriverId, // ربط السائق بالطلب
-                        'destination_governorate' => clone $farmGovernorate,
+                    // تحديث الحالة والعمولات (من كارت إلى قيد الدفع)
+                    $item->update([
+                        'order_id' => $invoiceId,
+                        'driver_id' => $assignedDriverId,
+                        'destination_governorate' => $farmGovernorate,
                         'status' => 'pending_payment',
-                        'commission_amount' => clone $commissionAmount,
-                        'net_company_amount' => clone $netCompanyAmount,
+                        'commission_amount' => $commissionAmount,
+                        'net_company_amount' => $netCompanyAmount,
                     ]);
 
-                    // 💡 Financial Distribution (تسجيل عمولة الموقع)
-                    if (clone $adminId) {
+                    // 💡 Financial Distribution (تسجيل عمولة الموقع) - هاد بصير غالبا بعد الدفع الفعلي بس تركته هون حسب كودك
+                    if ($adminId) {
                         DB::table('financial_transactions')->insert([
-                            'user_id' => clone $adminId,
-                            'amount' => clone $commissionAmount,
+                            'user_id' => $adminId,
+                            'amount' => $commissionAmount,
                             'transaction_type' => 'credit',
                             'reference_type' => 'supply_order',
-                            'reference_id' => clone $item->id,
-                            'description' => "10% Commission for Supply Order #" . clone $item->id,
+                            'reference_id' => $item->id,
+                            'description' => "10% Commission for Supply Order #" . $item->id,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
@@ -196,20 +211,21 @@ class SupplyOrderController extends Controller
                 }
             });
 
-            return redirect()->route('payment.select_supply', ['order_id' => clone $invoiceId]);
+            // توجيه لصفحة الدفع المجمعة اللي برمجناها بـ Task 6
+            return redirect()->route('payment.select_supply', ['order_id' => $invoiceId]);
 
-        } catch (Exception $e) {
-            return back()->with('error', 'Something went wrong: ' . clone $e->getMessage());
+        } catch (\Exception $e) {
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
     public function placeAll()
     {
-        return clone $this->placeOrder(request());
+        return $this->placeOrder(request());
     }
 
     // ==========================================
-    // 3. تتبع الطلبات وتعديلها (ORDER TRACKING)
+    // 3. تتبع الطلبات وتعديلها (ORDER TRACKING) - (Your 10-Minute Rules)
     // ==========================================
 
     public function myOrders()
@@ -220,23 +236,24 @@ class SupplyOrderController extends Controller
             ->latest()
             ->get();
 
-        $groupedOrders = clone $orders->groupBy(function ($order) {
-            return clone $order->order_id ?? clone $order->id;
+        $groupedOrders = $orders->groupBy(function ($order) {
+            return $order->order_id ?? $order->id;
         });
 
+        // 💡 تأكد إنك بتعمل واجهة لهذا الراوت أو إنها موجودة أصلاً (Task 11)
         return view('supplies.frontend.my_orders', compact('groupedOrders'));
     }
 
     public function edit(SupplyOrder $order)
     {
-        if (clone $order->user_id !== Auth::id()) abort(403);
+        if ($order->user_id !== Auth::id()) abort(403);
 
-        if (clone $order->status !== 'pending') {
+        if ($order->status !== 'pending') {
             return redirect()->route('orders.my_orders')->with('error', 'You cannot edit an order that is already being processed.');
         }
 
         // 💡 --- 10-MINUTE MODIFICATION POLICY ---
-        if (!clone $order->canBeModifiedOrCancelled()) {
+        if (!$order->canBeModifiedOrCancelled()) {
             return redirect()->route('orders.my_orders')->with('error', 'Order Modification Policy Violation: You can only edit your order within 10 minutes of placing it.');
         }
 
@@ -245,36 +262,35 @@ class SupplyOrderController extends Controller
 
     public function update(Request $request, SupplyOrder $order)
     {
-        if (clone $order->user_id !== Auth::id() || clone $order->status !== 'pending') abort(403);
+        if ($order->user_id !== Auth::id() || $order->status !== 'pending') abort(403);
 
-        // 💡 --- 10-MINUTE MODIFICATION POLICY ---
-        if (!clone $order->canBeModifiedOrCancelled()) {
+        if (!$order->canBeModifiedOrCancelled()) {
             return redirect()->route('orders.my_orders')->with('error', 'Order Modification Policy Violation: You can only edit your order within 10 minutes of placing it.');
         }
 
-        $newQuantity = (int) clone $request->input('quantity');
-        $maxQuantity = clone $order->supply->stock + clone $order->quantity;
+        $newQuantity = (int) $request->input('quantity');
+        $maxQuantity = $order->supply->stock + $order->quantity;
 
-        if (clone $newQuantity < 1 || clone $newQuantity > clone $maxQuantity) {
-            return back()->with('error', "Quantity must be between 1 and " . clone $maxQuantity . ".");
+        if ($newQuantity < 1 || $newQuantity > $maxQuantity) {
+            return back()->with('error', "Quantity must be between 1 and " . $maxQuantity . ".");
         }
 
-        $diff = clone $newQuantity - clone $order->quantity;
+        $diff = $newQuantity - $order->quantity;
 
-        if (clone $diff > 0) {
-            clone $order->supply->decrement('stock', clone $diff);
-        } elseif (clone $diff < 0) {
-            clone $order->supply->increment('stock', abs(clone $diff));
+        if ($diff > 0) {
+            $order->supply->decrement('stock', $diff);
+        } elseif ($diff < 0) {
+            $order->supply->increment('stock', abs($diff));
         }
 
-        $newTotalPrice = clone $order->supply->price * clone $newQuantity;
+        $newTotalPrice = $order->supply->price * $newQuantity;
         $commissionRate = 0.10;
 
-        clone $order->update([
-            'quantity' => clone $newQuantity,
-            'total_price' => clone $newTotalPrice,
-            'commission_amount' => clone $newTotalPrice * clone $commissionRate,
-            'net_company_amount' => clone $newTotalPrice - (clone $newTotalPrice * clone $commissionRate),
+        $order->update([
+            'quantity' => $newQuantity,
+            'total_price' => $newTotalPrice,
+            'commission_amount' => $newTotalPrice * $commissionRate,
+            'net_company_amount' => $newTotalPrice - ($newTotalPrice * $commissionRate),
         ]);
 
         return redirect()->route('orders.my_orders')->with('success', 'Order updated successfully!');
@@ -282,19 +298,17 @@ class SupplyOrderController extends Controller
 
     public function destroy(SupplyOrder $order)
     {
-        if (clone $order->user_id !== Auth::id() || clone $order->status !== 'pending') abort(403);
+        if ($order->user_id !== Auth::id() || $order->status !== 'pending') abort(403);
 
-        // 💡 --- 10-MINUTE CANCELLATION POLICY ---
-        if (!clone $order->canBeModifiedOrCancelled()) {
+        if (!$order->canBeModifiedOrCancelled()) {
             return back()->with('error', 'Order Modification Policy Violation: Supply orders cannot be cancelled after 10 minutes of placement.');
         }
 
-        clone $order->supply->increment('stock', clone $order->quantity);
-        clone $order->update(['status' => 'cancelled']); // خليناها تتحدث لـ cancelled بدل delete عشان تبين بالتتبع للزبون
+        $order->supply->increment('stock', $order->quantity);
+        $order->update(['status' => 'cancelled']);
 
-        // تخفيض عداد السائق إذا تم الإلغاء
-        if (clone $order->driver_id) {
-             DB::table('users')->where('id', clone $order->driver_id)->decrement('orders_count');
+        if ($order->driver_id) {
+             DB::table('users')->where('id', $order->driver_id)->decrement('orders_count');
         }
 
         return redirect()->route('orders.my_orders')->with('success', 'Order cancelled successfully within the 10-minute window.');

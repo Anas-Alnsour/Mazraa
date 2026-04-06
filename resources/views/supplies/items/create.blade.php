@@ -39,7 +39,7 @@
                                 <input id="image" name="image" type="file" class="sr-only" accept="image/*">
                             </span>
                         </div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">PNG, JPG, GIF up to 2MB</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">PNG, JPG, WEBP up to 5MB</p>
                     </div>
                 </div>
             </div>
@@ -50,6 +50,20 @@
                     <input type="text" name="name" id="name" value="{{ old('name') }}" required
                         placeholder="e.g. Premium Charcoal 5kg"
                         class="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all py-4 px-6">
+                </div>
+
+                {{-- 💡 Added Category Field --}}
+                <div class="md:col-span-2">
+                    <label for="category" class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Category</label>
+                    <select name="category" id="category" required
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all py-4 px-6">
+                        <option value="" disabled selected>Select a category</option>
+                        <option value="Meat & BBQ">Meat & BBQ</option>
+                        <option value="Charcoal & Firewood">Charcoal & Firewood</option>
+                        <option value="Beverages & Snacks">Beverages & Snacks</option>
+                        <option value="Cleaning Supplies">Cleaning Supplies</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
 
                 <div class="md:col-span-2">

@@ -220,7 +220,7 @@
                             <div>
                                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Price / Night</span>
                                 <div class="flex items-baseline gap-1">
-                                    <span class="text-xl font-black text-[#1d5c42]">{{ number_format($farm->price_per_night, 0) }}</span>
+                                    <span class="text-xl font-black text-[#1d5c42]">{{ number_format($farm->price_per_morning_shift, 0) }}</span>
                                     <span class="text-xs font-bold text-gray-500">JOD</span>
                                 </div>
                             </div>

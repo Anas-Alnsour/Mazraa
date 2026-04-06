@@ -61,6 +61,17 @@
                         class="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all py-4 px-6">
                 </div>
 
+                {{-- 💡 Added Category Field --}}
+                <div class="md:col-span-2">
+                    <label for="category" class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Category</label>
+                    <select name="category" id="category" required
+                        class="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all py-4 px-6">
+                        @foreach(['Meat & BBQ', 'Charcoal & Firewood', 'Beverages & Snacks', 'Cleaning Supplies', 'Other'] as $cat)
+                            <option value="{{ $cat }}" {{ old('category', $item->category) == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="md:col-span-2">
                     <label for="description" class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Description</label>
                     <textarea name="description" id="description" rows="4"

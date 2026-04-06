@@ -98,7 +98,7 @@
                     <h1 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-3 leading-tight">{{ $farm->name }}</h1>
                     <div class="flex items-center text-sm font-bold text-gray-500">
                         <svg class="w-5 h-5 mr-1.5 text-[#c2a265]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                        {{ $farm->location }}
+                        {{ $farm->location ?? $farm->governorate }}
                     </div>
                 </div>
 
@@ -162,7 +162,7 @@
                         </div>
 
                         {{-- Fullscreen Modal --}}
-                        <div x-show="isOpen" x-transition.opacity.duration.300ms x-cloak
+                        <div x-show="isOpen" x-transition.opacity.duration.300ms style="display: none;"
                             class="fixed inset-0 bg-[#020617]/95 flex items-center justify-center z-[200] backdrop-blur-xl"
                             @keydown.window.escape="close">
                             <div class="absolute top-0 inset-x-0 p-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
@@ -230,13 +230,13 @@
                     <div class="pt-6">
                         <h3 class="text-2xl font-black text-gray-900 mb-6 tracking-tight">Location Details</h3>
                         <div class="p-2 bg-white rounded-[2.5rem] shadow-sm border border-gray-100 mb-4">
-                            <div id="farm-map" class="w-full h-[350px] rounded-[2rem] z-0"></div>
+                            <div id="farm-map-display" class="w-full h-[350px] rounded-[2rem] z-0"></div>
                         </div>
                         <div class="flex items-start gap-3 px-2">
                             <svg class="w-6 h-6 text-[#1d5c42] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             <div>
                                 <p class="font-black text-gray-900">{{ $farm->name }}</p>
-                                <p class="text-gray-500 font-medium text-sm">{{ $farm->location }}</p>
+                                <p class="text-gray-500 font-medium text-sm">{{ $farm->location ?? $farm->governorate }}</p>
                             </div>
                         </div>
                     </div>
@@ -258,16 +258,19 @@
                     <div class="booking-card rounded-[2.5rem] p-8 md:p-10 sticky top-28 z-20">
 
                         <div class="flex items-baseline gap-2 border-b border-gray-200/60 pb-6 mb-8">
-                            <span class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($farm->price_per_night, 0) }}</span>
+                            {{-- 💡 Changed to price_per_morning_shift --}}
+                            <span class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
                             <span class="text-lg font-bold text-gray-900">JOD</span>
-                            <span class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">/ Shift</span>
+                            <span class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Starting Price</span>
                         </div>
 
                         {{-- 💡 AlpineJS Form Data for Toggling Modes --}}
-                        <form action="{{ route('farms.book', $farm->id) }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
+                        <form action="{{ route('bookings.store') }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
+                            <input type="hidden" name="farm_id" value="{{ $farm->id }}">
                             <input type="hidden" name="booking_date" id="booking_date">
                             <input type="hidden" name="booking_mode" x-model="bookingMode">
+                            <input type="hidden" name="shift" id="shift_input">
                             <input type="hidden" name="start_time" id="start_time">
                             <input type="hidden" name="end_time" id="end_time">
                             <input type="hidden" name="requires_transport" id="requires_transport" value="0">
@@ -327,19 +330,19 @@
                                     </div>
                                 </div>
 
-                                <div id="shiftsContainer" class="hidden animate-fade-in">
+                                <div id="shiftsContainer" style="display: none;" class="animate-fade-in">
                                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Available Shifts</label>
                                     <div class="grid grid-cols-2 gap-3">
                                         <button type="button" id="btnMorning" onclick="selectShift('morning')"
                                             class="shift-btn border-2 border-gray-200 bg-white p-4 rounded-2xl flex flex-col items-center justify-center hover:border-[#1d5c42] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
                                             <span class="text-sm font-black text-gray-800 transition-colors">☀️ Morning</span>
-                                            <span class="text-[10px] font-bold text-gray-500 mt-1">10 AM - 8 PM</span>
+                                            <span class="text-[10px] font-bold text-gray-500 mt-1">8 AM - 5 PM</span>
                                         </button>
 
                                         <button type="button" id="btnEvening" onclick="selectShift('evening')"
                                             class="shift-btn border-2 border-gray-200 bg-white p-4 rounded-2xl flex flex-col items-center justify-center hover:border-indigo-500 hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
                                             <span class="text-sm font-black text-gray-800 transition-colors">🌙 Evening</span>
-                                            <span class="text-[10px] font-bold text-gray-500 mt-1">10 PM - 8 AM</span>
+                                            <span class="text-[10px] font-bold text-gray-500 mt-1">7 PM - 6 AM</span>
                                         </button>
 
                                         <button type="button" id="btnFullDay" onclick="selectShift('full_day')"
@@ -389,24 +392,19 @@
                                     </div>
                                 </label>
 
-                                <div id="transportSection" class="hidden mt-4 space-y-4 animate-fade-in">
+                                <div id="transportSection" style="display: none;" class="mt-4 space-y-4 animate-fade-in">
+                                    <div class="mb-4">
+                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Number of Passengers</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                            </div>
+                                            <input type="number" name="passengers" id="transport_passengers" min="1" max="{{ $farm->capacity }}" value="1"
+                                                class="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] outline-none shadow-sm transition-all"
+                                                placeholder="e.g. 4">
+                                        </div>
+                                    </div>
 
-    {{-- Passengers Count --}}
-    <div class="mb-4">
-        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Number of Passengers</label>
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-            </div>
-            <input type="number" name="transport_passengers" id="transport_passengers" min="1" max="{{ $farm->capacity }}" value="1"
-                class="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] outline-none shadow-sm transition-all"
-                placeholder="e.g. 4">
-        </div>
-    </div>
-
-    {{-- Location Search Bar --}}
-
-                                    {{-- Location Search Bar --}}
                                     <div>
                                         <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Search Your Location</label>
                                         <div class="flex gap-2">
@@ -416,19 +414,17 @@
                                     </div>
 
                                     <div class="relative p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm" id="originalMapContainer">
-                                        {{-- Map Container --}}
                                         <div id="pickup-map-wrapper" class="w-full h-[200px] rounded-xl z-0 relative overflow-hidden transition-all duration-300">
                                             <div id="pickup-map" class="w-full h-full"></div>
-                                            {{-- Expand Button overlay --}}
                                             <button type="button" id="expandMapBtn" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-md text-xs font-black text-gray-800 hover:text-[#1d5c42] border border-gray-200 z-[1000] flex items-center gap-1">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                                 Expand
                                             </button>
                                         </div>
                                     </div>
-                                    <p class="text-[10px] text-gray-500 font-bold text-center">Click or drag on the map to set exact pickup point</p>
+                                    <p class="text-[10px] text-gray-500 font-bold text-center mt-2">Click or drag on the map to set exact pickup point</p>
 
-                                    <div id="transportCalc" class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center animate-fade-in">
+                                    <div id="transportCalc" style="display: none;" class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center animate-fade-in mt-4">
                                         <div class="text-blue-800">
                                             <span class="block text-[10px] font-black uppercase tracking-widest opacity-70">Distance</span>
                                             <span class="text-sm font-bold"><span id="distVal"></span> km</span>
@@ -443,7 +439,7 @@
                             @endif
 
                             {{-- Comprehensive Invoice --}}
-                            <div id="bookingSummary" class="hidden bg-gray-900 text-white p-6 rounded-2xl shadow-xl mt-6 animate-fade-in relative overflow-hidden">
+                            <div id="bookingSummary" style="display: none;" class="bg-gray-900 text-white p-6 rounded-2xl shadow-xl mt-6 animate-fade-in relative overflow-hidden">
                                 <div class="absolute top-0 right-0 w-32 h-32 bg-[#1d5c42]/20 rounded-bl-[100px] blur-2xl"></div>
 
                                 <h3 class="font-black text-gray-300 text-[10px] uppercase mb-5 tracking-[0.2em] border-b border-gray-700/50 pb-3">Invoice Summary</h3>
@@ -452,7 +448,7 @@
                                         <span class="font-medium text-gray-400" id="farmRentalLabel">Farm Rental</span>
                                         <span class="font-bold text-white" id="farmRentalDisplay">0.00 JOD</span>
                                     </div>
-                                    <div id="invoiceTransport" class="flex justify-between items-center hidden">
+                                    <div id="invoiceTransport" style="display: none;" class="flex justify-between items-center">
                                         <span class="font-medium text-gray-400">Transport Fee</span>
                                         <span class="font-bold text-white" id="invoiceTransportCost">0.00 JOD</span>
                                     </div>
@@ -491,15 +487,16 @@
     {{-- Leaflet JS & Flatpickr JS --}}
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     <?php
         $bookingsData = [];
         if(isset($farm->bookings) && $farm->bookings) {
             foreach($farm->bookings as $b) {
-                if($b->start_time) {
+                if($b->start_time && !in_array($b->status, ['cancelled', 'completed'])) {
                     $bookingsData[] = [
                         'date' => \Carbon\Carbon::parse($b->start_time)->toDateString(),
-                        'hour' => (int) \Carbon\Carbon::parse($b->start_time)->format('H')
+                        'shift' => $b->event_type
                     ];
                 }
             }
@@ -519,9 +516,17 @@
 
     <script>
         // --- CONSTANTS ---
-        const farmPrice = <?php echo floatval($farm->price_per_night ?? 0); ?>;
-        const farmLat = <?php echo $farm->latitude ? '"' . $farm->latitude . '"' : 'null'; ?>;
-        const farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
+        const priceMorning = <?php echo floatval($farm->price_per_morning_shift ?? 0); ?>;
+        const priceEvening = <?php echo floatval($farm->price_per_evening_shift ?? 0); ?>;
+        const priceFullDay = <?php echo floatval($farm->price_per_full_day ?? 0); ?>;
+
+        let farmLat = <?php echo $farm->latitude ? '"' . $farm->latitude . '"' : 'null'; ?>;
+        let farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
+
+        // Fallback to Amman if Farm coordinates are totally missing
+        if(!farmLat || farmLat === 'null') farmLat = 31.9522;
+        if(!farmLng || farmLng === 'null') farmLng = 35.2332;
+
         const existingBookings = <?php echo json_encode($bookingsData); ?>;
         const blockedDates = <?php echo json_encode($blockedData); ?>;
 
@@ -537,16 +542,13 @@
 
         // Parse bookings into a hashmap for the calendar UI
         let dateMap = {};
-        existingBookings.forEach(b => {
-            if(!dateMap[b.date]) dateMap[b.date] = { morning: false, evening: false };
-            if(b.hour === 10) dateMap[b.date].morning = true;
-            if(b.hour === 22) dateMap[b.date].evening = true;
-        });
-        blockedDates.forEach(b => {
-            if(!dateMap[b.date]) dateMap[b.date] = { morning: false, evening: false };
-            if(b.shift === 'morning' || b.shift === 'full_day') dateMap[b.date].morning = true;
-            if(b.shift === 'evening' || b.shift === 'full_day') dateMap[b.date].evening = true;
-        });
+        const addStatus = (date, shift) => {
+            if(!dateMap[date]) dateMap[date] = { morning: false, evening: false };
+            if(shift === 'morning' || shift === 'full_day') dateMap[date].morning = true;
+            if(shift === 'evening' || shift === 'full_day') dateMap[date].evening = true;
+        };
+        existingBookings.forEach(b => addStatus(b.date, b.shift));
+        blockedDates.forEach(b => addStatus(b.date, b.shift));
 
         for (const [date, status] of Object.entries(dateMap)) {
             if(status.morning && status.evening) {
@@ -564,7 +566,6 @@
             disableMobile: false,
             disable: fullyBookedDates,
             onDayCreate: function(dObj, dStr, fp, dayElem) {
-                // Adjust for timezone to get strict YYYY-MM-DD
                 const localDate = new Date(dayElem.dateObj.getTime() - (dayElem.dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                 if (morningBookedDates.includes(localDate)) {
                     dayElem.classList.add('booked-morning');
@@ -582,34 +583,17 @@
             onChange: function(selectedDates, dateStr, instance) {
                 if(dateStr) {
                     document.getElementById('booking_date').value = dateStr;
-
-                    // 💡 Fix: Safely ensure the container is visible and the hidden class is removed
                     const shiftsContainer = document.getElementById('shiftsContainer');
                     shiftsContainer.classList.remove('hidden');
-                    shiftsContainer.style.display = ''; // Clear any inline none
+                    shiftsContainer.style.display = 'block';
 
                     checkAvailability(dateStr);
-
-                    // Reset Shift selection
-                    selectedShift = false;
-                    currentShiftType = '';
-                    document.getElementById('confirmBookingBtn').disabled = true;
-                    document.getElementById('bookingSummary').classList.add('hidden');
-                    document.querySelectorAll('.shift-btn').forEach(btn => {
-                        btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
-                        btn.classList.add('border-gray-200', 'bg-white');
-
-                        const titleSpan = btn.querySelector('span:first-child');
-                        if(titleSpan) {
-                            titleSpan.classList.remove('text-[#1d5c42]', 'text-indigo-600', 'text-[#c2a265]');
-                            titleSpan.classList.add('text-gray-800');
-                        }
-                    });
+                    resetShiftSelection();
                 }
             }
         });
 
-        // Init Multi Day Calendars (Two Separate Inputs for Check-in / Check-out)
+        // Init Multi Day Calendars
         let multiStartPicker = flatpickr("#multi_start_date", {
             ...fpConfig,
             onChange: function(selectedDates, dateStr) {
@@ -617,7 +601,6 @@
                     let nextDay = new Date(selectedDates[0]);
                     nextDay.setDate(nextDay.getDate() + 1);
                     multiEndPicker.set('minDate', nextDay);
-
                     checkMultiDayLogic();
                 }
             }
@@ -632,31 +615,42 @@
             }
         });
 
-        // --- FORM & SHIFT LOGIC ---
+        // --- UI TOGGLES & LOGIC ---
+        window.setBookingMode = function(mode) {
+            document.getElementById('booking_mode').value = mode;
+            document.getElementById('modeSingle').className = mode === 'single' ? 'bg-white shadow-md text-[#1d5c42] flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none' : 'text-gray-500 hover:text-gray-800 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none';
+            document.getElementById('modeMulti').className = mode === 'multi' ? 'bg-white shadow-md text-blue-600 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none' : 'text-gray-500 hover:text-gray-800 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none';
+
+            if(mode === 'single') {
+                document.getElementById('singleDayUI').style.display = 'block';
+                document.getElementById('multiDayUI').style.display = 'none';
+            } else {
+                document.getElementById('singleDayUI').style.display = 'none';
+                document.getElementById('multiDayUI').style.display = 'block';
+            }
+            resetBookingForm();
+        }
+
         window.resetBookingForm = function() {
             singlePicker.clear();
             multiStartPicker.clear();
             multiEndPicker.clear();
+            document.getElementById('shiftsContainer').style.display = 'none';
             resetShiftSelection();
-
-            // 💡 Fix: Properly hide the container using Tailwind class only
-            const shiftsContainer = document.getElementById('shiftsContainer');
-            shiftsContainer.style.display = ''; // Clear inline styles
-            shiftsContainer.classList.add('hidden');
         };
 
         function resetShiftSelection() {
             selectedShift = false;
             currentShiftType = '';
+            document.getElementById('shift_input').value = '';
             document.getElementById('confirmBookingBtn').disabled = true;
-            document.getElementById('bookingSummary').classList.add('hidden');
+            document.getElementById('bookingSummary').style.display = 'none';
             document.getElementById('start_time').value = '';
             document.getElementById('end_time').value = '';
 
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
                 btn.classList.add('border-gray-200', 'bg-white');
-
                 const titleSpan = btn.querySelector('span:first-child');
                 if(titleSpan) {
                     titleSpan.classList.remove('text-[#1d5c42]', 'text-indigo-600', 'text-[#c2a265]');
@@ -693,37 +687,26 @@
 
             resetShiftSelection();
             currentShiftType = type;
+            document.getElementById('shift_input').value = type;
 
             if (type === 'morning') {
                 btnMorning.classList.remove('border-gray-200', 'bg-white');
                 btnMorning.classList.add('bg-green-50', 'border-[#1d5c42]');
-
-                const span = btnMorning.querySelector('span:first-child');
-                span.classList.remove('text-gray-800');
-                span.classList.add('text-[#1d5c42]');
-
-                document.getElementById('start_time').value = dateVal + ' 10:00:00';
-                document.getElementById('end_time').value = dateVal + ' 20:00:00';
+                btnMorning.querySelector('span:first-child').classList.replace('text-gray-800', 'text-[#1d5c42]');
+                document.getElementById('start_time').value = dateVal + ' 08:00:00';
+                document.getElementById('end_time').value = dateVal + ' 17:00:00';
             } else if (type === 'evening') {
                 btnEvening.classList.remove('border-gray-200', 'bg-white');
                 btnEvening.classList.add('bg-indigo-50', 'border-indigo-500');
-
-                const span = btnEvening.querySelector('span:first-child');
-                span.classList.remove('text-gray-800');
-                span.classList.add('text-indigo-600');
-
+                btnEvening.querySelector('span:first-child').classList.replace('text-gray-800', 'text-indigo-600');
                 let tomorrow = new Date(dateVal);
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                document.getElementById('start_time').value = dateVal + ' 22:00:00';
-                document.getElementById('end_time').value = tomorrow.toISOString().split('T')[0] + ' 08:00:00';
+                document.getElementById('start_time').value = dateVal + ' 19:00:00';
+                document.getElementById('end_time').value = tomorrow.toISOString().split('T')[0] + ' 06:00:00';
             } else if (type === 'full_day') {
                 btnFullDay.classList.remove('border-gray-200', 'bg-white');
                 btnFullDay.classList.add('bg-amber-50', 'border-[#c2a265]');
-
-                const span = btnFullDay.querySelector('span:first-child');
-                span.classList.remove('text-gray-800');
-                span.classList.add('text-[#c2a265]');
-
+                btnFullDay.querySelector('span:first-child').classList.replace('text-gray-800', 'text-[#c2a265]');
                 let tomorrow = new Date(dateVal);
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 document.getElementById('start_time').value = dateVal + ' 10:00:00';
@@ -772,6 +755,9 @@
             let diffTime = Math.abs(eDate - sDate);
             multiDaysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+            document.getElementById('booking_date').value = sDate.toISOString().split('T')[0];
+            document.getElementById('shift_input').value = 'full_day';
+
             document.getElementById('start_time').value = sDate.toISOString().split('T')[0] + ' 10:00:00';
             document.getElementById('end_time').value = eDate.toISOString().split('T')[0] + ' 08:00:00';
 
@@ -788,14 +774,17 @@
             let label = '';
 
             if (currentShiftType === 'multi_day') {
-                base = (farmPrice * 2) * multiDaysCount;
-                label = `Farm Rental (${multiDaysCount} Nights)`;
+                base = priceFullDay * multiDaysCount;
+                label = `Farm Rental (${multiDaysCount} Days)`;
             } else if (currentShiftType === 'full_day') {
-                base = farmPrice * 2;
+                base = priceFullDay;
                 label = 'Farm Rental (Full Day)';
+            } else if (currentShiftType === 'morning') {
+                base = priceMorning;
+                label = 'Farm Rental (Morning)';
             } else {
-                base = farmPrice;
-                label = 'Farm Rental (1 Shift)';
+                base = priceEvening;
+                label = 'Farm Rental (Evening)';
             }
 
             let totalBeforeTax = base + transportCost;
@@ -807,87 +796,90 @@
             document.getElementById('invoiceTax').innerText = tax.toFixed(2) + ' JOD';
             document.getElementById('invoiceTotal').innerText = grandTotal.toFixed(2) + ' JOD';
 
-            document.getElementById('bookingSummary').classList.remove('hidden');
+            document.getElementById('bookingSummary').style.display = 'block';
         }
 
-        /* --- TRANSPORT LOGIC WITH ADDRESS SEARCH AND FULLSCREEN --- */
+        /* --- STATIC FARM MAP --- */
+        const farmMapEl = document.getElementById('farm-map-display');
+        if(farmMapEl) {
+            var fMap = L.map('farm-map-display', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }).addTo(fMap);
+
+            const farmName = <?php echo json_encode($farm->name); ?>;
+
+            var customIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div style='background-color:#1d5c42; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            L.marker([farmLat, farmLng], {icon: customIcon}).addTo(fMap).bindPopup("<b style='color:#1d5c42'>" + farmName + "</b>").openPopup();
+        }
+
+        /* --- TRANSPORT MAP LOGIC --- */
         let pickupMap, pickupMarker;
-        document.addEventListener('DOMContentLoaded', function () {
-            if(farmLat && farmLat !== 'null' && farmLng && farmLng !== 'null') {
-                var map = L.map('farm-map', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-                }).addTo(map);
+        const toggle = document.getElementById('toggleTransport');
+        const section = document.getElementById('transportSection');
+        const invRow = document.getElementById('invoiceTransport');
 
-                const farmName = <?php echo json_encode($farm->name); ?>;
+        if(toggle && section) {
+            toggle.addEventListener('change', function() {
+                if(this.checked) {
+                    section.style.display = 'block';
+                    document.getElementById('requires_transport').value = "1";
+                    if(invRow) invRow.style.display = 'flex';
 
-                var customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: "<div style='background-color:#1d5c42; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                });
+                    if(!pickupMap) {
+                        // Default to Amman if user location not specified
+                        pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 12);
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(pickupMap);
 
-                L.marker([farmLat, farmLng], {icon: customIcon}).addTo(map).bindPopup("<b style='color:#1d5c42'>" + farmName + "</b>").openPopup();
-
-                const toggle = document.getElementById('toggleTransport');
-                const section = document.getElementById('transportSection');
-                const invRow = document.getElementById('invoiceTransport');
-
-                if(toggle && section) {
-                    toggle.addEventListener('change', function() {
-                        if(this.checked) {
-                            section.classList.remove('hidden');
-                            document.getElementById('requires_transport').value = "1";
-                            if(invRow) invRow.classList.remove('hidden');
-
-                            if(!pickupMap) {
-                                pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 12);
-                                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(pickupMap);
-
-                                pickupMap.on('click', function(e) {
-                                    setPickupMarker(e.latlng.lat, e.latlng.lng);
-                                });
-                            }
-                            setTimeout(() => pickupMap.invalidateSize(), 200);
-                        } else {
-                            section.classList.add('hidden');
-                            if(invRow) invRow.classList.add('hidden');
-                            document.getElementById('requires_transport').value = "0";
-                            transportCost = 0;
-                            updateInvoice();
-                        }
-                    });
+                        pickupMap.on('click', function(e) {
+                            setPickupMarker(e.latlng.lat, e.latlng.lng);
+                        });
+                    }
+                    setTimeout(() => pickupMap.invalidateSize(), 200);
+                } else {
+                    section.style.display = 'none';
+                    if(invRow) invRow.style.display = 'none';
+                    document.getElementById('requires_transport').value = "0";
+                    transportCost = 0;
+                    document.getElementById('transport_cost').value = 0;
+                    document.getElementById('transportCalc').style.display = 'none';
+                    updateInvoice();
                 }
+            });
+        }
 
-                const expandBtn = document.getElementById('expandMapBtn');
-                const mapWrapper = document.getElementById('pickup-map-wrapper');
-                const originalMapContainer = document.getElementById('originalMapContainer');
-                const backdrop = document.getElementById('mapBackdrop');
-                let isExpanded = false;
+        const expandBtn = document.getElementById('expandMapBtn');
+        const mapWrapper = document.getElementById('pickup-map-wrapper');
+        const originalMapContainer = document.getElementById('originalMapContainer');
+        const backdrop = document.getElementById('mapBackdrop');
+        let isExpanded = false;
 
-                if(expandBtn) {
-                    expandBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        isExpanded = !isExpanded;
-                        if(isExpanded) {
-                            document.body.appendChild(mapWrapper);
-                            mapWrapper.classList.add('map-fullscreen');
-                            backdrop.classList.add('active');
-                            expandBtn.innerHTML = "Collapse Map";
-                            document.body.style.overflow = 'hidden';
-                        } else {
-                            originalMapContainer.appendChild(mapWrapper);
-                            mapWrapper.classList.remove('map-fullscreen');
-                            backdrop.classList.remove('active');
-                            expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
-                            document.body.style.overflow = 'auto';
-                        }
-                        setTimeout(() => pickupMap.invalidateSize(), 300);
-                    });
+        if(expandBtn) {
+            expandBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                isExpanded = !isExpanded;
+                if(isExpanded) {
+                    document.body.appendChild(mapWrapper);
+                    mapWrapper.classList.add('map-fullscreen');
+                    backdrop.classList.add('active');
+                    expandBtn.innerHTML = "Collapse Map";
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    originalMapContainer.appendChild(mapWrapper);
+                    mapWrapper.classList.remove('map-fullscreen');
+                    backdrop.classList.remove('active');
+                    expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
+                    document.body.style.overflow = 'auto';
                 }
-            }
-        });
+                setTimeout(() => pickupMap.invalidateSize(), 300);
+            });
+        }
 
         window.searchPickupLocation = function() {
             const query = document.getElementById('pickup_search').value;
@@ -919,11 +911,11 @@
                 .then(data => {
                     if(data.routes && data.routes.length > 0) {
                         let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
-                        transportCost = parseFloat((distanceKm * 0.5).toFixed(2));
+                        transportCost = parseFloat((25 + (distanceKm * 0.5)).toFixed(2));
                         document.getElementById('distVal').innerText = distanceKm;
                         document.getElementById('costVal').innerText = transportCost;
                         document.getElementById('transport_cost').value = transportCost;
-                        document.getElementById('transportCalc').classList.remove('hidden');
+                        document.getElementById('transportCalc').style.display = 'flex';
                         document.getElementById('invoiceTransportCost').innerText = transportCost.toFixed(2) + ' JOD';
                         updateInvoice();
                     }

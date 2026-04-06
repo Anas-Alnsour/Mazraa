@@ -28,6 +28,7 @@
                     <thead>
                         <tr>
                             <th class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Info</th>
+                            <th class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Category</th> {{-- 💡 Added Category --}}
                             <th class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</th>
                             <th class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">Stock</th>
                             <th class="px-8 py-5 border-b-2 border-gray-100 bg-gray-50 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
@@ -50,6 +51,12 @@
                                             <p class="text-[11px] font-bold text-gray-400 mt-1 line-clamp-1 max-w-xs uppercase tracking-widest">{{ $item->description ?: 'No description provided' }}</p>
                                         </div>
                                     </div>
+                                </td>
+                                {{-- 💡 Added Category Display --}}
+                                <td class="px-8 py-6 bg-transparent text-left">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                        {{ $item->category }}
+                                    </span>
                                 </td>
                                 <td class="px-8 py-6 bg-transparent text-right">
                                     <p class="text-lg font-black text-emerald-600">{{ number_format($item->price, 2) }} <span class="text-[10px] text-gray-400 uppercase tracking-widest">JOD</span></p>
@@ -96,7 +103,7 @@
             @endif
         @else
             <div class="px-8 py-16 text-center">
-                <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-50 mb-4">
+                <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gray-50 mb-4 border border-gray-100 shadow-inner">
                     <svg class="w-12 h-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
                 <h3 class="text-lg font-black text-gray-900 mb-1">No products in inventory</h3>

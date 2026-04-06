@@ -27,7 +27,7 @@ use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\FinancialController;
 
-// 💡 الكنترولرات الجديدة للداشبوردات (عملنالهم Alias عشان ما يتعارضوا مع القدام)
+// 💡 الكنترولرات الجديدة للداشبوردات
 use App\Http\Controllers\Driver\TransportDriverController as DriverDashboardTransportController;
 use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
 
@@ -56,20 +56,20 @@ Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name
 // 🔐 B2B Portal Login & Registration
 // --------------------------------------------------------------------------
 Route::middleware('guest')->group(function () {
-    // 1. بوابة الملاك والأدمن (الأساسية)
+    // 1. بوابة الملاك والأدمن
     Route::get('/portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
 
-    // 2. بوابة شركات التوريد (الجديدة)
+    // 2. بوابة شركات التوريد
     Route::get('/portal/supply-company/login', function () {
         return view('auth.supply-company-login');
     })->name('supply-company.login');
 
-    // 3. بوابة شركات النقل (الجديدة)
+    // 3. بوابة شركات النقل
     Route::get('/portal/transport-company/login', function () {
         return view('auth.transport-company-login');
     })->name('transport-company.login');
 
-    // 4. بوابات السائقين (المنفصلة)
+    // 4. بوابات السائقين
     Route::get('/portal/transport-driver/login', function () {
         return view('auth.transport-driver-login');
     })->name('transport-driver.login');
@@ -78,7 +78,7 @@ Route::middleware('guest')->group(function () {
         return view('auth.supply-driver-login');
     })->name('supply-driver.login');
 
-    // تنفيذ عملية تسجيل الدخول (موحد لكل ما سبق)
+    // تنفيذ عملية تسجيل الدخول
     Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
 
     // تسجيل شريك جديد (صاحب مزرعة)
@@ -96,13 +96,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
     Route::delete('/reviews/{review}', [\App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
-    // ==================================================
     // 💳 Stripe Payment Routes (Farm Bookings)
-    // ==================================================
     Route::post('/payment/checkout/{booking}', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
-    Route::get('/bookings/upgrade/success', [App\Http\Controllers\BookingController::class, 'upgradeSuccess'])->name('bookings.upgrade.success');
 });
 
 // ==========================================================================
@@ -115,22 +112,22 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
     Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
 
-    // Bookings
-    Route::post('/farms/{farm}/book', [BookingController::class, 'store'])->name('farms.book');
-    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.my');
-    Route::get('/my-bookings-list', [BookingController::class, 'myBookings'])->name('bookings.my_bookings');
+    // 🌟 BOOKING ENGINE ROUTES (Customer Farm Bookings) 🌟
+    Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
+    Route::get('/my-bookings', [BookingController::class, 'myBookings'])->name('bookings.my_bookings');
+    // Aliases to maintain compatibility with your old views
+    Route::get('/my-bookings-list', [BookingController::class, 'myBookings'])->name('bookings.my');
+    Route::get('/bookings/upgrade/success', [BookingController::class, 'upgradeSuccess'])->name('bookings.upgrade.success');
     Route::get('/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::get('/bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
     Route::put('/bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
-    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
-    Route::delete('/bookings-delete/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+    Route::delete('/bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+    Route::delete('/bookings-delete/{booking}', [BookingController::class, 'destroy'])->name('bookings.cancel');
 
     // مسارات متجر التوريد المباشر
-    Route::post('/market/supplies/{supply}/order', [SupplyController::class, 'order'])->name('supplies.order');
     Route::get('/my-supply-orders', [SupplyController::class, 'myOrders'])->name('supplies.my_orders');
     Route::get('/my-supply-orders/{order}/edit', [SupplyController::class, 'editOrder'])->name('supplies.edit_order');
     Route::put('/my-supply-orders/{order}', [SupplyController::class, 'updateOrder'])->name('supplies.update_order');
-    Route::delete('/my-supply-orders/{order}', [SupplyController::class, 'destroyOrder'])->name('supplies.destroy_order');
 
     // نظام السلة
     Route::get('/my-orders', [SupplyOrderController::class, 'myOrders'])->name('orders.my_orders');
@@ -155,15 +152,17 @@ Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
 // --- [2] SUPER ADMIN ---
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [SuperAdminController::class, 'index'])->name('dashboard');
+
+    // 💡 راوتات الـ Verifications المعدلة (للمزارع وطلبات التوريد)
     Route::get('/verifications', [SuperAdminController::class, 'verifications'])->name('verifications');
-    Route::post('/verifications/{farm}', [SuperAdminController::class, 'handleVerification'])->name('verifications.handle');
+    Route::post('/verifications/{id}/{type}', [SuperAdminController::class, 'handleVerification'])->name('verifications.handle');
+
     Route::get('/system', [SuperAdminController::class, 'system'])->name('system');
     Route::post('/system/update', [SuperAdminController::class, 'updateSystem'])->name('system.update');
+
     // Financial Payouts
     Route::get('/payouts', [SuperAdminController::class, 'payouts'])->name('payouts');
     Route::post('/payouts/record', [SuperAdminController::class, 'recordPayout'])->name('payouts.record');
-
-    // 💡 راوت المالية الجديد اللي طلبه Jules مدمج هون
     Route::get('/financials', [FinancialController::class, 'index'])->name('financials');
 
     // Old resources mapped to admin logic
@@ -192,7 +191,7 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
 
-    // 💡 راوت المالية مع المنطق البرمجي (البزنس لوجيك)
+    // 💡 راوت المالية مع المنطق البرمجي
     Route::get('/financials', function() {
         $userId = auth()->id();
         $farmIds = \App\Models\Farm::where('owner_id', $userId)->pluck('id');
@@ -213,7 +212,6 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
         return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
     })->name('financials');
 
-    // 💡 راوت تصدير الـ CSV للتست
     Route::get('/financials/export-csv', function () {
         $filename = "mazraa_financial_report_" . date('Y-m-d') . ".csv";
         $headers = [
@@ -254,16 +252,16 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 });
 
 // ==========================================================================
-// 🚀 [8] NEW JULES DRIVER DASHBOARDS (Cleaned up from Old Routes)
+// 🚀 [8] NEW JULES DRIVER DASHBOARDS
 // ==========================================================================
 
-// --- TRANSPORT DRIVER ROUTES (Jules) ---
+// --- TRANSPORT DRIVER ROUTES ---
 Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
     Route::get('/dashboard', [DriverDashboardTransportController::class, 'dashboard'])->name('dashboard');
     Route::patch('/trip/{id}/status', [DriverDashboardTransportController::class, 'updateStatus'])->name('update_status');
 });
 
-// --- SUPPLY DRIVER ROUTES (Jules) ---
+// --- SUPPLY DRIVER ROUTES ---
 Route::middleware(['auth', 'role:supply_driver'])->prefix('driver/supply')->name('supply.driver.')->group(function () {
     Route::get('/dashboard', [DriverDashboardSupplyController::class, 'dashboard'])->name('dashboard');
     Route::patch('/order/{id}/status', [DriverDashboardSupplyController::class, 'updateStatus'])->name('update_status');
@@ -284,15 +282,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/supply/checkout/{order_id}', [PaymentController::class, 'checkoutSupply'])->name('payment.supply.checkout');
     Route::get('/payment/supply/success/{order_id}', [PaymentController::class, 'successSupply'])->name('payment.supply.success');
 
-    // 👇 راوتات دفع الكليك للمشتريات 👇
+    // 👇 راوتات دفع الكليك للمشتريات
     Route::get('/payment/supply/cliq/{order_id}', [PaymentController::class, 'processCliqSupply'])->name('payment.supply.cliq');
     Route::post('/payment/supply/confirm-cliq/{order_id}', [PaymentController::class, 'confirmCliqSupply'])->name('payment.supply.confirm_cliq');
 });
 
 // ==========================================================================
-// 🤝 BECOME A PARTNER / PORTAL LOGIN (Public - No Redirects)
+// 🤝 BECOME A PARTNER / PORTAL LOGIN
 // ==========================================================================
-// هاد الراوت بيفتح صفحة portal-login تبعتك، ومفتوح للكل عشان ما يعملك Redirect للداشبورد
 Route::get('/become-partner', function () {
     return view('auth.portal-login');
 })->withoutMiddleware(['auth', 'guest'])->name('become.partner');

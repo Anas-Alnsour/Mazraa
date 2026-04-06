@@ -176,38 +176,67 @@ class OwnerDashboardController extends Controller
         }
     }
 
+    /**
+     * Display the list of bookings for the owner's farms.
+     */
     public function bookings(Request $request)
     {
         $user = Auth::user();
+
+        // Ensure only the farm_owner can access
+        if ($user->role !== 'farm_owner') {
+            abort(403, 'Unauthorized access.');
+        }
+
         $farmIds = Farm::where('owner_id', $user->id)->pluck('id');
 
-        $query = FarmBooking::with(['farm', 'user'])->whereIn('farm_id', $farmIds);
+        $query = FarmBooking::with(['farm', 'user'])
+            ->whereIn('farm_id', $farmIds);
 
+        // Filter by Status (Optional, useful for UI Tabs)
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
 
+        // Paginate results
         $bookings = $query->orderBy('created_at', 'desc')->paginate(15);
         $bookings->appends($request->all());
 
         return view('owner.bookings.index', compact('bookings'));
     }
 
+    /**
+     * Owner manually approves a booking.
+     */
     public function approveBooking($id)
     {
         $booking = FarmBooking::findOrFail($id);
-        if ($booking->farm->owner_id !== auth()->id()) abort(403);
 
-        $booking->update(['status' => 'confirmed']);
-        return back()->with('success', 'Booking confirmed successfully!');
+        if ($booking->farm->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($booking->status === 'pending') {
+            $booking->update(['status' => 'confirmed']);
+            return back()->with('success', 'Booking confirmed successfully!');
+        }
+
+        return back()->with('error', 'Booking cannot be confirmed at this stage.');
     }
 
+    /**
+     * Owner manually rejects/cancels a booking.
+     */
     public function rejectBooking($id)
     {
         $booking = FarmBooking::findOrFail($id);
-        if ($booking->farm->owner_id !== auth()->id()) abort(403);
+
+        if ($booking->farm->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $booking->update(['status' => 'cancelled']);
-        return back()->with('error', 'Booking has been rejected.');
+
+        return back()->with('success', 'Booking has been rejected/cancelled.');
     }
 }

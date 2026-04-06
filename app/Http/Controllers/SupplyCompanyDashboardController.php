@@ -2,70 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Supply;
 use App\Models\SupplyOrder;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SupplyCompanyDashboardController extends Controller
 {
     /**
-     * Display the Supply Company Dashboard
+     * Display the Supply Company Dashboard. (Merged with Jules' Grouping Logic)
      */
     public function index()
     {
-        $user = Auth::user();
-
-        if ($user->role !== 'supply_company') {
+        if (Auth::user()->role !== 'supply_company') {
             abort(403, 'Unauthorized access.');
         }
 
-        // جلب طلبات هذه الشركة فقط مع الـ Eager Loading لمنع N+1
-        $recentOrders = SupplyOrder::with(['user', 'supply', 'driver'])
-            ->whereHas('supply', function($query) use ($user) {
-                $query->where('company_id', $user->id); // التأكد إن المنتج تابع للشركة الحالية
+        // Fetch all orders where the supply belongs to the authenticated company
+        $orders = SupplyOrder::with(['supply', 'user', 'driver', 'booking.farm'])
+            ->whereHas('supply', function ($query) {
+                $query->where('company_id', Auth::id());
             })
-            ->where('status', '!=', 'cart')
-            ->latest()
+            ->whereNotIn('status', ['cart']) // Don't show un-purchased cart items
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        // 1. Calculate Statistics (إصلاح حساب المنتجات لتشمل منتجات الشركة فقط)
-        $totalSupplies = Supply::where('company_id', $user->id)->count();
-        $totalOrders = $recentOrders->count();
-        $pendingOrders = $recentOrders->where('status', 'pending')->count();
+        // Group by Invoice ID to keep UI clean (Jules Logic)
+        $groupedOrders = $orders->groupBy('order_id');
 
-        // 2. Financial Reports
-        $completedOrders = $recentOrders->whereIn('status', ['completed', 'delivered']);
+        // Financial Metrics for the Company (Jules Logic)
+        $completedOrders = $orders->where('status', 'delivered');
+        $totalRevenue = $completedOrders->sum('net_company_amount');
+        $activeOrdersCount = $orders->whereIn('status', ['pending', 'waiting_driver', 'in_way'])->count();
 
-        $grossSales = $completedOrders->sum('total_price');
-        $platformCommission = $completedOrders->sum('commission_amount');
-        $netProfit = $completedOrders->sum('net_company_amount');
-
-        $financials = [
-            'gross' => $grossSales,
-            'commission' => $platformCommission,
-            'net' => $netProfit
-        ];
-
-        // 3. Driver Management
-        $drivers = User::where('role', 'supply_driver')
-            ->where('company_id', $user->id)
-            ->get();
-
-        // 💡 التعديل هون: غيرنا المسار ليتطابق مع مكان الملف الحقيقي في مشروعك
-        return view('admin.supplies.dashboard', compact(
-            'recentOrders',
-            'totalSupplies',
-            'totalOrders',
-            'pendingOrders',
-            'financials',
-            'drivers'
-        ));
+        // 💡 بنرجع الـ view تبعك الأصلي عشان ما تضرب الراوتات أو الـ UI
+        // إذا كنت بدك تستخدم view جولز غيرها لـ 'supplies.company.dashboard'
+        return view('admin.supplies.dashboard', compact('groupedOrders', 'totalRevenue', 'activeOrdersCount'));
     }
 
     /**
-     * Dispatching: Assign a driver to a specific order
+     * Dispatching: Assign a driver to a specific order (From your Original Code)
      */
     public function assignDriver(Request $request, $orderId)
     {
@@ -82,6 +58,8 @@ class SupplyCompanyDashboardController extends Controller
         $order = SupplyOrder::findOrFail($orderId);
 
         $driver = User::findOrFail($request->driver_id);
+
+        // Ensure the driver belongs to the same supply company
         if ($driver->company_id !== $user->id || $driver->role !== 'supply_driver') {
             abort(403, 'Invalid driver selection.');
         }

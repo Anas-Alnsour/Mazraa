@@ -16,13 +16,31 @@
         <div class="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_30px_60px_rgba(0,0,0,0.08)] border border-gray-100 relative overflow-hidden">
 
             {{-- Total Amount Display --}}
-            <div class="bg-gray-50 rounded-2xl p-6 mb-8 border border-gray-200 flex justify-between items-center">
+            <div class="bg-gray-50 rounded-2xl p-6 mb-4 border border-gray-200 flex justify-between items-center">
                 <div>
                     <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Amount Due</p>
                     <p class="text-3xl font-black text-gray-900">{{ number_format($booking->total_price, 2) }} <span class="text-sm">JOD</span></p>
                 </div>
                 <div class="bg-[#1d5c42]/10 p-3 rounded-xl text-[#1d5c42]">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+            </div>
+
+            {{-- 💡 Invoice Summary (Added cleanly to your layout) --}}
+            <div class="mb-8 space-y-2 px-2">
+                <div class="flex justify-between text-xs">
+                    <span class="text-gray-500 font-bold">Farm Rental</span>
+                    <span class="font-black text-gray-900">{{ number_format($booking->total_price - $booking->transport_cost - $booking->tax_amount, 2) }} JOD</span>
+                </div>
+                @if($booking->requires_transport)
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-500 font-bold">Transport Service</span>
+                        <span class="font-black text-gray-900">{{ number_format($booking->transport_cost, 2) }} JOD</span>
+                    </div>
+                @endif
+                <div class="flex justify-between text-xs pb-3 border-b border-gray-100">
+                    <span class="text-gray-500 font-bold">Platform Tax (16%)</span>
+                    <span class="font-black text-gray-900">{{ number_format($booking->tax_amount, 2) }} JOD</span>
                 </div>
             </div>
 

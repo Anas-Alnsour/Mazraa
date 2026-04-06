@@ -6,7 +6,6 @@
         </div>
     </x-slot>
 
-    <!-- Success Message (Flash Session) -->
     @if(session('success'))
     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 flex items-start gap-3 shadow-sm animate-fade-in-up">
         <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -20,12 +19,29 @@
     </div>
     @endif
 
-    <div class="pb-10">
-        @if(isset($bookings) && $bookings->count() > 0)
+    @if(session('error'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 shadow-sm animate-fade-in-up">
+        <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div>
+            <h3 class="text-sm font-bold text-red-800">Error</h3>
+            <p class="text-sm text-red-700 mt-0.5">{{ session('error') }}</p>
+        </div>
+        <button @click="show = false" class="ml-auto text-red-500 hover:text-red-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    @endif
 
-            <!-- Premium Data Table Card -->
+    <div class="pb-10">
+        <div class="mb-6 flex gap-2 overflow-x-auto pb-2">
+            <a href="{{ route('owner.bookings.index') }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ !request('status') || request('status') == 'all' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">All Bookings</a>
+            <a href="{{ route('owner.bookings.index', ['status' => 'pending']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'pending' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Pending Approval</a>
+            <a href="{{ route('owner.bookings.index', ['status' => 'confirmed']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'confirmed' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Confirmed</a>
+            <a href="{{ route('owner.bookings.index', ['status' => 'cancelled']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'cancelled' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Cancelled</a>
+        </div>
+
+        @if(isset($bookings) && $bookings->count() > 0)
             <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
-                <!-- Header / Filters (Optional placeholder for future) -->
                 <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h3 class="text-base font-bold text-[#020617] flex items-center gap-2">
                         <svg class="w-5 h-5 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -36,15 +52,14 @@
                     </div>
                 </div>
 
-                <!-- Table Wrapper for Responsiveness -->
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                             <tr class="border-b border-gray-100 bg-white text-xs font-bold tracking-wider text-gray-500 uppercase">
                                 <th class="py-4 px-6">Guest Detail</th>
-                                <th class="py-4 px-6">Property</th>
+                                <th class="py-4 px-6">Property & Shift</th>
                                 <th class="py-4 px-6">Stay Dates</th>
-                                <th class="py-4 px-6 text-right">Total Payout</th>
+                                <th class="py-4 px-6 text-right">Financials</th>
                                 <th class="py-4 px-6 text-center">Status</th>
                                 <th class="py-4 px-6 text-right">Actions</th>
                             </tr>
@@ -53,7 +68,6 @@
                             @foreach($bookings as $booking)
                                 <tr class="hover:bg-gray-50/50 transition-colors group">
 
-                                    <!-- Guest Detail -->
                                     <td class="py-4 px-6">
                                         <div class="flex items-center gap-3">
                                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#c2a265] to-yellow-600 flex items-center justify-center text-sm font-bold text-white shadow-sm flex-shrink-0">
@@ -66,36 +80,41 @@
                                         </div>
                                     </td>
 
-                                    <!-- Property -->
                                     <td class="py-4 px-6">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                                            <span class="font-semibold text-gray-700 text-sm max-w-[150px] truncate" title="{{ $booking->farm->name ?? 'Farm Name' }}">
-                                                {{ $booking->farm->name ?? 'Farm Name' }}
+                                        <div class="flex flex-col gap-1.5">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                                <span class="font-semibold text-gray-700 text-sm max-w-[150px] truncate" title="{{ $booking->farm->name ?? 'Farm Name' }}">
+                                                    {{ $booking->farm->name ?? 'Farm Name' }}
+                                                </span>
+                                            </div>
+                                            <span class="inline-flex items-center justify-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest w-max
+                                                {{ $booking->event_type === 'morning' ? 'bg-orange-100 text-orange-800' : ($booking->event_type === 'evening' ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800') }}">
+                                                {{ str_replace('_', ' ', $booking->event_type) }}
                                             </span>
                                         </div>
                                     </td>
 
-                                    <!-- Stay Dates -->
                                     <td class="py-4 px-6">
                                         <div class="flex flex-col">
                                             <span class="text-sm font-semibold text-[#020617]">
-                                                {{ \Carbon\Carbon::parse($booking->start_date)->format('M d') }} - {{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}
+                                                {{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}
                                             </span>
                                             <span class="text-xs text-gray-500 mt-0.5 font-medium">
-                                                {{ \Carbon\Carbon::parse($booking->start_date)->diffInDays(\Carbon\Carbon::parse($booking->end_date)) }} nights
+                                                {{ \Carbon\Carbon::parse($booking->start_time)->format('h:i A') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('h:i A') }}
                                             </span>
                                         </div>
                                     </td>
 
-                                    <!-- Total Payout -->
                                     <td class="py-4 px-6 text-right">
-                                        <span class="block text-base font-extrabold text-[#1d5c42]">
-                                            {{ number_format($booking->total_price ?? 0, 2) }} <span class="text-xs text-gray-500 font-bold">JOD</span>
-                                        </span>
+                                        <div class="flex flex-col items-end">
+                                            <span class="block text-base font-extrabold text-[#1d5c42]">
+                                                {{ number_format($booking->net_owner_amount ?? 0, 2) }} <span class="text-xs text-gray-500 font-bold">JOD</span>
+                                            </span>
+                                            <span class="text-[10px] text-gray-400 font-bold mt-1">Total: {{ number_format($booking->total_price, 2) }} JOD</span>
+                                        </div>
                                     </td>
 
-                                    <!-- Status -->
                                     <td class="py-4 px-6 text-center">
                                         @php
                                             $status = strtolower($booking->status);
@@ -103,7 +122,7 @@
 
                                         @if(in_array($status, ['approved', 'confirmed', 'completed', 'finished']))
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 shadow-sm">
-                                                <span class="w-2 h-2 rounded-full bg-green-500"></span> {{ ucfirst($status) }}
+                                                <span class="w-2 h-2 rounded-full bg-green-500"></span> Confirmed
                                             </span>
                                         @elseif($status === 'pending')
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200 shadow-sm">
@@ -113,6 +132,10 @@
                                                 </span>
                                                 Action Required
                                             </span>
+                                        @elseif($status === 'pending_payment' || $status === 'pending_verification')
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
+                                                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Awaiting Payment
+                                            </span>
                                         @else
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 shadow-sm">
                                                 <span class="w-2 h-2 rounded-full bg-red-500"></span> {{ ucfirst($status) }}
@@ -120,11 +143,9 @@
                                         @endif
                                     </td>
 
-                                    <!-- Actions -->
                                     <td class="py-4 px-6 text-right">
-                                        @if($status === 'pending')
-                                            <div class="flex items-center justify-end gap-2">
-                                                <!-- Approve Form -->
+                                        <div class="flex items-center justify-end gap-2">
+                                            @if($status === 'pending')
                                                 <form action="{{ route('owner.bookings.approve', $booking->id) }}" method="POST">
                                                     @csrf
                                                     @method('PATCH')
@@ -134,7 +155,6 @@
                                                     </button>
                                                 </form>
 
-                                                <!-- Reject Form -->
                                                 <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to decline this booking request?');">
                                                     @csrf
                                                     @method('PATCH')
@@ -143,11 +163,18 @@
                                                         Decline
                                                     </button>
                                                 </form>
-                                            </div>
-                                        @else
-                                            <!-- Static Action State (Disabled/View Only) -->
-                                            <span class="text-xs font-semibold text-gray-400 italic">No actions available</span>
-                                        @endif
+                                            @elseif($status === 'confirmed')
+                                                <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this CONFIRMED booking?');">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors border border-red-100 hover:border-red-600 text-xs font-bold uppercase tracking-wider">
+                                                        Cancel
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="text-xs font-semibold text-gray-400 italic">No actions available</span>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -156,7 +183,6 @@
                 </div>
             </div>
 
-            <!-- Pagination Links -->
             <div class="mt-8">
                 @if(method_exists($bookings, 'links'))
                     {{ $bookings->links() }}
@@ -164,7 +190,6 @@
             </div>
 
         @else
-            <!-- Empty State -->
             <div class="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-3xl border border-dashed border-gray-300 shadow-sm">
                 <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border border-gray-100 shadow-inner">
                     <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12v.01"></path></svg>

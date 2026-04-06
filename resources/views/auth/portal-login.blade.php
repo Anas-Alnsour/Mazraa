@@ -133,7 +133,7 @@
                 {{-- Headers --}}
                 <div class="mb-10 transition-all duration-700 delay-100 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
                     <h2 class="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-3">
-                        Business Login
+                        Farms Owner Login
                     </h2>
                     <p class="text-base text-gray-500 font-medium">
                         Enter your credentials to access the partner dashboard.

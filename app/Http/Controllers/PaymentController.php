@@ -245,23 +245,19 @@ class PaymentController extends Controller
         }
 
         $totalPrice = $orders->sum('total_price');
-        return view('payment.cliq_supply', compact('order_id', 'totalPrice'));
+        return view('payment.supply_cliq', compact('order_id', 'totalPrice'));
     }
 
     public function confirmCliqSupply(Request $request, $order_id)
     {
+        $request->validate([
+            'cliq_alias' => 'required|string|max:255',
+        ]);
+
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
             ->where('status', 'pending_payment')
             ->get();
-
-        if ($orders->isEmpty()) {
-            abort(403, 'Unauthorized or already paid.');
-        }
-
-        $request->validate([
-            'cliq_alias' => 'required|string|max:255',
-        ]);
 
         foreach ($orders as $order) {
             $order->update([
@@ -270,6 +266,6 @@ class PaymentController extends Controller
         }
 
         return redirect()->route('supplies.my_orders')
-            ->with('success', 'Payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
+            ->with('success', 'Market payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
     }
 }

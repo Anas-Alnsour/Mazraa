@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\FarmBooking;
 use App\Models\Transport;
 use App\Models\SupplyOrder;
+use App\Models\FinancialTransaction; // ضفنا هاد للتعامل مع العمليات المالية
 use Carbon\Carbon;
 use App\Notifications\FarmApprovedNotification;
 use App\Notifications\PayoutProcessedNotification;
@@ -81,36 +82,120 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * عرض المزارع التي تنتظر الموافقة
+     * عرض المزارع التي تنتظر الموافقة، وحوالات الكليك (CliQ) التي تنتظر التأكيد
      */
     public function verifications()
     {
+        // Must be Super Admin
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // جلب المزارع اللي بتستنى الموافقة (كودك الأصلي)
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
-        return view('admin.dashboard.verifications', compact('pendingFarms'));
+
+        // Fetch pending Farm Bookings (كود Jules للـ CliQ)
+        $farmBookings = FarmBooking::with(['farm', 'user'])
+            ->where('status', 'pending_verification')
+            ->orderBy('updated_at', 'asc')
+            ->get();
+
+        // Fetch pending Supply Orders (كود Jules للـ CliQ)
+        $supplyOrders = SupplyOrder::with(['supply', 'user'])
+            ->where('status', 'pending_verification')
+            ->orderBy('updated_at', 'asc')
+            ->get();
+
+        // بنبعث كل الداتا المطلوبة للفيو
+        return view('admin.verifications', compact('pendingFarms', 'farmBookings', 'supplyOrders'));
     }
 
     /**
-     * معالجة الموافقة أو الرفض
+     * معالجة الموافقة أو الرفض لكل أنواع الطلبات (مزارع، حوالات كليك)
      */
-    public function handleVerification(Request $request, Farm $farm)
+    public function handleVerification(Request $request, $id, $type = 'farm_approval')
     {
-        $validated = $request->validate([
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $request->validate([
             'action' => 'required|in:approve,reject'
         ]);
 
-        if ($validated['action'] === 'approve') {
-            $farm->update(['is_approved' => true]);
+        $action = $request->action;
 
-            // 👈 إضافة إشعار الموافقة للمالك
-            $farm->owner->notify(new FarmApprovedNotification($farm));
+        // 1. معالجة موافقة/رفض إنشاء مزرعة جديدة (كودك الأصلي)
+        if ($type === 'farm_approval') {
+            $farm = Farm::findOrFail($id);
 
-            $message = 'Farm approved successfully and published to the marketplace!';
-        } else {
-            $farm->delete();
-            $message = 'Farm rejected and completely removed from the system.';
+            if ($action === 'approve') {
+                $farm->update(['is_approved' => true]);
+                $farm->owner->notify(new FarmApprovedNotification($farm));
+                return redirect()->route('admin.verifications')->with('success', 'Farm approved successfully and published to the marketplace!');
+            } else {
+                $farm->delete();
+                return redirect()->route('admin.verifications')->with('success', 'Farm rejected and completely removed from the system.');
+            }
         }
 
-        return redirect()->route('admin.verifications')->with('success', $message);
+        // 2. معالجة حوالات الكليك لحجوزات المزارع (كود Jules)
+        elseif ($type === 'farm_booking') {
+            $booking = FarmBooking::findOrFail($id);
+
+            if ($action === 'approve') {
+                $booking->update([
+                    'payment_status' => 'paid',
+                    'status' => 'confirmed'
+                ]);
+
+                FinancialTransaction::create([
+                    'user_id'          => $booking->user_id,
+                    'reference_type'   => 'farm_booking',
+                    'reference_id'     => $booking->id,
+                    'amount'           => $booking->total_price,
+                    'transaction_type' => 'credit',
+                    'description'      => 'Manual CliQ Transfer Verified (Booking #' . $booking->id . ')',
+                ]);
+
+                return back()->with('success', 'Farm Booking payment verified and confirmed!');
+            } elseif ($action === 'reject') {
+                $booking->update([
+                    'payment_status' => 'failed',
+                    'status' => 'cancelled'
+                ]);
+                return back()->with('error', 'Farm Booking payment rejected and cancelled.');
+            }
+        }
+
+        // 3. معالجة حوالات الكليك لطلبات التوريد (كود Jules)
+        elseif ($type === 'supply_order') {
+            $order = SupplyOrder::findOrFail($id);
+
+            if ($action === 'approve') {
+                $order->update([
+                    'status' => 'pending'
+                ]);
+
+                FinancialTransaction::create([
+                    'user_id'          => $order->user_id,
+                    'reference_type'   => 'supply_order',
+                    'reference_id'     => $order->id,
+                    'amount'           => $order->total_price,
+                    'transaction_type' => 'credit',
+                    'description'      => 'Manual CliQ Transfer Verified (Supply Invoice #' . $order->order_id . ')',
+                ]);
+
+                return back()->with('success', 'Supply Order payment verified! The order is now pending processing.');
+            } elseif ($action === 'reject') {
+                $order->update([
+                    'status' => 'cancelled'
+                ]);
+                return back()->with('error', 'Supply Order payment rejected and cancelled.');
+            }
+        }
+
+        return back()->with('error', 'Invalid verification request.');
     }
 
     /**
@@ -172,7 +257,6 @@ class SuperAdminController extends Controller
             'reference_id' => 'required|string',
         ]);
 
-        // 👈 تم إسناد النتيجة لمتغير $transaction عشان نبعثه بالإشعار
         $transaction = \App\Models\FinancialTransaction::create([
             'user_id' => $validated['user_id'],
             'reference_type' => 'manual_payout',
@@ -182,7 +266,6 @@ class SuperAdminController extends Controller
             'description' => 'Bank Transfer Ref: ' . $validated['reference_id'],
         ]);
 
-        // 👈 إرسال إشعار بتحويل الأرباح للمورد
         $vendorUser = User::find($request->user_id);
         if ($vendorUser) {
             $vendorUser->notify(new PayoutProcessedNotification($transaction));

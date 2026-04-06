@@ -7,6 +7,7 @@ use App\Models\Farm;
 use App\Models\FarmImage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Supply;
 
 class FarmController extends Controller
 {
@@ -47,10 +48,16 @@ class FarmController extends Controller
     /**
      * عرض صفحة تفاصيل مزرعة محددة للزبون
      */
-    public function show(Farm $farm)
+public function show($id)
     {
-        $farm->load(['images', 'bookings', 'blockedDates', 'owner', 'reviews.user']);
-        return view('public_farms.show', compact('farm'));
+        // 1. جلب المزرعة مع الصور والمالك
+        $farm = Farm::with(['images', 'owner'])->findOrFail($id);
+
+        // 2. جلب لوازم الرحلات (Supplies)
+        // شلنا شرط الـ status لأنه مش موجود عندك بالجدول، بنجيب كل اللوازم المتوفرة
+        $supplies = \App\Models\Supply::all();
+
+        return view('public_farms.show', compact('farm', 'supplies'));
     }
 
     /**
