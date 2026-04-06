@@ -37,8 +37,9 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
         $user = Auth::user();
 
-        // --- STRICT B2B / B2C GATEWAY LOGIC ---
-        $isPortalLogin = $request->routeIs('portal.login') || $request->has('portal_login');
+       // --- STRICT B2B / B2C GATEWAY LOGIC ---
+        // 💡 THE FIX: Use input() to check the actual value instead of has()
+        $isPortalLogin = $request->routeIs('portal.login') || $request->input('portal_login') == '1';
 
         if ($isPortalLogin && $user->role === 'user') {
             Auth::guard('web')->logout();

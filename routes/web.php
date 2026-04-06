@@ -56,10 +56,20 @@ Route::get('/market/supplies/{supply}', [SupplyController::class, 'show'])->name
 // 🔐 B2B Portal Login & Registration
 // --------------------------------------------------------------------------
 Route::middleware('guest')->group(function () {
+    // 1. بوابة الملاك والأدمن (الأساسية)
     Route::get('/portal/login', [AuthenticatedSessionController::class, 'createPortal'])->name('portal.login');
-    Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
 
-// راوتات السائقين المخصصة (دخول)
+    // 2. بوابة شركات التوريد (الجديدة)
+    Route::get('/portal/supply-company/login', function () {
+        return view('auth.supply-company-login');
+    })->name('supply-company.login');
+
+    // 3. بوابة شركات النقل (الجديدة)
+    Route::get('/portal/transport-company/login', function () {
+        return view('auth.transport-company-login');
+    })->name('transport-company.login');
+
+    // 4. بوابات السائقين (المنفصلة)
     Route::get('/portal/transport-driver/login', function () {
         return view('auth.transport-driver-login');
     })->name('transport-driver.login');
@@ -68,7 +78,10 @@ Route::middleware('guest')->group(function () {
         return view('auth.supply-driver-login');
     })->name('supply-driver.login');
 
-    // راوتات تسجيل شريك جديد (صاحب مزرعة)
+    // تنفيذ عملية تسجيل الدخول (موحد لكل ما سبق)
+    Route::post('/portal/login', [AuthenticatedSessionController::class, 'store']);
+
+    // تسجيل شريك جديد (صاحب مزرعة)
     Route::get('/partner/register', [PartnerRegisteredUserController::class, 'create'])->name('partner.register');
     Route::post('/partner/register', [PartnerRegisteredUserController::class, 'store'])->name('partner.register.store');
 });

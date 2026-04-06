@@ -8,23 +8,17 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // الباسوورد الموحد لكل حسابات التست
         $password = Hash::make('password123');
 
-        // 1. Super Admin
         User::updateOrCreate(['email' => 'admin@mazraa.com'], [
             'name' => 'System Admin',
-            'phone' => '0799999901', // أرقام مميزة عشان ما تضرب مع إيرور التكرار
+            'phone' => '0799999901',
             'role' => 'admin',
             'password' => $password,
         ]);
 
-        // 2. Farm Owner
         User::updateOrCreate(['email' => 'owner@mazraa.com'], [
             'name' => 'Farm Owner',
             'phone' => '0799999902',
@@ -35,7 +29,6 @@ class UserSeeder extends Seeder
             'iban' => 'JO00 ARAB 0000 0000 0000 0000 0000 00',
         ]);
 
-        // 3. Supply Company
         User::updateOrCreate(['email' => 'supply@mazraa.com'], [
             'name' => 'Supply Company',
             'phone' => '0799999903',
@@ -43,7 +36,6 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 4. Transport Company
         User::updateOrCreate(['email' => 'transport@mazraa.com'], [
             'name' => 'Transport Company',
             'phone' => '0799999904',
@@ -51,7 +43,6 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 5. Transport Driver
         User::updateOrCreate(['email' => 'driver.t@mazraa.com'], [
             'name' => 'Transport Driver',
             'phone' => '0799999905',
@@ -59,7 +50,6 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 6. Supply Driver
         User::updateOrCreate(['email' => 'driver.s@mazraa.com'], [
             'name' => 'Supply Driver',
             'phone' => '0799999906',
@@ -67,7 +57,6 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 7. Normal User (Customer)
         User::updateOrCreate(['email' => 'user@mazraa.com'], [
             'name' => 'Normal User',
             'phone' => '0799999907',
