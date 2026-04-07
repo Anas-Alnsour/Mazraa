@@ -182,32 +182,20 @@ class SupplyOrderController extends Controller
                     $commissionAmount = $item->total_price * $commissionRate;
                     $netCompanyAmount = $item->total_price - $commissionAmount;
 
-                    // خصم المخزون
+                    // Decrement stock
                     $supply->decrement('stock', $item->quantity);
 
-                    // تحديث الحالة والعمولات (من كارت إلى قيد الدفع)
+                    // Move from cart → pending_payment with financials pre-calculated
                     $item->update([
-                        'order_id' => $invoiceId,
-                        'driver_id' => $assignedDriverId,
+                        'order_id'                => $invoiceId,
+                        'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status' => 'pending_payment',
-                        'commission_amount' => $commissionAmount,
-                        'net_company_amount' => $netCompanyAmount,
+                        'status'                  => 'pending_payment',
+                        'commission_amount'       => $commissionAmount,
+                        'net_company_amount'      => $netCompanyAmount,
                     ]);
-
-                    // 💡 Financial Distribution (تسجيل عمولة الموقع) - هاد بصير غالبا بعد الدفع الفعلي بس تركته هون حسب كودك
-                    if ($adminId) {
-                        DB::table('financial_transactions')->insert([
-                            'user_id' => $adminId,
-                            'amount' => $commissionAmount,
-                            'transaction_type' => 'credit',
-                            'reference_type' => 'supply_order',
-                            'reference_id' => $item->id,
-                            'description' => "10% Commission for Supply Order #" . $item->id,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+                    // NOTE: Financial transactions are recorded in PaymentController::successSupply()
+                    // after actual payment is confirmed — not here.
                 }
             });
 

@@ -24,14 +24,22 @@ class FarmController extends Controller
             $query->where('location', 'like', '%' . $request->location . '%');
         }
 
-        // فلترة حسب أقل سعر
+        // Filter by minimum price (uses the lowest shift price as the comparison basis)
         if ($request->filled('min_price')) {
-            $query->where('price_per_night', '>=', $request->min_price);
+            $query->where(function($q) use ($request) {
+                $q->where('price_per_morning_shift', '>=', $request->min_price)
+                  ->orWhere('price_per_evening_shift', '>=', $request->min_price)
+                  ->orWhere('price_per_full_day', '>=', $request->min_price);
+            });
         }
 
-        // فلترة حسب أعلى سعر
+        // Filter by maximum price (farm is eligible if ANY shift fits the budget)
         if ($request->filled('max_price')) {
-            $query->where('price_per_night', '<=', $request->max_price);
+            $query->where(function($q) use ($request) {
+                $q->where('price_per_morning_shift', '<=', $request->max_price)
+                  ->orWhere('price_per_evening_shift', '<=', $request->max_price)
+                  ->orWhere('price_per_full_day', '<=', $request->max_price);
+            });
         }
 
         // فلترة حسب السعة (عدد الأشخاص)

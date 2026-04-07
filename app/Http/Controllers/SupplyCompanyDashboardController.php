@@ -6,6 +6,7 @@ use App\Models\SupplyOrder;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SupplyCompanyDashboardController extends Controller
 {
@@ -92,11 +93,32 @@ class SupplyCompanyDashboardController extends Controller
             abort(403, 'Invalid driver selection.');
         }
 
-        $order->update([
-            'driver_id' => $driver->id,
-            'status' => 'in_way'
-        ]);
+        // Resolve the invoice ID so we can update ALL line items in the same invoice
+        $invoiceId = $order->order_id ?? $order->id;
 
-        return back()->with('success', 'Driver assigned successfully. Order is now on the way.');
+        // Update all orders in this invoice atomically
+        DB::beginTransaction();
+        try {
+            SupplyOrder::where('order_id', $invoiceId)
+                ->whereHas('supply', function ($q) use ($user) {
+                    $q->where('company_id', $user->id);
+                })
+                ->update([
+                    'driver_id' => $driver->id,
+                    'status'    => 'waiting_driver',
+                ]);
+
+            // Increment driver's active orders count
+            DB::table('users')
+                ->where('id', $driver->id)
+                ->increment('orders_count');
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to assign driver: ' . $e->getMessage());
+        }
+
+        return back()->with('success', 'Driver assigned successfully. Order is now waiting for driver pick-up.');
     }
 }

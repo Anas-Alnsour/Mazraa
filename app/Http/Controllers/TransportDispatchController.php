@@ -115,9 +115,9 @@ class TransportDispatchController extends Controller
             return back()->withErrors(['driver_id' => 'Invalid driver or vehicle selection.'])->withInput();
         }
 
-        // Increment driver's active orders count (if it's the first time assigning)
+        // Increment driver's active TRIPS count (transport drivers use trips_count, not orders_count)
         if ($job->status === 'accepted') {
-            $driver->increment('orders_count');
+            $driver->increment('trips_count');
         }
 
         // 💡 التعديل هون: تحديث الـ driver_id, vehicle_id والـ status حسب الفورم
@@ -127,8 +127,8 @@ class TransportDispatchController extends Controller
             'status' => $request->status ?? 'assigned'
         ]);
 
-        // Optional: Update vehicle status to booked
-        $vehicle->update(['status' => 'booked']);
+        // Mark vehicle as in_use so it can't be double-booked
+        $vehicle->update(['status' => 'in_use']);
 
         return redirect()->route('transport.dispatch.index')->with('success', 'Resources assigned successfully. The driver has been notified.');
     }

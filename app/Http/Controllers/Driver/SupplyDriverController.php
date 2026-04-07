@@ -42,7 +42,9 @@ class SupplyDriverController extends Controller
         }
 
         $request->validate([
-            'status' => 'required|in:waiting_driver,in_way,delivered'
+            // Drivers can only advance to 'in_way' or 'delivered'
+            // 'waiting_driver' is set by the supply company, not the driver
+            'status' => 'required|in:in_way,delivered'
         ]);
 
         // Fetch all items under this Invoice ID assigned to this driver
@@ -57,28 +59,29 @@ class SupplyDriverController extends Controller
         DB::beginTransaction();
 
         try {
-            // فحص إذا الفاتورة أصلاً تسلمت من قبل عشان ما ننقص العداد أكثر من مرة
+            // Idempotency: don't double-decrement if already delivered
             $alreadyDelivered = $orders->first()->status === 'delivered';
 
-            // تحديث حالة كل العناصر التابعة لنفس الفاتورة
+            // Update all line items in the invoice
             foreach ($orders as $order) {
                 $order->update(['status' => $request->status]);
             }
 
-            // 💡 التعديل هون: تنقيص العداد مرة واحدة فقط لكل فاتورة تكتمل
+            // Decrement driver's active orders count only once per full invoice delivery
             if (!$alreadyDelivered && $request->status === 'delivered') {
                 DB::table('users')
                     ->where('id', Auth::id())
-                    ->where('orders_count', '>', 0) // حماية إضافية عشان ما يصير العداد بالسالب
+                    ->where('orders_count', '>', 0)
                     ->decrement('orders_count');
             }
 
             DB::commit();
-            return back()->with('success', 'Delivery status updated successfully to: ' . strtoupper(str_replace('_', ' ', $request->status)));
+            return back()->with('success', 'Delivery status updated to: ' . strtoupper(str_replace('_', ' ', $request->status)));
 
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to update delivery status.');
         }
     }
+
 }

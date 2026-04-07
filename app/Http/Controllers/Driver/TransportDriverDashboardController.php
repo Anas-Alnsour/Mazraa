@@ -61,13 +61,19 @@ class TransportDriverDashboardController extends Controller
 
         $newStatus = $request->status;
 
-        // Validation based on state machine
+        // State machine guards
         if ($newStatus === 'in_progress' && $trip->status !== 'assigned') {
             return back()->with('error', 'Cannot start this trip. It is not in assigned status.');
         }
 
         if ($newStatus === 'completed' && !in_array($trip->status, ['in_progress', 'in_way'])) {
             return back()->with('error', 'Cannot complete this trip. It is not currently in progress.');
+        }
+
+        // 🔒 Idempotency guard: prevent duplicate ledger entries if submitted twice
+        if ($newStatus === 'completed' && $trip->status === 'completed') {
+            return redirect()->route('transport.driver.dashboard')
+                ->with('success', 'This trip is already marked as completed.');
         }
 
         DB::beginTransaction();
@@ -79,55 +85,53 @@ class TransportDriverDashboardController extends Controller
             // Specific actions when a trip is completed
             if ($newStatus === 'completed') {
 
-                // 1. Decrement the driver's active orders_count
-                if ($driver->orders_count > 0) {
-                    $driver->decrement('orders_count');
+                // 1. Decrement the driver's active trips_count
+                if ($driver->trips_count > 0) {
+                    $driver->decrement('trips_count');
                 }
 
-                // 2. Update vehicle status to available
+                // 2. Release vehicle back to fleet
                 if ($trip->vehicle) {
                     $trip->vehicle->update(['status' => 'available']);
                 }
 
-                // 3. Financial Distribution 💰
-                // Ensure the trip has calculated commission/net amounts (fallback if not set)
+                // 3. Financial Distribution — pull pre-calculated amounts (set during booking)
+                //    with safe fallback to 10/90 split if not pre-calculated
                 $commissionAmount = $trip->commission_amount ?? ($trip->price * 0.10);
                 $netCompanyAmount = $trip->net_company_amount ?? ($trip->price * 0.90);
 
-                // Entry A: Credit Transport Company's wallet (Net Profit)
+                $adminId = User::where('role', 'admin')->value('id');
+
+                // Entry A: Credit Transport Company's wallet (Net Revenue)
                 if ($trip->company_id) {
                     FinancialTransaction::create([
-                        'user_id' => $trip->company_id,
-                        'amount' => $netCompanyAmount,
+                        'user_id'          => $trip->company_id,
+                        'amount'           => $netCompanyAmount,
                         'transaction_type' => 'credit',
-                        'reference_type' => 'Transport',
-                        'reference_id' => $trip->id,
-                        'description' => 'Transport Revenue for trip #' . $trip->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'reference_type'   => 'transport',
+                        'reference_id'     => $trip->id,
+                        'description'      => "Net revenue for transport trip #{$trip->id}",
                     ]);
                 }
 
                 // Entry B: Credit Admin's wallet (Platform Commission)
-                // Find the primary super admin (assuming the first admin created, or specifically user ID 1)
-                $admin = User::where('role', 'admin')->first();
-                if ($admin) {
+                if ($adminId) {
                     FinancialTransaction::create([
-                        'user_id' => $admin->id,
-                        'amount' => $commissionAmount,
+                        'user_id'          => $adminId,
+                        'amount'           => $commissionAmount,
                         'transaction_type' => 'credit',
-                        'reference_type' => 'Transport_Commission',
-                        'reference_id' => $trip->id,
-                        'description' => 'Platform commission for transport trip #' . $trip->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'reference_type'   => 'transport',
+                        'reference_id'     => $trip->id,
+                        'description'      => "Platform commission for transport trip #{$trip->id}",
                     ]);
                 }
             }
 
             DB::commit();
 
-            $message = $newStatus === 'in_progress' ? 'Trip started successfully. Drive safely!' : 'Trip marked as completed. Great job! Funds have been distributed.';
+            $message = $newStatus === 'in_progress'
+                ? 'Trip started successfully. Drive safely!'
+                : 'Trip marked as completed. Great job! Funds have been distributed.';
 
             return redirect()->route('transport.driver.dashboard')->with('success', $message);
 
@@ -136,4 +140,5 @@ class TransportDriverDashboardController extends Controller
             return back()->with('error', 'An error occurred while updating the status: ' . $e->getMessage());
         }
     }
+
 }

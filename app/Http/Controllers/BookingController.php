@@ -31,57 +31,33 @@ class BookingController extends Controller
         $farm = Farm::findOrFail($validated['farm_id']);
         $user = Auth::user();
 
-        // فحص التعارض مع تواريخ مغلقة من قبل المالك
-        $isBlocked = FarmBlockedDate::where('farm_id', $farm->id)
-            ->where('date', $validated['booking_date'])
-            ->whereIn('shift', [$validated['shift'], 'full_day'])
-            ->exists();
-
-        if ($isBlocked) {
-            return back()->with('error', 'Sorry, this farm is not available for the selected date and shift.');
-        }
-
-        // فحص التعارض مع حجوزات زبائن آخرين
-        $existingBookingQuery = FarmBooking::where('farm_id', $farm->id)
-            ->whereDate('start_time', $validated['booking_date'])
-            ->whereIn('status', ['pending_payment', 'pending_verification', 'pending', 'confirmed', 'completed']);
-
-        if ($validated['shift'] === 'full_day') {
-            $isBooked = $existingBookingQuery->exists();
-        } else {
-            $isBooked = $existingBookingQuery->whereIn('event_type', [$validated['shift'], 'full_day'])->exists();
-        }
-
-        if ($isBooked) {
-            return back()->with('error', 'Sorry, this shift is already booked by another user.');
-        }
-
-        // تجهيز الأوقات والأسعار بناءً على الشفت
+        // ---------------------------------------------------------------
+        // Calculate prices and transport costs BEFORE the transaction
+        // ---------------------------------------------------------------
         $bookingDate = Carbon::parse($validated['booking_date']);
         if ($validated['shift'] === 'morning') {
-            $startTime = $bookingDate->copy()->setTime(8, 0, 0); // 8 AM
-            $endTime = $bookingDate->copy()->setTime(17, 0, 0);  // 5 PM
+            $startTime = $bookingDate->copy()->setTime(8, 0, 0);
+            $endTime   = $bookingDate->copy()->setTime(17, 0, 0);
             $farmPrice = $farm->price_per_morning_shift;
         } elseif ($validated['shift'] === 'evening') {
-            $startTime = $bookingDate->copy()->setTime(19, 0, 0); // 7 PM
-            $endTime = $bookingDate->copy()->addDay()->setTime(6, 0, 0); // 6 AM next day
+            $startTime = $bookingDate->copy()->setTime(19, 0, 0);
+            $endTime   = $bookingDate->copy()->addDay()->setTime(6, 0, 0);
             $farmPrice = $farm->price_per_evening_shift;
-        } else { // full_day
-            $startTime = $bookingDate->copy()->setTime(10, 0, 0); // 10 AM
-            $endTime = $bookingDate->copy()->addDay()->setTime(8, 0, 0); // 8 AM next day
+        } else {
+            $startTime = $bookingDate->copy()->setTime(10, 0, 0);
+            $endTime   = $bookingDate->copy()->addDay()->setTime(8, 0, 0);
             $farmPrice = $farm->price_per_full_day;
         }
 
-        // الحسابات المالية (باستخدام السعر الديناميكي للمواصلات من الخريطة)
-        $transportCost = 0;
-        $pickupLocation = 'Custom User Location';
+        $transportCost   = 0;
+        $pickupLocation  = 'Custom User Location';
         $destGovernorate = $user->governorate ?? 'Amman';
         $requiresTransport = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
         if ($requiresTransport) {
             $request->validate(['transport_cost' => 'required|numeric|min:25']);
-            $transportCost = (float) $request->transport_cost;
-            $pickupLocation = $request->input('pickup_location', 'Custom User Location');
+            $transportCost   = (float) $request->transport_cost;
+            $pickupLocation  = $request->input('pickup_location', 'Custom User Location');
             $destGovernorate = $request->input('destination_governorate', $user->governorate ?? 'Amman');
         }
 
@@ -95,63 +71,94 @@ class BookingController extends Controller
             }
         }
 
-        $totalBeforeTax = $farmPrice + $transportCost + $suppliesTotal;
-        $taxAmount = $totalBeforeTax * 0.16; // 16% VAT
-        $finalTotal = $totalBeforeTax + $taxAmount;
-
+        $totalBeforeTax  = $farmPrice + $transportCost + $suppliesTotal;
+        $taxAmount       = $totalBeforeTax * 0.16;
+        $finalTotal      = $totalBeforeTax + $taxAmount;
         $commissionAmount = $farmPrice * ($farm->commission_rate / 100);
-        $netOwnerAmount = $farmPrice - $commissionAmount;
+        $netOwnerAmount  = $farmPrice - $commissionAmount;
 
+        // ---------------------------------------------------------------
+        // 🔒 ATOMIC TRANSACTION — availability check + insert together
+        // prevents double-booking race conditions
+        // ---------------------------------------------------------------
         DB::beginTransaction();
 
         try {
-            // إنشاء الحجز الرئيسي
+            // Re-check blocked dates INSIDE the transaction (pessimistic lock)
+            $isBlocked = FarmBlockedDate::where('farm_id', $farm->id)
+                ->where('date', $validated['booking_date'])
+                ->whereIn('shift', [$validated['shift'], 'full_day'])
+                ->lockForUpdate()
+                ->exists();
+
+            if ($isBlocked) {
+                DB::rollBack();
+                return back()->with('error', 'Sorry, this farm is not available for the selected date and shift.');
+            }
+
+            // Re-check competitor bookings INSIDE the transaction (pessimistic lock)
+            $existingBookingQuery = FarmBooking::where('farm_id', $farm->id)
+                ->whereDate('start_time', $validated['booking_date'])
+                ->whereIn('status', ['pending_payment', 'pending_verification', 'pending', 'confirmed', 'completed'])
+                ->lockForUpdate();
+
+            if ($validated['shift'] === 'full_day') {
+                $isBooked = $existingBookingQuery->exists();
+            } else {
+                $isBooked = $existingBookingQuery->whereIn('event_type', [$validated['shift'], 'full_day'])->exists();
+            }
+
+            if ($isBooked) {
+                DB::rollBack();
+                return back()->with('error', 'Sorry, this shift is already booked by another user.');
+            }
+
+            // Create the booking
             $booking = FarmBooking::create([
-                'farm_id' => $farm->id,
-                'user_id' => $user->id,
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'event_type' => $validated['shift'],
-                'total_price' => $finalTotal,
-                'tax_amount' => $taxAmount,
+                'farm_id'           => $farm->id,
+                'user_id'           => $user->id,
+                'start_time'        => $startTime,
+                'end_time'          => $endTime,
+                'event_type'        => $validated['shift'],
+                'total_price'       => $finalTotal,
+                'tax_amount'        => $taxAmount,
                 'commission_amount' => $commissionAmount,
-                'net_owner_amount' => $netOwnerAmount,
-                'payment_status' => 'pending',
-                'status' => 'pending_payment',
-                'requires_transport' => $requiresTransport,
-                'transport_cost' => $transportCost,
-                'pickup_lat' => $requiresTransport ? $validated['pickup_lat'] : null,
-                'pickup_lng' => $requiresTransport ? $validated['pickup_lng'] : null,
+                'net_owner_amount'  => $netOwnerAmount,
+                'payment_status'    => 'pending',
+                'status'            => 'pending_payment',
+                'requires_transport'=> $requiresTransport,
+                'transport_cost'    => $transportCost,
+                'pickup_lat'        => $requiresTransport ? $validated['pickup_lat'] : null,
+                'pickup_lng'        => $requiresTransport ? $validated['pickup_lng'] : null,
             ]);
 
-            // إنشاء طلب المواصلات
+            // Create the transport request (if needed)
             if ($requiresTransport) {
                 $transport = Transport::create([
-                    'user_id' => $user->id,
-                    'farm_id' => $farm->id,
-                    'farm_booking_id' => $booking->id,
-                    'transport_type' => 'Shuttle',
-                    'passengers' => $validated['passengers'],
+                    'user_id'                => $user->id,
+                    'farm_id'                => $farm->id,
+                    'farm_booking_id'        => $booking->id,
+                    'transport_type'         => 'Shuttle',
+                    'passengers'             => $validated['passengers'],
                     'start_and_return_point' => $pickupLocation,
-                    'pickup_location' => $pickupLocation,
-                    'destination_governorate' => $destGovernorate,
-                    'pickup_lat' => $validated['pickup_lat'],
-                    'pickup_lng' => $validated['pickup_lng'],
-                    'price' => $transportCost,
-                    'distance' => 0,
-                    'Farm_Arrival_Time' => $startTime,
-                    'Farm_Departure_Time' => $endTime,
-                    'status' => 'pending',
-                    'commission_amount' => $transportCost * 0.10,
-                    'net_company_amount' => $transportCost * 0.90
+                    'destination_governorate'=> $destGovernorate,
+                    'pickup_lat'             => $validated['pickup_lat'],
+                    'pickup_lng'             => $validated['pickup_lng'],
+                    'price'                  => $transportCost,
+                    'distance'               => 0,
+                    'Farm_Arrival_Time'      => $startTime,
+                    'Farm_Departure_Time'    => $endTime,
+                    'status'                 => 'pending',
+                    'commission_amount'      => $transportCost * 0.10,
+                    'net_company_amount'     => $transportCost * 0.90,
                 ]);
 
-                if(class_exists('\App\Services\TransportDispatchAction')) {
+                if (class_exists('\App\Services\TransportDispatchAction')) {
                     \App\Services\TransportDispatchAction::dispatchDriver($transport);
                 }
             }
 
-            // إنشاء طلبات التوريد
+            // Create supply orders (if any)
             if (!empty($validated['supplies'])) {
                 $orderId = 'INV-' . strtoupper(uniqid());
                 foreach ($validated['supplies'] as $item) {
@@ -159,15 +166,15 @@ class BookingController extends Controller
                     if ($supply) {
                         $itemTotal = $supply->price * $item['quantity'];
                         SupplyOrder::create([
-                            'user_id' => $user->id,
-                            'supply_id' => $supply->id,
-                            'booking_id' => $booking->id,
-                            'order_id' => $orderId,
-                            'quantity' => $item['quantity'],
-                            'total_price' => $itemTotal,
-                            'commission_amount' => $itemTotal * 0.10,
+                            'user_id'            => $user->id,
+                            'supply_id'          => $supply->id,
+                            'booking_id'         => $booking->id,
+                            'order_id'           => $orderId,
+                            'quantity'           => $item['quantity'],
+                            'total_price'        => $itemTotal,
+                            'commission_amount'  => $itemTotal * 0.10,
                             'net_company_amount' => $itemTotal * 0.90,
-                            'status' => 'pending',
+                            'status'             => 'pending',
                         ]);
                     }
                 }

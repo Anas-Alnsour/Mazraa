@@ -77,8 +77,13 @@ protected $fillable = [
     // 3. علاقة شركة التوريد بالمنتجات تبعتها
     public function supplies()
     {
-        // ملاحظة: إذا كان موديل التوريد عندك اسمه SupplyItem استبدل كلمة Supply بـ SupplyItem
         return $this->hasMany(\App\Models\Supply::class, 'company_id');
+    }
+
+    // 4. Financial transactions ledger entries for this user
+    public function financialTransactions()
+    {
+        return $this->hasMany(\App\Models\FinancialTransaction::class, 'user_id');
     }
 
     // ==================================================

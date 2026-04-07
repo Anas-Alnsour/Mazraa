@@ -13,71 +13,65 @@ use App\Models\FinancialTransaction;
 use Carbon\Carbon;
 use App\Notifications\FarmApprovedNotification;
 use App\Notifications\PayoutProcessedNotification;
+use Illuminate\Support\Facades\DB;
 
 class SuperAdminController extends Controller
 {
     /**
-     * Display the Unified Super Admin Dashboard. (Jules Metrics)
+     * Display the Unified Super Admin Dashboard.
      */
     public function index()
     {
         // ---------------------------------------------------------
         // 1. GLOBAL METRICS (All Time)
         // ---------------------------------------------------------
-        $totalUsers = User::count();
+        $totalUsers    = User::count();
         $totalPartners = User::whereIn('role', ['farm_owner', 'supply_company', 'transport_company'])->count();
-        $totalFarms = Farm::count();
+        $totalFarms    = Farm::count();
 
         // ---------------------------------------------------------
-        // 2. FINANCIAL OVERSIGHT (Platform Commissions & Revenue)
+        // 2. FINANCIAL OVERSIGHT — ONLY Admin's credit transactions
         // ---------------------------------------------------------
         $adminId = auth()->id();
 
-        // Total platform commissions earned (all time)
+        // Total platform commissions earned (only Admin credit entries)
         $totalCommissionEarned = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
             ->sum('amount');
 
         // Revenue breakdown by sector (Completed/Confirmed only)
-        // Note: Using total_price for volume indication
-        $farmRevenue = FarmBooking::whereIn('status', ['confirmed', 'completed'])->sum('total_price');
-        $supplyRevenue = SupplyOrder::whereIn('status', ['paid', 'delivered', 'completed'])->sum('total_price');
-        $transportRevenue = Transport::whereIn('status', ['completed'])->sum('price');
+        $farmRevenue      = FarmBooking::whereIn('status', ['confirmed', 'completed'])->sum('total_price');
+        $supplyRevenue    = SupplyOrder::whereIn('status', ['delivered', 'completed'])->sum('total_price');
+        $transportRevenue = Transport::where('status', 'completed')->sum('price');
 
         $totalGrossVolume = $farmRevenue + $supplyRevenue + $transportRevenue;
 
         // ---------------------------------------------------------
         // 3. ECOSYSTEM ACTIVITY (Current Status)
         // ---------------------------------------------------------
-
-        // FARMS (Emerald)
-        $activeFarmsCount = Farm::where('is_approved', true)->count();
+        $activeFarmsCount    = Farm::where('is_approved', true)->count();
         $pendingFarmBookings = FarmBooking::whereIn('status', ['pending', 'pending_verification', 'pending_payment'])->count();
-        $activeFarmBookings = FarmBooking::where('status', 'confirmed')->whereDate('start_time', '>=', now())->count();
+        $activeFarmBookings  = FarmBooking::where('status', 'confirmed')->whereDate('start_time', '>=', now())->count();
 
-        // SUPPLIES (Green/Lime)
         $pendingSupplyOrders = SupplyOrder::where('status', 'pending')->count();
-        $inTransitSupplies = SupplyOrder::whereIn('status', ['waiting_driver', 'in_way'])->count();
-        $completedSupplies = SupplyOrder::where('status', 'delivered')->count();
+        $inTransitSupplies   = SupplyOrder::whereIn('status', ['waiting_driver', 'in_way'])->count();
+        $completedSupplies   = SupplyOrder::where('status', 'delivered')->count();
 
-        // TRANSPORT LOGISTICS (Cyan/Blue)
-        $pendingTransports = Transport::where('status', 'pending')->count();
+        $pendingTransports    = Transport::where('status', 'pending')->count();
         $inProgressTransports = Transport::whereIn('status', ['in_progress', 'in_way'])->count();
-        $completedTransports = Transport::where('status', 'completed')->count();
+        $completedTransports  = Transport::where('status', 'completed')->count();
 
         // ---------------------------------------------------------
-        // 4. VERIFICATIONS & ACTION CENTER (Pending Approvals)
+        // 4. VERIFICATIONS & ACTION CENTER
         // ---------------------------------------------------------
-        $farmsAwaitingApproval = Farm::where('is_approved', false)->count();
-        $paymentsAwaitingVerification = FarmBooking::where('status', 'pending_verification')->count() +
-                                        SupplyOrder::where('status', 'pending_verification')->count();
-
+        $farmsAwaitingApproval      = Farm::where('is_approved', false)->count();
+        $paymentsAwaitingVerification = FarmBooking::where('status', 'pending_verification')->count()
+                                      + SupplyOrder::where('status', 'pending_verification')->count();
         $actionRequiredCount = $farmsAwaitingApproval + $paymentsAwaitingVerification;
 
         // ---------------------------------------------------------
         // 5. RECENT TRANSACTIONS FEED
         // ---------------------------------------------------------
-        // Fetch verified farms for the ecosystem map coverage
         $verifiedFarms = Farm::where('is_approved', true)->select('id', 'name', 'latitude', 'longitude')->get();
 
         $recentTransactions = FinancialTransaction::with('user')
@@ -98,25 +92,19 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * عرض المزارع التي تنتظر الموافقة، وحوالات الكليك (CliQ) التي تنتظر التأكيد
+     * Show pending farm approvals and CliQ payment verifications.
      */
     public function verifications()
     {
-        // Must be Super Admin
-        if (auth()->user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        if (auth()->user()->role !== 'admin') abort(403);
 
-        // جلب المزارع اللي بتستنى الموافقة
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
 
-        // Fetch pending Farm Bookings (CliQ)
         $farmBookings = FarmBooking::with(['farm', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
             ->get();
 
-        // Fetch pending Supply Orders (CliQ)
         $supplyOrders = SupplyOrder::with(['supply', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
@@ -126,191 +114,244 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * معالجة الموافقة أو الرفض لكل أنواع الطلبات (مزارع، حوالات كليك)
+     * Handle approve/reject for farms and CliQ payment verifications.
      */
     public function handleVerification(Request $request, $id, $type = 'farm_approval')
     {
-        if (auth()->user()->role !== 'admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        if (auth()->user()->role !== 'admin') abort(403);
 
-        $request->validate([
-            'action' => 'required|in:approve,reject'
-        ]);
-
+        $request->validate(['action' => 'required|in:approve,reject']);
         $action = $request->action;
 
-        // 1. معالجة موافقة/رفض إنشاء مزرعة جديدة
+        // ── 1. Farm Approval ─────────────────────────────────────
         if ($type === 'farm_approval') {
             $farm = Farm::findOrFail($id);
-
             if ($action === 'approve') {
                 $farm->update(['is_approved' => true]);
                 $farm->owner->notify(new FarmApprovedNotification($farm));
-                return redirect()->route('admin.verifications')->with('success', 'Farm approved successfully and published to the marketplace!');
-            } else {
-                $farm->delete();
-                return redirect()->route('admin.verifications')->with('success', 'Farm rejected and completely removed from the system.');
+                return redirect()->route('admin.verifications')->with('success', 'Farm approved and published!');
             }
+            $farm->delete();
+            return redirect()->route('admin.verifications')->with('success', 'Farm rejected and removed.');
         }
 
-        // 2. معالجة حوالات الكليك لحجوزات المزارع
+        // ── 2. CliQ for Farm Booking ──────────────────────────────
         elseif ($type === 'farm_booking') {
-            $booking = FarmBooking::findOrFail($id);
+            $booking = FarmBooking::with('farm')->findOrFail($id);
 
             if ($action === 'approve') {
-                $booking->update([
-                    'payment_status' => 'paid',
-                    'status' => 'confirmed'
-                ]);
+                $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
 
+                $adminId = User::where('role', 'admin')->value('id');
+
+                // Admin commission
                 FinancialTransaction::create([
-                    'user_id'          => $booking->user_id,
+                    'user_id'          => $adminId,
                     'reference_type'   => 'farm_booking',
                     'reference_id'     => $booking->id,
-                    'amount'           => $booking->total_price,
+                    'amount'           => $booking->commission_amount,
                     'transaction_type' => 'credit',
-                    'description'      => 'Manual CliQ Transfer Verified (Booking #' . $booking->id . ')',
+                    'description'      => "Platform commission — CliQ Booking #{$booking->id}",
                 ]);
 
-                return back()->with('success', 'Farm Booking payment verified and confirmed!');
-            } elseif ($action === 'reject') {
-                $booking->update([
-                    'payment_status' => 'failed',
-                    'status' => 'cancelled'
+                // Farm owner net
+                FinancialTransaction::create([
+                    'user_id'          => $booking->farm->owner_id,
+                    'reference_type'   => 'farm_booking',
+                    'reference_id'     => $booking->id,
+                    'amount'           => $booking->net_owner_amount,
+                    'transaction_type' => 'credit',
+                    'description'      => "Net payout — CliQ Booking #{$booking->id}",
                 ]);
-                return back()->with('error', 'Farm Booking payment rejected and cancelled.');
+
+                return back()->with('success', 'Farm Booking CliQ payment verified and funds distributed!');
             }
+
+            $booking->update(['payment_status' => 'failed', 'status' => 'cancelled']);
+            return back()->with('error', 'Farm Booking CliQ payment rejected and cancelled.');
         }
 
-        // 3. معالجة حوالات الكليك لطلبات التوريد
+        // ── 3. CliQ for Supply Order ──────────────────────────────
         elseif ($type === 'supply_order') {
-            $order = SupplyOrder::findOrFail($id);
+            $order = SupplyOrder::with('supply')->findOrFail($id);
 
             if ($action === 'approve') {
-                $order->update([
-                    'status' => 'pending'
-                ]);
+                $order->update(['status' => 'pending']);
 
+                $adminId = User::where('role', 'admin')->value('id');
+
+                // Admin commission
                 FinancialTransaction::create([
-                    'user_id'          => $order->user_id,
+                    'user_id'          => $adminId,
                     'reference_type'   => 'supply_order',
                     'reference_id'     => $order->id,
-                    'amount'           => $order->total_price,
+                    'amount'           => $order->commission_amount,
                     'transaction_type' => 'credit',
-                    'description'      => 'Manual CliQ Transfer Verified (Supply Invoice #' . $order->order_id . ')',
+                    'description'      => "Platform commission — CliQ Supply Order #{$order->id}",
                 ]);
 
-                return back()->with('success', 'Supply Order payment verified! The order is now pending processing.');
-            } elseif ($action === 'reject') {
-                $order->update([
-                    'status' => 'cancelled'
-                ]);
-                return back()->with('error', 'Supply Order payment rejected and cancelled.');
+                // Supply company net
+                if ($order->supply && $order->supply->company_id) {
+                    FinancialTransaction::create([
+                        'user_id'          => $order->supply->company_id,
+                        'reference_type'   => 'supply_order',
+                        'reference_id'     => $order->id,
+                        'amount'           => $order->net_company_amount,
+                        'transaction_type' => 'credit',
+                        'description'      => "Net payout — CliQ Supply Order #{$order->id}",
+                    ]);
+                }
+
+                return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
             }
+
+            $order->update(['status' => 'cancelled']);
+            return back()->with('error', 'Supply Order CliQ payment rejected and cancelled.');
         }
 
         return back()->with('error', 'Invalid verification request.');
     }
 
     /**
-     * Display the Financial Payouts Ledger
+     * Display the Financial Payouts Ledger.
+     * Uses aggregate DB queries — no memory-heavy eager loading.
      */
     public function payouts()
     {
-        // 1. Get all Farm Owners and their earnings
-        $farmOwners = User::where('role', 'farm_owner')->with(['farms.bookings' => function($q) {
-            $q->whereIn('status', ['completed', 'finished']);
-        }])->get()->map(function($user) {
-            $earned = $user->farms->flatMap->bookings->sum('net_company_amount');
-            $paidOut = \App\Models\FinancialTransaction::where('user_id', $user->id)->where('transaction_type', 'debit')->sum('amount');
-            $user->balance = $earned - $paidOut;
-            return $user;
-        })->filter(function($user) { return $user->balance > 0; });
+        // Efficient: get all vendors with their credit/debit totals in ONE query,
+        // then compute available balance in PHP — no nested collection maps on raw model data.
+        $vendorRoles = ['farm_owner', 'supply_company', 'transport_company'];
 
-        // 2. Get all Transport Companies and their earnings
-        $transportCompanies = User::where('role', 'transport_company')->with(['transportCompanyJobs' => function($q) {
-            $q->whereIn('status', ['completed', 'delivered']);
-        }])->get()->map(function($user) {
-            $earned = $user->transportCompanyJobs->sum('net_company_amount');
-            $paidOut = \App\Models\FinancialTransaction::where('user_id', $user->id)->where('transaction_type', 'debit')->sum('amount');
-            $user->balance = $earned - $paidOut;
-            return $user;
-        })->filter(function($user) { return $user->balance > 0; });
+        $vendors = User::whereIn('role', $vendorRoles)
+            ->with(['financialTransactions' => function ($q) {
+                $q->selectRaw('user_id, transaction_type, SUM(amount) as total_amount')
+                  ->groupBy('user_id', 'transaction_type');
+            }])
+            ->get()
+            ->map(function ($user) {
+                $credits  = $user->financialTransactions->where('transaction_type', 'credit')->sum('total_amount');
+                $debits   = $user->financialTransactions->where('transaction_type', 'debit')->sum('total_amount');
+                $user->balance = round($credits - $debits, 2);
+                return $user;
+            })
+            ->filter(fn($user) => $user->balance > 0)
+            ->sortByDesc('balance')
+            ->values();
 
-        // 3. Get all Supply Companies and their earnings
-        $supplyCompanies = User::where('role', 'supply_company')->with(['supplies.orders' => function($q) {
-            $q->whereIn('status', ['completed', 'delivered']);
-        }])->get()->map(function($user) {
-            $earned = $user->supplies->flatMap->orders->sum('net_company_amount');
-            $paidOut = \App\Models\FinancialTransaction::where('user_id', $user->id)->where('transaction_type', 'debit')->sum('amount');
-            $user->balance = $earned - $paidOut;
-            return $user;
-        })->filter(function($user) { return $user->balance > 0; });
-
-        // Merge all vendors who are owed money
-        $vendorsOwed = $farmOwners->merge($transportCompanies)->merge($supplyCompanies)->sortByDesc('balance');
-
-        // Fetch recent payout history
-        $recentPayouts = \App\Models\FinancialTransaction::with('user')
+        // Recent payout history
+        $recentPayouts = FinancialTransaction::with('user')
             ->where('reference_type', 'manual_payout')
             ->latest()
             ->take(20)
             ->get();
 
+        // Alias for view compatibility
+        $vendorsOwed = $vendors;
+
         return view('admin.payouts', compact('vendorsOwed', 'recentPayouts'));
     }
 
     /**
-     * Record a manual payout to a vendor
+     * Record a manual payout to a vendor.
+     * Enforces balance guard: cannot pay more than available balance.
      */
     public function recordPayout(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:1',
-            'reference_id' => 'required|string',
+            'user_id'      => 'required|exists:users,id',
+            'amount'       => 'required|numeric|min:0.01',
+            'reference_id' => 'required|string|max:255',
         ]);
 
-        $transaction = \App\Models\FinancialTransaction::create([
-            'user_id' => $validated['user_id'],
-            'reference_type' => 'manual_payout',
-            'reference_id' => 0,
+        $userId = $validated['user_id'];
+        $amount = (float) $validated['amount'];
+
+        // ── BALANCE GUARD: prevent overpayment ───────────────────
+        $credits = FinancialTransaction::where('user_id', $userId)
+            ->where('transaction_type', 'credit')
+            ->sum('amount');
+
+        $debits = FinancialTransaction::where('user_id', $userId)
+            ->where('transaction_type', 'debit')
+            ->sum('amount');
+
+        $availableBalance = round($credits - $debits, 2);
+
+        if ($amount > $availableBalance) {
+            return back()
+                ->withInput()
+                ->with('error', "Payout rejected: requested amount ({$amount} JOD) exceeds available balance ({$availableBalance} JOD).");
+        }
+
+        // Record the debit transaction
+        $transaction = FinancialTransaction::create([
+            'user_id'          => $userId,
+            'reference_type'   => 'manual_payout',
+            'reference_id'     => 0,
             'transaction_type' => 'debit',
-            'amount' => $validated['amount'],
-            'description' => 'Bank Transfer Ref: ' . $validated['reference_id'],
+            'amount'           => $amount,
+            'description'      => 'Bank Transfer Ref: ' . $validated['reference_id'],
         ]);
 
-        $vendorUser = User::find($request->user_id);
+        $vendorUser = User::find($userId);
         if ($vendorUser) {
             $vendorUser->notify(new PayoutProcessedNotification($transaction));
         }
 
-        return redirect()->route('admin.payouts')->with('success', 'Payout of ' . number_format($validated['amount'], 2) . ' JOD recorded successfully.');
+        return redirect()->route('admin.payouts')
+            ->with('success', 'Payout of ' . number_format($amount, 2) . ' JOD recorded successfully for ' . ($vendorUser->name ?? 'Vendor') . '.');
     }
 
     /**
-     * عرض إعدادات النظام
+     * Display System Settings page.
      */
     public function system()
     {
-        $users = User::all();
-        $defaultCommission = config('app.default_commission_rate', 10);
+        $users             = User::all();
+        $defaultCommission = $this->getCommissionRate();
 
         return view('admin.system', compact('users', 'defaultCommission'));
     }
 
     /**
-     * تحديث إعدادات النظام
+     * Persist system settings to a local JSON config file.
+     * (No settings DB table exists; JSON file is the safe fallback.)
      */
     public function updateSystem(Request $request)
     {
-         $request->validate([
-             'commission_rate' => 'required|numeric|min:0|max:100',
-         ]);
+        $request->validate([
+            'commission_rate' => 'required|numeric|min:0|max:100',
+        ]);
 
-         // Logic to save the setting goes here
+        $settingsPath = storage_path('app/system_settings.json');
 
-         return redirect()->route('admin.system')->with('success', 'System settings updated.');
+        // Load existing settings or start fresh
+        $settings = file_exists($settingsPath)
+            ? json_decode(file_get_contents($settingsPath), true) ?? []
+            : [];
+
+        $settings['default_commission_rate'] = (float) $request->commission_rate;
+        $settings['updated_at']              = now()->toDateTimeString();
+        $settings['updated_by']              = auth()->id();
+
+        file_put_contents($settingsPath, json_encode($settings, JSON_PRETTY_PRINT));
+
+        return redirect()->route('admin.system')
+            ->with('success', 'System settings updated. New commission rate: ' . $request->commission_rate . '%');
+    }
+
+    /**
+     * Helper: Read the persisted commission rate (falls back to config/env).
+     */
+    private function getCommissionRate(): float
+    {
+        $settingsPath = storage_path('app/system_settings.json');
+        if (file_exists($settingsPath)) {
+            $settings = json_decode(file_get_contents($settingsPath), true);
+            if (isset($settings['default_commission_rate'])) {
+                return (float) $settings['default_commission_rate'];
+            }
+        }
+        return (float) config('app.default_commission_rate', 10);
     }
 }

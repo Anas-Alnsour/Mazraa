@@ -116,11 +116,66 @@ class TransportCompanyDashboardController extends Controller
     }
 
     /**
-     * Assign a driver and vehicle to a specific trip.
+     * Assign a driver and vehicle to a specific trip (accept a dispatch job).
      */
     public function assignDriver(Request $request, Transport $trip)
     {
-        // To be fully implemented in Step 2.2
-        abort(404);
+        $user = Auth::user();
+
+        if ($user->role !== 'transport_company') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // A company can only accept unassigned (pending, no company) jobs
+        if ($trip->company_id !== null && $trip->company_id !== $user->id) {
+            return back()->with('error', 'This job has already been accepted by another company.');
+        }
+
+        $request->validate([
+            'driver_id'  => 'required|exists:users,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
+        ]);
+
+        $driver  = User::findOrFail($request->driver_id);
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+
+        // Security: Ensure driver and vehicle belong to this company
+        if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
+            return back()->with('error', 'Invalid driver selection. Driver must belong to your company.');
+        }
+
+        if ($vehicle->company_id !== $user->id) {
+            return back()->with('error', 'Invalid vehicle selection. Vehicle must belong to your company.');
+        }
+
+        if ($vehicle->status !== 'available') {
+            return back()->with('error', 'This vehicle is not available. Please select another.');
+        }
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            // Accept the job: link company, driver, vehicle and advance status
+            $trip->update([
+                'company_id' => $user->id,
+                'driver_id'  => $driver->id,
+                'vehicle_id' => $vehicle->id,
+                'status'     => 'assigned',
+            ]);
+
+            // Mark vehicle as in_use
+            $vehicle->update(['status' => 'in_use']);
+
+            // Increment driver's active trip count for fair dispatching
+            \Illuminate\Support\Facades\DB::table('users')
+                ->where('id', $driver->id)
+                ->increment('trips_count');
+
+            \Illuminate\Support\Facades\DB::commit();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Assignment failed: ' . $e->getMessage());
+        }
+
+        return back()->with('success', "Job #TRP-{$trip->id} accepted! Driver {$driver->name} has been assigned with vehicle {$vehicle->license_plate}.");
     }
 }

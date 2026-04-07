@@ -95,28 +95,51 @@ class PaymentController extends Controller
         try {
             $session = Session::retrieve($request->get('session_id'));
             if ($session->payment_status === 'paid') {
+
+                // Idempotency guard: don't double-process if already confirmed
+                if ($booking->payment_status === 'paid') {
+                    return redirect()->route('bookings.show', $booking->id)
+                        ->with('success', 'Your booking is already confirmed!');
+                }
+
                 $booking->update([
-                    'payment_status' => 'paid',
-                    'status' => 'confirmed'
+                    'payment_status'           => 'paid',
+                    'status'                   => 'confirmed',
+                    'stripe_session_id'        => $session->id,
+                    'stripe_payment_intent_id' => $session->payment_intent,
                 ]);
 
+                // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
                 FinancialTransaction::create([
-                    'user_id'        => $booking->user_id,
-                    'reference_type' => 'farm_booking',
-                    'reference_id'   => $booking->id,
-                    'amount'         => $booking->total_price,
+                    'user_id'          => \App\Models\User::where('role', 'admin')->value('id'),
+                    'reference_type'   => 'farm_booking',
+                    'reference_id'     => $booking->id,
+                    'amount'           => $booking->commission_amount,
                     'transaction_type' => 'credit',
-                    'description'    => 'Stripe Checkout Session: ' . $session->id,
+                    'description'      => "Platform commission (Booking #{$booking->id})",
                 ]);
 
-                return redirect()->route('explore')->with('success', 'Payment successful! Your booking is confirmed.');
+                // --- FINANCIAL SPLIT: OWNER NET PROFIT ---
+                FinancialTransaction::create([
+                    'user_id'          => $booking->farm->owner_id,
+                    'reference_type'   => 'farm_booking',
+                    'reference_id'     => $booking->id,
+                    'amount'           => $booking->net_owner_amount,
+                    'transaction_type' => 'credit',
+                    'description'      => "Net payout for farm booking #{$booking->id}",
+                ]);
+
+                return redirect()->route('bookings.show', $booking->id)
+                    ->with('success', 'Payment successful! Your booking is confirmed.');
             }
         } catch (\Exception $e) {
-            return redirect()->route('explore')->with('error', 'Payment verification failed: ' . $e->getMessage());
+            return redirect()->route('explore')
+                ->with('error', 'Payment verification failed: ' . $e->getMessage());
         }
 
         return redirect()->route('explore')->with('error', 'Payment not completed.');
     }
+
 
     public function cancel(FarmBooking $booking)
     {
@@ -197,40 +220,55 @@ class PaymentController extends Controller
                 $orders = SupplyOrder::where('order_id', $order_id)
                     ->where('user_id', auth()->id())
                     ->where('status', 'pending_payment')
+                    ->with('supply.company')
                     ->get();
 
                 if ($orders->isEmpty()) {
-                    abort(404, 'Orders not found.');
+                    // Idempotency: already processed
+                    return redirect()->route('supplies.my_orders')
+                        ->with('success', 'Your order has already been confirmed!');
                 }
 
-                // بمجرد الدفع نغير الحالة لـ pending عشان تبين عند الشركة وتجهزها
+                $adminId = \App\Models\User::where('role', 'admin')->value('id');
+
                 foreach ($orders as $order) {
-                    $order->update([
-                        'status' => 'pending',
+                    // Move to 'pending' so the supply company sees and dispatches it
+                    $order->update(['status' => 'pending']);
+
+                    // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
+                    \App\Models\FinancialTransaction::create([
+                        'user_id'          => $adminId,
+                        'reference_type'   => 'supply_order',
+                        'reference_id'     => $order->id,
+                        'amount'           => $order->commission_amount,
+                        'transaction_type' => 'credit',
+                        'description'      => "Platform commission (Supply Order #{$order->id})",
                     ]);
+
+                    // --- FINANCIAL SPLIT: SUPPLY COMPANY NET ---
+                    if ($order->supply && $order->supply->company_id) {
+                        \App\Models\FinancialTransaction::create([
+                            'user_id'          => $order->supply->company_id,
+                            'reference_type'   => 'supply_order',
+                            'reference_id'     => $order->id,
+                            'amount'           => $order->net_company_amount,
+                            'transaction_type' => 'credit',
+                            'description'      => "Net payout for Supply Order #{$order->id}",
+                        ]);
+                    }
                 }
 
-                $totalPrice = $orders->sum('total_price');
-
-                // 💡 التعديل هون: خلينا البيانات تطابق دالة المزارع بالزبط عشان ما تضرب الداتابيز
-                \App\Models\FinancialTransaction::create([
-                    'user_id'          => auth()->id(),
-                    'reference_type'   => 'supply_order',
-                    'reference_id'     => $orders->first()->id, // 👈 بعتنا رقم الآي دي (Integer) بدل نص الفاتورة
-                    'amount'           => $totalPrice,
-                    'transaction_type' => 'credit', // 👈 استخدمنا credit زي ما هو موجود بحجوزات المزارع
-                    'description'      => 'Stripe Supply Payment (Invoice #' . $order_id . ')',
-                ]);
-
-                return redirect()->route('supplies.my_orders')->with('success', 'Supply payment successful! Your order is now being processed.');
+                return redirect()->route('supplies.my_orders')
+                    ->with('success', 'Supply payment successful! Your order is now being processed.');
             }
         } catch (\Exception $e) {
-            // 💡 التعديل الأهم: هسا لو صار إيرور، رح يكتبلك إياه بالزبط بالشريط الأحمر عشان نحله فوراً
-            return redirect()->route('supplies.my_orders')->with('error', 'Error: ' . $e->getMessage());
+            return redirect()->route('supplies.my_orders')
+                ->with('error', 'Error: ' . $e->getMessage());
         }
 
         return redirect()->route('supplies.my_orders')->with('error', 'Payment not completed.');
     }
+
 
     // --- دفع كليك (CliQ) للمشتريات ---
     public function processCliqSupply(Request $request, $order_id)
