@@ -18,26 +18,54 @@ class SupplyCompanyDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        // Fetch all orders where the supply belongs to the authenticated company
+        $companyId = Auth::id();
+
+        // ---------------------------------------------------------------
+        // 1. Fetch all non-cart orders belonging to this company's supplies
+        // ---------------------------------------------------------------
         $orders = SupplyOrder::with(['supply', 'user', 'driver', 'booking.farm'])
-            ->whereHas('supply', function ($query) {
-                $query->where('company_id', Auth::id());
+            ->whereHas('supply', function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
             })
-            ->whereNotIn('status', ['cart']) // Don't show un-purchased cart items
+            ->whereNotIn('status', ['cart', 'pending_payment'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Group by Invoice ID to keep UI clean (Jules Logic)
+        // ---------------------------------------------------------------
+        // 2. Financial Metrics — only count completed/delivered orders
+        // ---------------------------------------------------------------
+        $completedOrders = $orders->whereIn('status', ['delivered', 'completed']);
+
+        $financials = [
+            'gross'      => $completedOrders->sum('total_price'),
+            'commission' => $completedOrders->sum('commission_amount'),
+            'net'        => $completedOrders->sum('net_company_amount'),
+        ];
+
+        // ---------------------------------------------------------------
+        // 3. Active Drivers for this company (for the dispatch dropdown)
+        // ---------------------------------------------------------------
+        $drivers = User::where('company_id', $companyId)
+            ->where('role', 'supply_driver')
+            ->get();
+
+        // ---------------------------------------------------------------
+        // 4. Recent orders (flat list for the dispatch table)
+        //    and grouped orders (by invoice) — both available to the view
+        // ---------------------------------------------------------------
+        $recentOrders  = $orders->take(50);
         $groupedOrders = $orders->groupBy('order_id');
 
-        // Financial Metrics for the Company (Jules Logic)
-        $completedOrders = $orders->where('status', 'delivered');
-        $totalRevenue = $completedOrders->sum('net_company_amount');
+        // Supporting metrics (used by some view sections)
         $activeOrdersCount = $orders->whereIn('status', ['pending', 'waiting_driver', 'in_way'])->count();
 
-        // 💡 بنرجع الـ view تبعك الأصلي عشان ما تضرب الراوتات أو الـ UI
-        // إذا كنت بدك تستخدم view جولز غيرها لـ 'supplies.company.dashboard'
-        return view('admin.supplies.dashboard', compact('groupedOrders', 'totalRevenue', 'activeOrdersCount'));
+        return view('admin.supplies.dashboard', compact(
+            'financials',
+            'drivers',
+            'recentOrders',
+            'groupedOrders',
+            'activeOrdersCount'
+        ));
     }
 
     /**

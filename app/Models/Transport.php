@@ -4,20 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // 👈 تمت إضافة الاستدعاء هنا
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transport extends Model
 {
     use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
 
     protected $fillable = [
-        'company_id',   // ضفناه جديد
+        'company_id',
         'user_id',
         'transport_type',
         'passengers',
         'driver_id',
-        'vehicle_id',   // ضفناه جديد
+        'vehicle_id',
         'farm_id',
+        'farm_booking_id',
         'start_and_return_point',
         'distance',
         'price',
@@ -29,6 +30,9 @@ class Transport extends Model
         'pickup_lng',
         'commission_amount',
         'net_company_amount',
+        'origin_governorate',
+        'destination_governorate',
+        'return_scheduled_at',
     ];
 
     protected $casts = [
@@ -59,5 +63,14 @@ class Transport extends Model
     public function farm()
     {
         return $this->belongsTo(Farm::class);
+    }
+
+    /**
+     * The FarmBooking that this transport trip was created for.
+     * Links via the farm_booking_id foreign key.
+     */
+    public function farmBooking()
+    {
+        return $this->belongsTo(FarmBooking::class, 'farm_booking_id');
     }
 }

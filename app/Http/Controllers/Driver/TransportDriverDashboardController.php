@@ -22,13 +22,13 @@ class TransportDriverDashboardController extends Controller
         // Active Trip: Only one trip should technically be in_progress or in_way at a time
         $activeTrip = Transport::where('driver_id', $driverId)
             ->whereIn('status', ['in_progress', 'in_way'])
-            ->with(['user', 'farmBooking.farm', 'vehicle'])
+            ->with(['user', 'farmBooking.farm', 'farm', 'vehicle'])
             ->first();
 
         // Upcoming/Assigned Trips
         $assignedTrips = Transport::where('driver_id', $driverId)
             ->where('status', 'assigned')
-            ->with(['user', 'farmBooking.farm', 'vehicle'])
+            ->with(['user', 'farmBooking.farm', 'farm', 'vehicle'])
             ->orderBy('Farm_Arrival_Time', 'asc')
             ->get();
 

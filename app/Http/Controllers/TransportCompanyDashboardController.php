@@ -21,7 +21,7 @@ class TransportCompanyDashboardController extends Controller
         }
 
         // --- 1. جلب الرحلات الخاصة بهي الشركة (مع منع الـ Lazy Loading وتعديل ربط المزرعة) ---
-        $myTrips = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'user'])
+        $myTrips = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'farm', 'user'])
             ->where('company_id', $companyId)
             ->latest()
             ->get();
@@ -60,14 +60,14 @@ class TransportCompanyDashboardController extends Controller
             ->count();
 
         // --- 5. لوجيك التوزيع والواجهة (Dispatch) ---
-        $availableJobs = Transport::with(['farmBooking.farm', 'user'])
+        $availableJobs = Transport::with(['farmBooking.farm', 'farm', 'user'])
             ->whereNull('company_id')
             ->where('status', 'pending')
             ->latest()
             ->get();
 
         // Pagination for my jobs
-        $myJobs = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'user'])
+        $myJobs = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'farm', 'user'])
             ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
