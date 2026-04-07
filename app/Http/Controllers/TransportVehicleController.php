@@ -12,7 +12,7 @@ class TransportVehicleController extends Controller
 {
     public function index()
     {
-        // سحب المركبات مع السائقين المرتبطين فيها
+        // سحب المركبات مع السائقين المرتبطين فيها (كودك الأصلي ممتاز)
         $vehicles = Vehicle::with('driver')
             ->where('company_id', Auth::id())
             ->latest()
@@ -23,7 +23,7 @@ class TransportVehicleController extends Controller
 
     public function create()
     {
-        // جلب سائقين الشركة عشان نختار منهم
+        // جلب سائقين الشركة عشان نختار منهم (مهم جداً)
         $drivers = User::where('role', 'transport_driver')
             ->where('company_id', Auth::id())
             ->get();

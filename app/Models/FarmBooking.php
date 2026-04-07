@@ -49,6 +49,24 @@ class FarmBooking extends Model
     }
 
     /**
+     * العلاقة مع طلبات المواصلات
+     * هذه العلاقة ضرورية لعرض حالة النقل ومعلومات السائق في لوحة تحكم المستخدم
+     */
+    public function transport()
+    {
+        return $this->hasOne(Transport::class, 'farm_booking_id');
+    }
+
+    /**
+     * العلاقة مع طلبات اللوازم (Supply Orders)
+     * ضرورية لعرض اللوازم المطلوبة مع هذا الحجز في صفحة تفاصيل الحجز للمستخدم
+     */
+    public function supplyOrders()
+    {
+        return $this->hasMany(SupplyOrder::class, 'booking_id');
+    }
+
+    /**
      * هل يحق للمستخدم الدفع لشراء المنتجات الآن؟
      * مسموح فقط: خلال فترة الحجز، أو قبل الحجز بـساعتين كحد أقصى.
      */
@@ -61,5 +79,5 @@ class FarmBooking extends Model
 
         return $now->between($twoHoursBeforeStart, $endTime);
     }
-    
+
 }

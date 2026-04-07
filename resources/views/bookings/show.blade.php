@@ -56,29 +56,22 @@
         @endif
 
         @php
-            // Logic for Dates and Status
             $startDate = \Carbon\Carbon::parse($booking->start_time);
             $endDate = \Carbon\Carbon::parse($booking->end_time);
-
-            // 💡 FIX: Using copy() prevents resetting the original time to 12:00 AM!
             $isMultiDay = $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) > 1;
 
             $rawStatus = strtolower($booking->status ?? 'pending');
             $statusClasses = '';
             $statusIcon = '';
-            $statusBg = '';
 
             if($rawStatus === 'confirmed' || $rawStatus === 'paid') {
                 $statusClasses = 'text-green-700 bg-green-100/80 border-green-200';
-                $statusBg = 'bg-green-50/40';
                 $statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>';
             } elseif($rawStatus === 'cancelled') {
                 $statusClasses = 'text-red-700 bg-red-100/80 border-red-200';
-                $statusBg = 'bg-red-50/40';
                 $statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>';
             } else {
                 $statusClasses = 'text-amber-700 bg-amber-100/80 border-amber-200';
-                $statusBg = 'bg-amber-50/40';
                 $statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
             }
             $displayStatus = ucwords(str_replace('_', ' ', $rawStatus));
@@ -139,14 +132,14 @@
                     {{-- Dates Box --}}
                     <div class="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)]">
 
-                        {{-- Date Section (Shows Check-in/Check-out for all types of bookings) --}}
+                        {{-- Date Section --}}
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Check-in</p>
                                 <p class="text-lg font-black text-gray-900 tracking-tight">{{ $startDate->format('M d, Y') }}</p>
                             </div>
                             <div class="px-4 text-gray-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4-4m4 4H3"></path></svg>
                             </div>
                             <div class="text-right">
                                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Check-out</p>
@@ -168,10 +161,64 @@
                         </div>
                     </div>
 
+                    {{-- 💡 TRANSPORT LOGISTICS SECTION --}}
+                    @if($booking->requires_transport && $booking->transport)
+                        <div class="bg-cyan-50 rounded-[2rem] p-6 border border-cyan-100 relative overflow-hidden shadow-inner mt-6">
+                            <svg class="absolute -bottom-10 -right-10 w-40 h-40 text-cyan-500/10" fill="currentColor" viewBox="0 0 24 24"><path d="M19 7h-3V6a4 4 0 00-8 0v1H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2zm-9-1a2 2 0 014 0v1h-4V6zm9 12H5V9h14v9z"></path></svg>
+
+                            <h3 class="text-sm font-black text-cyan-900 uppercase tracking-widest flex items-center mb-4 relative z-10 border-b border-cyan-200/50 pb-3">
+                                <svg class="w-5 h-5 mr-2 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                Shuttle Service
+                            </h3>
+
+                            <div class="mb-4 relative z-10">
+                                @if($booking->transport->status === 'pending')
+                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-amber-100 text-amber-800 border border-amber-200 shadow-sm"><span class="w-2 h-2 rounded-full bg-amber-500 mr-2 animate-pulse"></span> Finding Driver...</span>
+                                @elseif(in_array($booking->transport->status, ['accepted', 'assigned']))
+                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-800 border border-blue-200 shadow-sm"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span> Driver Assigned</span>
+                                @elseif(in_array($booking->transport->status, ['in_progress', 'in_way']))
+                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-cyan-100 text-cyan-800 border border-cyan-200 shadow-sm"><span class="w-2 h-2 rounded-full bg-cyan-500 mr-2 animate-ping"></span> In Transit</span>
+                                @elseif($booking->transport->status === 'completed')
+                                    <span class="inline-flex items-center px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span> Completed</span>
+                                @endif
+                            </div>
+
+                            <dl class="space-y-3 relative z-10">
+                                <div class="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-cyan-200/50 shadow-sm flex justify-between items-center">
+                                    <dt class="text-[10px] font-black text-cyan-700 uppercase tracking-widest">Pickup</dt>
+                                    <dd class="text-sm font-bold text-slate-900 truncate max-w-[200px]" title="{{ $booking->transport->pickup_location }}">{{ $booking->transport->pickup_location ?? 'Custom Location' }}</dd>
+                                </div>
+
+                                @if($booking->transport->driver)
+                                    <div class="mt-4 bg-slate-900 p-4 rounded-2xl shadow-xl">
+                                        <dt class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center border-b border-slate-700 pb-2">
+                                            <svg class="w-4 h-4 mr-1.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                                            Assigned Captain
+                                        </dt>
+                                        <dd>
+                                            <div class="flex justify-between items-center">
+                                                <div>
+                                                    <div class="font-black text-white text-base mb-0.5">{{ $booking->transport->driver->name }}</div>
+                                                    <a href="tel:{{ $booking->transport->driver->phone }}" class="text-cyan-400 text-xs hover:text-cyan-300">{{ $booking->transport->driver->phone ?? 'N/A' }}</a>
+                                                </div>
+                                                @if($booking->transport->vehicle)
+                                                    <div class="text-right">
+                                                        <div class="text-[10px] font-black uppercase text-slate-400 mb-1">{{ $booking->transport->vehicle->type }}</div>
+                                                        <div class="inline-block bg-white text-slate-900 font-mono font-bold text-xs px-2 py-1 rounded border border-slate-300 shadow-sm">{{ $booking->transport->vehicle->license_plate ?? 'N/A' }}</div>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </dd>
+                                    </div>
+                                @endif
+                            </dl>
+                        </div>
+                    @endif
+
                 </div>
 
                 <div class="mt-10">
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8 p-6 {{ $statusBg }} rounded-3xl border border-gray-100 shadow-sm">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-6 mb-8 p-6 bg-gray-50 rounded-3xl border border-gray-100 shadow-sm">
                         <div class="text-center sm:text-left w-full">
                             <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Total Payment</p>
                             <div class="flex items-baseline justify-center sm:justify-start gap-1">
@@ -190,27 +237,30 @@
                         </a>
 
                         @if($rawStatus !== 'cancelled' && $rawStatus !== 'completed')
-                        <form action="{{ route('bookings.destroy', $booking->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel? This action cannot be undone.');" class="w-full">
+                        <form action="{{ route('bookings.destroy', $booking->id) }}" method="POST"
+                              onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');"
+                              class="w-full h-full">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="w-full py-4 bg-white text-red-500 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-600 transition-colors border-2 border-red-100 text-center shadow-sm active:scale-95 flex items-center justify-center gap-2 group">
-                                <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Cancel Booking
+                            <button type="submit"
+                                    class="w-full h-full py-4 bg-white text-red-500 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-600 transition-colors border-2 border-red-100 text-center shadow-sm active:scale-95 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Cancel
                             </button>
                         </form>
                         @else
-                        <div class="py-4 bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest rounded-2xl border-2 border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-2 shadow-inner">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            Modification Locked
+                        <div class="py-4 bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest rounded-2xl border-2 border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-1.5 h-full shadow-inner">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            Locked
                         </div>
                         @endif
                     </div>
-                </div>
 
+                </div>
             </div>
+
         </div>
 
     </div>
 </div>
 @endsection
-

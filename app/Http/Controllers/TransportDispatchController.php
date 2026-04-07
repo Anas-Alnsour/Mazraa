@@ -10,104 +10,126 @@ use Illuminate\Support\Facades\Auth;
 
 class TransportDispatchController extends Controller
 {
-    // ==========================================
-    // ACTION 1: قبول الطلب من السوق
-    // ==========================================
-    public function acceptJob($id)
+    /**
+     * Display the Dispatch Board (Kanban/Categorized List).
+     */
+    public function index()
     {
-        $user = Auth::user();
+        $companyId = Auth::id();
+        $company = Auth::user();
 
-        if ($user->role !== 'transport_company') {
-            abort(403, 'Unauthorized access.');
-        }
+        // 1. Pending Market Jobs
+        $pendingJobs = Transport::where('status', 'pending')
+            ->where(function($query) use ($companyId, $company) {
+                $query->where('company_id', $companyId)
+                      ->orWhere(function($q) use ($company) {
+                          $q->whereNull('company_id')
+                            ->where('destination_governorate', $company->governorate);
+                      });
+            })
+            ->with(['user', 'farmBooking.farm'])
+            ->orderBy('Farm_Arrival_Time', 'asc')
+            ->get();
 
+        // 2. Accepted Jobs
+        $acceptedJobs = Transport::where('company_id', $companyId)
+            ->where('status', 'accepted')
+            ->with(['user', 'farmBooking.farm'])
+            ->orderBy('Farm_Arrival_Time', 'asc')
+            ->get();
+
+        // 3. Assigned Jobs
+        $assignedJobs = Transport::where('company_id', $companyId)
+            ->where('status', 'assigned')
+            ->with(['user', 'farmBooking.farm', 'driver', 'vehicle'])
+            ->orderBy('Farm_Arrival_Time', 'asc')
+            ->get();
+
+        // 4. In Progress / In Way Jobs
+        $inProgressJobs = Transport::where('company_id', $companyId)
+            ->whereIn('status', ['in_progress', 'in_way'])
+            ->with(['user', 'farmBooking.farm', 'driver', 'vehicle'])
+            ->orderBy('Farm_Arrival_Time', 'asc')
+            ->get();
+
+        return view('transports.dispatch.index', compact('pendingJobs', 'acceptedJobs', 'assignedJobs', 'inProgressJobs'));
+    }
+
+    /**
+     * Accept a pending job from the market.
+     */
+    public function acceptJob(Request $request, $id)
+    {
         $job = Transport::findOrFail($id);
 
-        if ($job->company_id !== null) {
-            return redirect()->back()->with('error', 'Job already taken by another company.');
+        if ($job->status !== 'pending') {
+            return redirect()->back()->with('error', 'This job is no longer available.');
         }
 
+        // 💡 التعديل الصحيح لدالة acceptJob: فقط تحديث الـ company_id والحالة
         $job->update([
-            'company_id' => $user->id,
+            'company_id' => Auth::id(),
             'status' => 'accepted'
         ]);
 
-        return redirect()->route('transport.dispatch.edit', $job->id)
-            ->with('success', 'Job accepted! Please assign a vehicle and driver from your fleet.');
+        return redirect()->route('transport.dispatch.index')->with('success', 'Job accepted! Please assign a driver and vehicle.');
     }
 
-    // ==========================================
-    // ACTION 2: عرض صفحة تعيين السائق والمركبة
-    // ==========================================
+    /**
+     * Show the form to assign a Driver and Vehicle to an accepted job.
+     */
     public function edit($id)
     {
-        $user = Auth::user();
+        $job = Transport::with(['user', 'farmBooking.farm'])->findOrFail($id);
 
-        if ($user->role !== 'transport_company') {
-            abort(403, 'Unauthorized access.');
+        if ($job->company_id !== Auth::id() || !in_array($job->status, ['accepted', 'assigned'])) {
+            abort(403, 'Unauthorized or invalid job status.');
         }
 
-        $dispatch = Transport::with(['farm', 'user'])->findOrFail($id);
+        $drivers = User::where('company_id', Auth::id())->where('role', 'transport_driver')->get();
+        $vehicles = Vehicle::where('company_id', Auth::id())->get();
 
-        if ($dispatch->company_id !== $user->id) {
-            abort(403, 'You do not own this dispatch job.');
-        }
-
-        // جلب سائقي وسيارات هذه الشركة فقط
-        $drivers = User::where('company_id', $user->id)->where('role', 'transport_driver')->get();
-        // تأكد من وجود موديل Vehicle بالداتا بيس عندك، وإلا استخدم مصفوفة فارغة
-        $vehicles = Vehicle::where('company_id', $user->id)->where('status', 'available')->get();
-
-        return view('transports.dispatch.edit', compact('dispatch', 'drivers', 'vehicles'));
+        return view('transports.dispatch.edit', compact('job', 'drivers', 'vehicles'));
     }
 
-    // ==========================================
-    // ACTION 3: حفظ تعيين السائق والمركبة
-    // ==========================================
+    /**
+     * Update the job with the assigned Driver and Vehicle.
+     */
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
+        $job = Transport::findOrFail($id);
 
-        if ($user->role !== 'transport_company') {
-            abort(403, 'Unauthorized access.');
+        if ($job->company_id !== Auth::id() || !in_array($job->status, ['accepted', 'assigned'])) {
+            abort(403, 'Unauthorized action.');
         }
 
-        $dispatch = Transport::findOrFail($id);
-
-        if ($dispatch->company_id !== $user->id) {
-            abort(403, 'You do not own this dispatch job.');
-        }
-
-        $validated = $request->validate([
+        $request->validate([
             'driver_id' => 'required|exists:users,id',
             'vehicle_id' => 'required|exists:vehicles,id',
-            'status' => 'required|string|in:accepted,assigned,in_progress,completed,cancelled',
         ]);
 
-        // التأكد إن السائق والسيارة تابعين لهي الشركة
-        $driver = User::findOrFail($validated['driver_id']);
-        if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
-            return back()->withErrors(['driver_id' => 'Invalid driver selected.']);
+        $driver = User::where('company_id', Auth::id())->where('role', 'transport_driver')->find($request->driver_id);
+        $vehicle = Vehicle::where('company_id', Auth::id())->find($request->vehicle_id);
+
+        if (!$driver || !$vehicle) {
+            return back()->withErrors(['driver_id' => 'Invalid driver or vehicle selection.'])->withInput();
         }
 
-        $vehicle = Vehicle::findOrFail($validated['vehicle_id']);
-        if ($vehicle->company_id !== $user->id) {
-            return back()->withErrors(['vehicle_id' => 'Invalid vehicle selected.']);
+        // Increment driver's active orders count (if it's the first time assigning)
+        if ($job->status === 'accepted') {
+            $driver->increment('orders_count');
         }
 
-        $dispatch->update([
-            'driver_id' => $validated['driver_id'],
-            'vehicle_id' => $validated['vehicle_id'],
-            'status' => $validated['status'] === 'accepted' ? 'assigned' : $validated['status'],
+        // 💡 التعديل هون: تحديث الـ driver_id, vehicle_id والـ status حسب الفورم
+        $job->update([
+            'driver_id' => $driver->id,
+            'vehicle_id' => $vehicle->id,
+            'status' => $request->status ?? 'assigned'
         ]);
 
-        return redirect()->route('transport.dashboard')
-            ->with('success', 'Fleet assignment updated successfully.');
-    }
+        // Optional: Update vehicle status to booked
+        $vehicle->update(['status' => 'booked']);
 
-    // يمكننا إضافة دالة index لاحقاً إذا أردت عرض جميع الـ dispatches في صفحة منفصلة
-    public function index()
-    {
-        return redirect()->route('transport.dashboard');
+        return redirect()->route('transport.dispatch.index')->with('success', 'Resources assigned successfully. The driver has been notified.');
     }
 }

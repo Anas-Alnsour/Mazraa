@@ -20,17 +20,21 @@ class TransportCompanyDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        // --- 1. جلب الرحلات الخاصة بهي الشركة (مع منع الـ Lazy Loading 🚀) ---
-        $myTrips = Transport::with(['driver', 'vehicle', 'farm', 'user'])
+        // --- 1. جلب الرحلات الخاصة بهي الشركة (مع منع الـ Lazy Loading وتعديل ربط المزرعة) ---
+        $myTrips = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'user'])
             ->where('company_id', $companyId)
             ->latest()
             ->get();
 
-        // --- 2. إحصائيات الرحلات (مدمجة) ---
+        // --- 2. إحصائيات الرحلات (مدمجة بين القديم وجديد جولز) ---
         $totalTrips = $myTrips->count();
         $pendingTrips = $myTrips->where('status', 'accepted')->count();
-        $activeTrips = $myTrips->whereIn('status', ['accepted', 'assigned', 'in_progress'])->count();
+        $activeTrips = $myTrips->whereIn('status', ['accepted', 'assigned', 'in_progress', 'in_way'])->count();
         $completedTrips = $myTrips->whereIn('status', ['completed', 'delivered', 'finished'])->count();
+
+        // متغيرات جولز
+        $pendingTransportsCount = $myTrips->where('status', 'pending')->count();
+        $assignedTransportsCount = $myTrips->whereIn('status', ['assigned', 'in_way'])->count();
 
         // --- 3. الحسابات المالية ---
         $completedTripsData = $myTrips->whereIn('status', ['completed', 'delivered', 'finished']);
@@ -47,30 +51,32 @@ class TransportCompanyDashboardController extends Controller
             ->get();
 
         $totalDrivers = $drivers->count();
+        $driversCount = $totalDrivers; // لجولز
 
         $totalVehicles = Vehicle::where('company_id', $companyId)->count();
+        $vehiclesCount = $totalVehicles; // لجولز
         $availableVehicles = Vehicle::where('company_id', $companyId)
             ->where('status', 'available')
             ->count();
 
         // --- 5. لوجيك التوزيع والواجهة (Dispatch) ---
-        // 💡 THE FIX: Added `with(['farm', 'user'])` here as well to prevent errors
-        $availableJobs = Transport::with(['farm', 'user'])
+        $availableJobs = Transport::with(['farmBooking.farm', 'user'])
             ->whereNull('company_id')
             ->where('status', 'pending')
             ->latest()
             ->get();
 
         // Pagination for my jobs
-        $myJobs = Transport::with(['driver', 'vehicle', 'farm', 'user'])
+        $myJobs = Transport::with(['driver', 'vehicle', 'farmBooking.farm', 'user'])
             ->where('company_id', $companyId)
             ->latest()
             ->paginate(10);
 
         // آخر نشاطات للواجهة الجديدة
         $recentActivity = $myTrips->take(5);
+        $recentTrips = $recentActivity; // لجولز
 
-        // متغيرات التوافق (عشان الكود اللي أعطيتك إياه قبل ما يضرب مع الـ View إذا كان بيستناها)
+        // متغيرات التوافق
         $recentJobs = $recentActivity;
         $myDrivers = $drivers;
         $pendingRequests = $availableJobs->take(5);
@@ -96,11 +102,25 @@ class TransportCompanyDashboardController extends Controller
             'availableJobs',
             'myJobs',
             'recentActivity',
-            // --- Compatibility vars ---
             'recentJobs',
             'myDrivers',
             'pendingRequests',
-            'stats'
+            'stats',
+            // متغيرات جولز
+            'vehiclesCount',
+            'driversCount',
+            'pendingTransportsCount',
+            'assignedTransportsCount',
+            'recentTrips'
         ));
+    }
+
+    /**
+     * Assign a driver and vehicle to a specific trip.
+     */
+    public function assignDriver(Request $request, Transport $trip)
+    {
+        // To be fully implemented in Step 2.2
+        abort(404);
     }
 }

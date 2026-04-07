@@ -1,137 +1,196 @@
 @extends('layouts.driver')
 
+@section('title', 'Driver Dashboard')
+
 @section('content')
-<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-    <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Transport Dispatch Dashboard</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">View and manage your assigned round-trips.</p>
-    </div>
+<div class="bg-slate-900 min-h-screen text-slate-100 pb-24 font-sans">
 
-    @if($trips->isEmpty())
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No active trips</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You currently have no assigned trips in your region.</p>
-        </div>
-    @else
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Trip List Sidebar -->
-            <div class="lg:col-span-1 space-y-4">
-                @foreach($trips as $trip)
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 border-l-4 {{ $trip->status == 'in_progress' ? 'border-blue-500' : 'border-gray-300' }}">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Trip #{{ $trip->id }}</h3>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $trip->status == 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                                    {{ ucfirst(str_replace('_', ' ', $trip->status)) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-                            <p><strong class="text-gray-900 dark:text-white">Customer:</strong> {{ $trip->user->name ?? 'N/A' }}</p>
-                            <p><strong class="text-gray-900 dark:text-white">Phone:</strong> {{ $trip->user->phone ?? 'N/A' }}</p>
-                            <div class="mt-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
-                                <p class="font-medium text-gray-900 dark:text-white mb-1">Schedule (Round-Trip):</p>
-                                <p><strong>Pickup (Origin):</strong> {{ $trip->origin_governorate }}<br> <span class="text-xs text-gray-500 dark:text-gray-400">{{ $trip->scheduled_at ? $trip->scheduled_at->format('M d, Y h:i A') : 'N/A' }}</span></p>
-                                <p class="mt-2"><strong>Destination:</strong> {{ $trip->destination_governorate }} (Farm)</p>
-                                <p class="mt-2"><strong>Return:</strong> From Farm back to {{ $trip->origin_governorate }}<br> <span class="text-xs text-gray-500 dark:text-gray-400">{{ $trip->return_scheduled_at ? $trip->return_scheduled_at->format('M d, Y h:i A') : 'N/A' }}</span></p>
-                            </div>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="mt-5 flex flex-col space-y-2">
-                            <form action="{{ route('transport.driver.update_status', $trip->id) }}" method="POST">
-                                @csrf
-                                @method('PATCH')
-                                <select name="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white mb-2">
-                                    <option value="pending" {{ $trip->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="accepted" {{ $trip->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
-                                    <option value="assigned" {{ $trip->status == 'assigned' ? 'selected' : '' }}>Assigned</option>
-                                    <option value="in_progress" {{ $trip->status == 'in_progress' ? 'selected' : '' }}>In Progress (Driving)</option>
-                                    <option value="completed" {{ $trip->status == 'completed' ? 'selected' : '' }}>Completed</option>
-                                </select>
-                                <button class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 mb-2">
-                                    Update Status
-                                </button>
-                            </form>
-                            <button onclick="showRoute('{{ $trip->origin_governorate }}', '{{ $trip->destination_governorate }}')" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                View Route on Map
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            <!-- Map View -->
-            <div class="lg:col-span-2">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden h-[600px] relative">
-                    <div id="transportMap" class="w-full h-full z-0"></div>
+    <header class="bg-slate-900/90 backdrop-blur-md shadow-lg border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-5 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-white leading-tight">Driver Console</h1>
+                    <p class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">Mazraa Logistics</p>
                 </div>
             </div>
+            <div class="flex items-center">
+                <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-800 border-2 border-slate-700 text-sm font-black text-white shadow-sm">
+                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                </span>
+            </div>
         </div>
-    @endif
+    </header>
+
+    <div class="max-w-3xl mx-auto px-5 mt-8">
+
+        @if (session('success'))
+            <div class="mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center shadow-lg">
+                <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mr-3 shrink-0">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                </div>
+                <p class="text-xs font-black text-emerald-400 tracking-widest uppercase">{{ session('success') }}</p>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 p-4 flex items-center shadow-lg">
+                <div class="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 mr-3 shrink-0">
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                </div>
+                <p class="text-xs font-black text-rose-400 tracking-widest uppercase">{{ session('error') }}</p>
+            </div>
+        @endif
+
+        @if($activeTrip)
+            <div class="mb-10">
+                <div class="flex items-center justify-between mb-4 pl-1">
+                    <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Active Trip</h2>
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                    </span>
+                </div>
+
+                <div class="bg-slate-800 rounded-[2rem] shadow-2xl border border-slate-700 overflow-hidden relative">
+                    <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-500 to-emerald-400"></div>
+
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6 border-b border-slate-700/50 pb-5">
+                            <div>
+                                <span class="bg-cyan-500/10 text-cyan-400 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border border-cyan-500/20 inline-block mb-3">On Route</span>
+                                <h3 class="text-2xl font-black text-white">{{ $activeTrip->user->name ?? 'Guest User' }}</h3>
+                                <div class="flex items-center text-slate-400 text-xs font-bold mt-2">
+                                    <svg class="w-4 h-4 mr-1.5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                    <a href="tel:{{ $activeTrip->user->phone ?? '' }}" class="text-slate-300 hover:text-white transition-colors">{{ $activeTrip->user->phone ?? 'No Phone' }}</a>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-slate-500 uppercase tracking-widest mb-1">Trip ID</div>
+                                <div class="text-xl font-black text-white bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700">#{{ $activeTrip->id }}</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="relative pl-8">
+                                <div class="absolute left-[13px] top-2 bottom-4 w-0.5 bg-slate-700 border-l border-dashed border-slate-600"></div>
+
+                                <div class="relative mb-8">
+                                    <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-slate-800 border-[4px] border-cyan-500 z-10 shadow-[0_0_10px_rgba(6,182,212,0.5)]"></div>
+                                    <p class="text-[10px] font-black text-cyan-500 uppercase tracking-widest mb-1">Pickup Location</p>
+                                    <p class="text-base text-white font-bold">{{ $activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? 'TBD' }}</p>
+
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-3 text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-4 py-2 rounded-lg border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors active:scale-95">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        Navigate to Pickup
+                                    </a>
+                                </div>
+
+                                <div class="relative">
+                                    <div class="absolute -left-8 top-1 w-5 h-5 rounded-full bg-slate-800 border-[4px] border-emerald-500 z-10 flex items-center justify-center shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                                    <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Drop-off Farm</p>
+                                    <p class="text-base text-white font-bold">{{ $activeTrip->farmBooking->farm->name ?? 'Farm' }}</p>
+
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->farmBooking->farm->name ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-3 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-lg border border-emerald-500/30 hover:bg-emerald-500/20 transition-colors active:scale-95">
+                                        <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        Navigate to Farm
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if($activeTrip->notes)
+                            <div class="mt-6 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                                <span class="block text-[9px] font-black text-amber-500 uppercase tracking-widest mb-1">Customer Notes</span>
+                                <p class="text-xs font-bold text-amber-100">"{{ $activeTrip->notes }}"</p>
+                            </div>
+                        @endif
+
+                    </div>
+
+                    <div class="p-5 bg-slate-900 border-t border-slate-800">
+                        <form action="{{ route('transport.driver.update_status', $activeTrip->id) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="completed">
+                            <button onclick="return confirm('Confirm drop-off and complete trip?');" class="w-full flex items-center justify-center px-4 py-5 border border-transparent text-sm font-black tracking-widest rounded-2xl text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] active:scale-95 uppercase">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                Slide / Tap to Complete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <div class="mb-10">
+            <h2 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 pl-1 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Assigned Trips ({{ $assignedTrips->count() }})
+            </h2>
+
+            <div class="space-y-5">
+                @forelse($assignedTrips as $trip)
+                    <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-lg {{ $activeTrip ? 'opacity-60 grayscale-[30%]' : '' }}">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="text-xs font-black text-slate-400 bg-slate-900 px-2 py-1 rounded border border-slate-700 uppercase tracking-widest">#TRP-{{ str_pad($trip->id, 4, '0', STR_PAD_LEFT) }}</div>
+                                <span class="bg-blue-500/10 text-blue-400 text-[9px] font-black px-2.5 py-1 rounded border border-blue-500/20 uppercase tracking-widest">Ready</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-y-4 gap-x-2 mb-6">
+                                <div>
+                                    <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Time</span>
+                                    <span class="text-sm font-bold text-white">{{ optional($trip->Farm_Arrival_Time)->format('M d, H:i') ?? 'N/A' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Customer</span>
+                                    <span class="text-sm font-bold text-white">{{ $trip->user->name ?? 'N/A' }}</span>
+                                </div>
+                                <div class="col-span-2 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50 mt-1">
+                                    <span class="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Route</span>
+                                    <div class="flex items-center text-xs font-bold text-slate-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 mr-2 shrink-0"></span>
+                                        <span class="truncate">{{ $trip->pickup_location ?? $trip->start_and_return_point }}</span>
+                                    </div>
+                                    <div class="w-0.5 h-2 bg-slate-700 ml-[2.5px] my-0.5"></div>
+                                    <div class="flex items-center text-xs font-bold text-slate-300">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0"></span>
+                                        <span class="truncate">{{ $trip->farmBooking->farm->name ?? 'Farm' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if(!$activeTrip)
+                                <form action="{{ route('transport.driver.update_status', $trip->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="hidden" name="status" value="in_progress">
+                                    <button class="w-full flex justify-center items-center py-4 px-4 border border-cyan-500/30 rounded-xl shadow-lg shadow-cyan-600/10 text-xs font-black tracking-widest uppercase text-white bg-cyan-600 hover:bg-cyan-500 focus:outline-none transition-all active:scale-95">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        Start This Trip
+                                    </button>
+                                </form>
+                            @else
+                                <div class="w-full text-center py-3 bg-slate-900/50 text-[10px] font-black uppercase tracking-widest text-slate-500 rounded-xl border border-slate-700 border-dashed">
+                                    Finish active trip to start
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="bg-slate-800/30 rounded-[2rem] border border-slate-700/50 border-dashed p-10 text-center">
+                        <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
+                            <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        </div>
+                        <p class="text-sm text-slate-300 font-bold">No assigned trips.</p>
+                        <p class="text-[10px] uppercase tracking-widest font-bold text-slate-500 mt-2">Wait for dispatch to assign a new job.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+    </div>
 </div>
-
-<!-- Leaflet CSS & JS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Map centered on Jordan
-        const map = L.map('transportMap').setView([31.2400, 36.5140], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        let currentRoutingControl = null;
-
-        // Approximate coordinates for Jordanian Governorates for demo purposes
-        const governorateCoords = {
-            'Amman': [31.9454, 35.9284],
-            'Irbid': [32.5514, 35.8515],
-            'Zarqa': [32.0645, 36.0858],
-            'Mafraq': [32.3423, 36.2045],
-            'Balqa': [32.0400, 35.7300],
-            'Karak': [31.1828, 35.7031],
-            'Jerash': [32.2763, 35.8943],
-            'Madaba': [31.7196, 35.7946],
-            'Ma\'an': [30.1945, 35.7342],
-            'Ajloun': [32.3326, 35.7517],
-            'Aqaba': [29.5319, 35.0061],
-            'Tafilah': [30.8359, 35.6133]
-        };
-
-        window.showRoute = function(origin, destination) {
-            // Remove existing markers/routes
-            map.eachLayer(function (layer) {
-                if (layer instanceof L.Marker || layer instanceof L.Polyline) {
-                    map.removeLayer(layer);
-                }
-            });
-
-            const startCoords = governorateCoords[origin];
-            const endCoords = governorateCoords[destination];
-
-            if (startCoords && endCoords) {
-                // Add Markers
-                const startMarker = L.marker(startCoords).addTo(map)
-                    .bindPopup(`<b>Origin:</b> ${origin}`).openPopup();
-                const endMarker = L.marker(endCoords).addTo(map)
-                    .bindPopup(`<b>Destination (Farm):</b> ${destination}`);
-
-                // Draw a simple polyline to represent the route
-                const latlngs = [startCoords, endCoords];
-                const polyline = L.polyline(latlngs, {color: 'blue', weight: 4, opacity: 0.7}).addTo(map);
-
-                // Zoom the map to the polyline
-                map.fitBounds(polyline.getBounds(), {padding: [50, 50]});
-            } else {
-                alert('Coordinates not found for these locations.');
-            }
-        };
-    });
-</script>
 @endsection

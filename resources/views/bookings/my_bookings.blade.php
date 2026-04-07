@@ -23,7 +23,6 @@
     }
 </style>
 
-{{-- 💡 pt-36 to push content further down from the fixed navbar --}}
 <div class="bg-[#f8fafc] min-h-screen pb-24 font-sans pt-36 selection:bg-[#1d5c42] selection:text-white">
 
     {{-- ==========================================
@@ -124,7 +123,6 @@
                             $statusIcon = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
                         }
 
-                        // Clean up the text for display
                         $displayStatus = ucwords(str_replace('_', ' ', $rawStatus));
 
                         // Time & Range Logic
@@ -142,16 +140,15 @@
                                  alt="Farm Image"
                                  class="booking-image w-full h-full object-cover transition-transform duration-[1.5s] ease-out text-transparent">
 
-                            {{-- Gradient Overlay for text readability --}}
                             <div class="image-gradient-overlay absolute inset-0"></div>
 
-                            {{-- Rating Badge (Top Right) --}}
+                            {{-- Rating Badge --}}
                             <div class="absolute top-5 right-5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-xs font-black text-gray-900 shadow-lg flex items-center gap-1.5 z-10 border border-white/50">
                                 <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                 {{ number_format($booking->farm->average_rating ?? 0, 1) }}
                             </div>
 
-                            {{-- Booking Date overlay on image --}}
+                            {{-- Booking Date --}}
                             <div class="absolute bottom-5 left-6 z-10 text-white w-full pr-8">
                                 @if($isMultiDay)
                                     <p class="text-[10px] font-black uppercase tracking-widest text-white/70 mb-1 drop-shadow-sm">Stay Dates</p>
@@ -170,12 +167,20 @@
                         {{-- Card Body --}}
                         <div class="p-6 md:p-8 flex flex-col flex-1 bg-white">
 
-                            {{-- 🌟 PROMINENT STATUS BADGE --}}
-                            <div class="mb-5 flex items-center w-full">
-                                <div class="w-full flex items-center justify-center gap-2 py-3 rounded-2xl {{ $statusClasses }} border-2 font-black text-xs uppercase tracking-widest shadow-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $statusIcon !!}</svg>
+                            <div class="mb-5 flex flex-wrap items-center gap-2 w-full">
+                                {{-- Booking Status Badge --}}
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl {{ $statusClasses }} border-2 font-black text-[10px] uppercase tracking-widest shadow-sm">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{!! $statusIcon !!}</svg>
                                     {{ $displayStatus }}
                                 </div>
+
+                                {{-- 💡 Transport Status Badge (New) --}}
+                                @if($booking->requires_transport && $booking->transport)
+                                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-50 text-cyan-700 border-2 border-cyan-200 font-black text-[10px] uppercase tracking-widest shadow-sm">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                                        {{ str_replace('_', ' ', $booking->transport->status) }}
+                                    </div>
+                                @endif
                             </div>
 
                             <h2 class="text-2xl font-black text-gray-900 mb-6 group-hover:text-[#1d5c42] transition-colors line-clamp-1 tracking-tight">
@@ -197,15 +202,6 @@
                                     <p class="text-xs font-bold text-gray-800 capitalize">{{ $booking->event_type ?? 'Standard Stay' }}</p>
                                 </div>
 
-                                {{-- Stay Dates --}}
-                                <div class="flex items-center justify-between p-4 border-b border-gray-200/50">
-                                    <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Stay Dates</p>
-                                    <p class="text-xs font-bold text-gray-800 text-right flex items-center gap-1 justify-end">
-                                        {{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}
-                                        <span class="text-gray-400">➝</span>
-                                        {{ \Carbon\Carbon::parse($booking->end_time)->format('M d, Y') }}
-                                    </p>
-                                </div>
                                 {{-- Time --}}
                                 <div class="flex items-center justify-between p-4">
                                     <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Time</p>
@@ -215,7 +211,6 @@
                                         {{ \Carbon\Carbon::parse($booking->end_time)->format('h:i A') }}
                                     </p>
                                 </div>
-
                             </div>
 
                             {{-- Action Buttons --}}
@@ -245,7 +240,6 @@
                                 </div>
                                 @endif
                             </div>
-
                         </div>
                     </div>
                 @endforeach

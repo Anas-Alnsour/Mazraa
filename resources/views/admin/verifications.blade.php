@@ -1,166 +1,189 @@
-<x-admin-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Pending Financial Verifications (CliQ)') }}
-        </h2>
-    </x-slot>
+@extends('layouts.admin')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-12">
+@section('title', 'Verification Center')
 
-            @if(session('success'))
-                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="font-bold text-sm">{{ session('success') }}</span>
-                </div>
-            @endif
+@section('content')
+<div class="max-w-7xl mx-auto py-10">
 
-            @if(session('error'))
-                <div class="bg-red-50 border border-red-200 text-red-800 rounded-xl p-4 flex items-center gap-3">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span class="font-bold text-sm">{{ session('error') }}</span>
-                </div>
-            @endif
-
-            <!-- 1. Farm Bookings Verifications -->
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                        Farm Bookings Awaiting Verification
-                        <span class="bg-indigo-100 text-indigo-800 text-xs font-black px-2 py-0.5 rounded-full">{{ $farmBookings->count() }}</span>
-                    </h3>
-                </div>
-
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-100">
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Customer & ID</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Farm Details</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Amount Required</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Date Submitted</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @forelse($farmBookings as $booking)
-                                    <tr class="hover:bg-gray-50/50 transition-colors">
-                                        <td class="px-6 py-4">
-                                            <span class="block text-sm font-bold text-gray-900">{{ $booking->user->name ?? 'Guest' }}</span>
-                                            <span class="block text-xs font-medium text-gray-500">{{ $booking->user->email ?? 'No email' }}</span>
-                                            <span class="block mt-1 text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded w-max">#FB-{{ $booking->id }}</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="block text-sm font-bold text-gray-900">{{ $booking->farm->name }}</span>
-                                            <span class="block text-xs font-medium text-gray-500">{{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }} ({{ ucfirst(str_replace('_', ' ', $booking->event_type)) }})</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-sm font-black text-[#7e22ce]">{{ number_format($booking->total_price, 3) }} JOD</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-xs font-bold text-gray-600">{{ $booking->updated_at->diffForHumans() }}</span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <form action="{{ route('admin.verifications.handle', ['id' => $booking->id, 'type' => 'farm_booking']) }}" method="POST" class="inline-block">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="approve">
-                                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200 text-xs font-black uppercase tracking-wider" onclick="return confirm('Confirm receipt of funds?');">
-                                                        Approve
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.verifications.handle', ['id' => $booking->id, 'type' => 'farm_booking']) }}" method="POST" class="inline-block">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="reject">
-                                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white transition-colors border border-red-200 text-xs font-black uppercase tracking-wider" onclick="return confirm('Are you sure you want to REJECT and CANCEL this booking?');">
-                                                        Reject
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-8 text-center text-sm font-medium text-gray-500 italic">No farm bookings awaiting verification.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Supply Orders Verifications -->
-            <div>
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                        Supply Orders Awaiting Verification
-                        <span class="bg-rose-100 text-rose-800 text-xs font-black px-2 py-0.5 rounded-full">{{ $supplyOrders->count() }}</span>
-                    </h3>
-                </div>
-
-                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 border-b border-gray-100">
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Customer & Invoice</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Supply Item</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Amount Required</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest">Date Submitted</th>
-                                    <th class="px-6 py-4 text-xs font-black text-gray-500 uppercase tracking-widest text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @forelse($supplyOrders as $order)
-                                    <tr class="hover:bg-gray-50/50 transition-colors">
-                                        <td class="px-6 py-4">
-                                            <span class="block text-sm font-bold text-gray-900">{{ $order->user->name ?? 'Guest' }}</span>
-                                            <span class="block mt-1 text-[10px] font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded w-max">{{ $order->order_id }}</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="block text-sm font-bold text-gray-900">{{ $order->supply->name ?? 'Deleted Item' }}</span>
-                                            <span class="block text-xs font-medium text-gray-500">Qty: {{ $order->quantity }}</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-sm font-black text-[#7e22ce]">{{ number_format($order->total_price, 3) }} JOD</span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span class="text-xs font-bold text-gray-600">{{ $order->updated_at->diffForHumans() }}</span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right">
-                                            <div class="flex items-center justify-end gap-2">
-                                                <form action="{{ route('admin.verifications.handle', ['id' => $order->id, 'type' => 'supply_order']) }}" method="POST" class="inline-block">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="approve">
-                                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200 text-xs font-black uppercase tracking-wider" onclick="return confirm('Confirm receipt of funds?');">
-                                                        Approve
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.verifications.handle', ['id' => $order->id, 'type' => 'supply_order']) }}" method="POST" class="inline-block">
-                                                    @csrf
-                                                    <input type="hidden" name="action" value="reject">
-                                                    <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white transition-colors border border-red-200 text-xs font-black uppercase tracking-wider" onclick="return confirm('Are you sure you want to REJECT and CANCEL this order?');">
-                                                        Reject
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-8 text-center text-sm font-medium text-gray-500 italic">No supply orders awaiting verification.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
+    <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Verification Center</h1>
+            <p class="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest">Review and approve pending requests</p>
         </div>
     </div>
-</x-admin-layout>
+
+    @if(session('success'))
+        <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 p-5 rounded-2xl shadow-sm font-bold mb-10 flex items-center gap-3">
+            <svg class="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-800 p-5 rounded-2xl shadow-sm font-bold mb-10 flex items-center gap-3">
+            <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <div class="mb-10">
+        <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            New Farm Listings Awaiting Approval
+            <span class="bg-emerald-100 text-emerald-800 text-xs font-black px-2 py-0.5 rounded-full">{{ $pendingFarms->count() }}</span>
+        </h2>
+
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+            @if($pendingFarms->count() > 0)
+                <div class="overflow-x-auto p-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Farm Details</th>
+                                <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Owner Info</th>
+                                <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right border-b border-slate-100">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @foreach($pendingFarms as $farm)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-6 py-6">
+                                        <p class="text-base font-black text-slate-900">{{ $farm->name }}</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Price: {{ $farm->price_per_night }} JOD/night</p>
+                                    </td>
+                                    <td class="px-6 py-6">
+                                        <p class="text-sm font-black text-slate-900">{{ $farm->owner->name ?? 'Unknown' }}</p>
+                                        <p class="text-[10px] font-bold text-indigo-600 mt-0.5 uppercase tracking-widest">{{ $farm->owner->phone ?? 'No Phone' }}</p>
+                                    </td>
+                                    <td class="px-6 py-6 text-right">
+                                        <form action="{{ route('admin.verifications.handle', ['id' => $farm->id, 'type' => 'farm_approval']) }}" method="POST" class="inline-flex gap-2">
+                                            @csrf
+                                            <button type="submit" name="action" value="reject" class="px-5 py-3 bg-white border border-rose-200 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all" onclick="return confirm('Reject and delete farm?');">Reject</button>
+                                            <button type="submit" name="action" value="approve" class="px-5 py-3 bg-slate-900 text-white hover:bg-emerald-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Approve</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="p-16 text-center bg-white rounded-[2.5rem]">
+                    <h3 class="text-xl font-black text-slate-900 mb-2">No Pending Farms</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">All farm listings have been reviewed.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="mb-10">
+        <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Farm Bookings Awaiting CliQ Verification
+            <span class="bg-indigo-100 text-indigo-800 text-xs font-black px-2 py-0.5 rounded-full">{{ isset($farmBookings) ? $farmBookings->count() : 0 }}</span>
+        </h2>
+
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+            @if(isset($farmBookings) && $farmBookings->count() > 0)
+                <div class="overflow-x-auto p-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer & ID</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Farm Details</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount Required</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @foreach($farmBookings as $booking)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="block text-sm font-bold text-slate-900">{{ $booking->user->name ?? 'Guest' }}</span>
+                                        <span class="block text-xs font-medium text-slate-500">{{ $booking->user->phone ?? 'No phone' }}</span>
+                                        <span class="block mt-1 text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded w-max">#FB-{{ $booking->id }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="block text-sm font-bold text-slate-900">{{ $booking->farm->name }}</span>
+                                        <span class="block text-xs font-medium text-slate-500">{{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }} ({{ ucfirst(str_replace('_', ' ', $booking->event_type)) }})</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="text-sm font-black text-indigo-600">{{ number_format($booking->total_price, 2) }} JOD</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <form action="{{ route('admin.verifications.handle', ['id' => $booking->id, 'type' => 'farm_booking']) }}" method="POST" class="inline-flex gap-2">
+                                            @csrf
+                                            <button type="submit" name="action" value="reject" class="px-4 py-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-wider" onclick="return confirm('Reject and cancel this booking?');">Reject</button>
+                                            <button type="submit" name="action" value="approve" class="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-wider" onclick="return confirm('Confirm receipt of CliQ funds?');">Approve</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="p-16 text-center bg-white rounded-[2.5rem]">
+                    <h3 class="text-xl font-black text-slate-900 mb-2">Queue is Empty</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending farm booking payments.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="mb-10">
+        <h2 class="text-lg font-black text-slate-900 flex items-center gap-2 mb-4">
+            <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+            Supply Orders Awaiting CliQ Verification
+            <span class="bg-rose-100 text-rose-800 text-xs font-black px-2 py-0.5 rounded-full">{{ isset($supplyOrders) ? $supplyOrders->count() : 0 }}</span>
+        </h2>
+
+        <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+            @if(isset($supplyOrders) && $supplyOrders->count() > 0)
+                <div class="overflow-x-auto p-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer & Invoice</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Supply Details</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Amount Required</th>
+                                <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-50">
+                            @foreach($supplyOrders as $order)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <span class="block text-sm font-bold text-slate-900">{{ $order->user->name ?? 'Guest' }}</span>
+                                        <span class="block mt-1 text-[10px] font-mono font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded w-max">{{ $order->order_id }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="block text-sm font-bold text-slate-900">{{ $order->supply->name ?? 'Deleted Item' }}</span>
+                                        <span class="block text-xs font-medium text-slate-500">Qty: {{ $order->quantity }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="text-sm font-black text-[#7e22ce]">{{ number_format($order->total_price, 2) }} JOD</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        <form action="{{ route('admin.verifications.handle', ['id' => $order->id, 'type' => 'supply_order']) }}" method="POST" class="inline-flex gap-2">
+                                            @csrf
+                                            <button type="submit" name="action" value="reject" class="px-4 py-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-wider" onclick="return confirm('Reject and cancel this order?');">Reject</button>
+                                            <button type="submit" name="action" value="approve" class="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors text-[10px] font-black uppercase tracking-wider" onclick="return confirm('Confirm receipt of CliQ funds?');">Approve</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="p-16 text-center bg-white rounded-[2.5rem]">
+                    <h3 class="text-xl font-black text-slate-900 mb-2">Queue is Empty</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending supply order payments.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+</div>
+@endsection

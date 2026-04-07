@@ -28,7 +28,6 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\FinancialController;
 
 // 💡 الكنترولرات الجديدة للداشبوردات
-use App\Http\Controllers\Driver\TransportDriverController as DriverDashboardTransportController;
 use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
 
 /*
@@ -255,10 +254,10 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 // 🚀 [8] NEW JULES DRIVER DASHBOARDS
 // ==========================================================================
 
-// --- TRANSPORT DRIVER ROUTES ---
-Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
-    Route::get('/dashboard', [DriverDashboardTransportController::class, 'dashboard'])->name('dashboard');
-    Route::patch('/trip/{id}/status', [DriverDashboardTransportController::class, 'updateStatus'])->name('update_status');
+// --- TRANSPORT DRIVER DASHBOARD ---
+Route::middleware(['auth', 'role:transport_driver'])->prefix('transport/driver')->name('transport.driver.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::patch('/trips/{id}/status', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
 });
 
 // --- SUPPLY DRIVER ROUTES ---

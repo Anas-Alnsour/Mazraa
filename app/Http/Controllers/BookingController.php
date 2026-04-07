@@ -72,12 +72,17 @@ class BookingController extends Controller
             $farmPrice = $farm->price_per_full_day;
         }
 
-        // الحسابات المالية
+        // الحسابات المالية (باستخدام السعر الديناميكي للمواصلات من الخريطة)
         $transportCost = 0;
+        $pickupLocation = 'Custom User Location';
+        $destGovernorate = $user->governorate ?? 'Amman';
         $requiresTransport = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
         if ($requiresTransport) {
-            $transportCost = 25.00; // سعر المواصلات الأساسي
+            $request->validate(['transport_cost' => 'required|numeric|min:25']);
+            $transportCost = (float) $request->transport_cost;
+            $pickupLocation = $request->input('pickup_location', 'Custom User Location');
+            $destGovernorate = $request->input('destination_governorate', $user->governorate ?? 'Amman');
         }
 
         $suppliesTotal = 0;
@@ -124,9 +129,12 @@ class BookingController extends Controller
                 $transport = Transport::create([
                     'user_id' => $user->id,
                     'farm_id' => $farm->id,
+                    'farm_booking_id' => $booking->id,
                     'transport_type' => 'Shuttle',
                     'passengers' => $validated['passengers'],
-                    'start_and_return_point' => 'Custom User Location',
+                    'start_and_return_point' => $pickupLocation,
+                    'pickup_location' => $pickupLocation,
+                    'destination_governorate' => $destGovernorate,
                     'pickup_lat' => $validated['pickup_lat'],
                     'pickup_lng' => $validated['pickup_lng'],
                     'price' => $transportCost,
@@ -138,7 +146,9 @@ class BookingController extends Controller
                     'net_company_amount' => $transportCost * 0.90
                 ]);
 
-                \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                if(class_exists('\App\Services\TransportDispatchAction')) {
+                    \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                }
             }
 
             // إنشاء طلبات التوريد
@@ -179,7 +189,7 @@ class BookingController extends Controller
     {
         $query = FarmBooking::where('user_id', Auth::id())
             ->where('end_time', '>=', now())
-            ->with('farm');
+            ->with(['farm', 'transport']);
 
         if ($request->filled('filter_date')) {
             $query->whereDate('start_time', $request->filter_date);
@@ -222,6 +232,10 @@ class BookingController extends Controller
     public function show(FarmBooking $booking)
     {
         if ($booking->user_id !== Auth::id()) { abort(403); }
+
+        // Ensure relations are loaded
+        $booking->load(['farm', 'transport.driver', 'transport.vehicle', 'supplyOrders.supply']);
+
         return view('bookings.show', compact('booking'));
     }
 
@@ -308,7 +322,7 @@ class BookingController extends Controller
 
         $farm = $booking->farm;
 
-        // فحص التعارض (باستثناء الحجز الحالي)
+        // فحص التعارض
         $isBlocked = FarmBlockedDate::where('farm_id', $farm->id)
             ->where('date', $request->booking_date)
             ->whereIn('shift', [$request->shift, 'full_day'])
@@ -333,7 +347,6 @@ class BookingController extends Controller
             return back()->with('error', 'Sorry, this shift is booked by another user.');
         }
 
-        // أوقات الشفت الجديد
         $bookingDate = Carbon::parse($request->booking_date);
         if ($request->shift === 'morning') {
             $startTime = $bookingDate->copy()->setTime(8, 0, 0);
@@ -343,18 +356,23 @@ class BookingController extends Controller
             $startTime = $bookingDate->copy()->setTime(19, 0, 0);
             $endTime = $bookingDate->copy()->addDay()->setTime(6, 0, 0);
             $farmPrice = $farm->price_per_evening_shift;
-        } else { // full_day
+        } else {
             $startTime = $bookingDate->copy()->setTime(10, 0, 0);
             $endTime = $bookingDate->copy()->addDay()->setTime(8, 0, 0);
             $farmPrice = $farm->price_per_full_day;
         }
 
-        // حساب السعر الجديد
         $transportCost = 0;
+        $pickupLocation = 'Custom User Location';
+        $destGovernorate = Auth::user()->governorate ?? 'Amman';
         $requiresTransportFlag = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
-        if ($requiresTransportFlag) { $transportCost = 25.00; }
 
-        // الحفاظ على سعر التوريد الأصلي عشان ما يضيع بالتحديث
+        if ($requiresTransportFlag) {
+            $transportCost = (float) $request->transport_cost;
+            $pickupLocation = $request->input('pickup_location', 'Custom User Location');
+            $destGovernorate = $request->input('destination_governorate', Auth::user()->governorate ?? 'Amman');
+        }
+
         $originalSuppliesCost = SupplyOrder::where('booking_id', $booking->id)
             ->where('status', '!=', 'cancelled')
             ->sum('total_price');
@@ -368,7 +386,6 @@ class BookingController extends Controller
 
         $difference = $newTotalPrice - $booking->total_price;
 
-        // الحالة 1: ترقية (Upgrade - دفع فرقية)
         if ($difference > 0 && $booking->payment_status === 'paid') {
             Stripe::setApiKey(config('services.stripe.secret'));
             try {
@@ -398,6 +415,8 @@ class BookingController extends Controller
                         'transport_cost' => $transportCost,
                         'pickup_lat' => $request->pickup_lat,
                         'pickup_lng' => $request->pickup_lng,
+                        'pickup_location' => substr($pickupLocation, 0, 200), // Ensure it fits in Stripe metadata
+                        'destination_governorate' => substr($destGovernorate, 0, 200),
                         'transport_passengers' => $request->passengers ?? 1,
                     ],
                 ]);
@@ -407,7 +426,6 @@ class BookingController extends Controller
             }
         }
 
-        // الحالة 2: تقليل (Downgrade - إرجاع فرقية)
         if ($difference < 0 && $booking->payment_status === 'paid' && $booking->stripe_payment_intent_id) {
             $refundAmount = abs($difference);
             Stripe::setApiKey(config('services.stripe.secret'));
@@ -421,27 +439,35 @@ class BookingController extends Controller
             }
         }
 
-        // معالجة المواصلات (إلغاء، تعديل وقت، أو إضافة جديدة)
         $existingTransport = Transport::where('farm_id', $farm->id)->where('user_id', Auth::id())->where('status', '!=', 'cancelled')->latest()->first();
 
         if ($booking->requires_transport && !$requiresTransportFlag && $existingTransport) {
             $existingTransport->update(['status' => 'cancelled']);
             $existingTransport->delete();
         } elseif ($booking->requires_transport && $requiresTransportFlag && $existingTransport) {
-            $existingTransport->update(['Farm_Arrival_Time' => $startTime, 'Farm_Departure_Time' => $endTime]);
+            $existingTransport->update([
+                'Farm_Arrival_Time' => $startTime,
+                'Farm_Departure_Time' => $endTime,
+                'price' => $transportCost,
+                'commission_amount' => $transportCost * 0.10,
+                'net_company_amount' => $transportCost * 0.90,
+                'pickup_location' => $pickupLocation
+            ]);
         } elseif (!$booking->requires_transport && $requiresTransportFlag && $booking->payment_status !== 'paid') {
             $transport = Transport::create([
-                'user_id' => Auth::id(), 'farm_id' => $farm->id, 'transport_type' => 'Shuttle',
-                'passengers' => $request->passengers ?? 1, 'start_and_return_point' => 'Custom User Location',
+                'user_id' => Auth::id(), 'farm_id' => $farm->id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
+                'passengers' => $request->passengers ?? 1, 'start_and_return_point' => $pickupLocation,
+                'pickup_location' => $pickupLocation, 'destination_governorate' => $destGovernorate,
                 'pickup_lat' => $request->pickup_lat, 'pickup_lng' => $request->pickup_lng,
                 'price' => $transportCost, 'distance' => 0, 'Farm_Arrival_Time' => $startTime,
                 'Farm_Departure_Time' => $endTime, 'status' => 'pending',
                 'commission_amount' => $transportCost * 0.10, 'net_company_amount' => $transportCost * 0.90
             ]);
-            \App\Services\TransportDispatchAction::dispatchDriver($transport);
+            if(class_exists('\App\Services\TransportDispatchAction')) {
+                \App\Services\TransportDispatchAction::dispatchDriver($transport);
+            }
         }
 
-        // التحديث المباشر
         $booking->update([
             'start_time' => $startTime, 'end_time' => $endTime, 'event_type' => $request->shift,
             'total_price' => $newTotalPrice, 'tax_amount' => $taxAmount, 'commission_amount' => $commissionAmount,
@@ -492,15 +518,18 @@ class BookingController extends Controller
                 $existingTransport = Transport::where('farm_id', $booking->farm_id)->where('user_id', Auth::id())->where('status', '!=', 'cancelled')->latest()->first();
                 if (!$existingTransport) {
                     $transport = Transport::create([
-                        'user_id' => Auth::id(), 'farm_id' => $booking->farm_id, 'transport_type' => 'Shuttle',
-                        'passengers' => $session->metadata->transport_passengers, 'start_and_return_point' => 'Custom User Location',
+                        'user_id' => Auth::id(), 'farm_id' => $booking->farm_id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
+                        'passengers' => $session->metadata->transport_passengers, 'start_and_return_point' => $session->metadata->pickup_location,
+                        'pickup_location' => $session->metadata->pickup_location, 'destination_governorate' => $session->metadata->destination_governorate,
                         'pickup_lat' => $session->metadata->pickup_lat, 'pickup_lng' => $session->metadata->pickup_lng,
                         'price' => $session->metadata->transport_cost, 'distance' => 0,
                         'Farm_Arrival_Time' => Carbon::parse($session->metadata->new_start_time),
                         'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time), 'status' => 'pending',
                         'commission_amount' => $session->metadata->transport_cost * 0.10, 'net_company_amount' => $session->metadata->transport_cost * 0.90
                     ]);
-                    \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                    if(class_exists('\App\Services\TransportDispatchAction')) {
+                        \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                    }
                 }
             }
 

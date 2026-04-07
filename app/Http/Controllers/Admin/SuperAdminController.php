@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Farm;
 use App\Models\User;
+use App\Models\Farm;
 use App\Models\FarmBooking;
-use App\Models\Transport;
 use App\Models\SupplyOrder;
-use App\Models\FinancialTransaction; // ضفنا هاد للتعامل مع العمليات المالية
+use App\Models\Transport;
+use App\Models\FinancialTransaction;
 use Carbon\Carbon;
 use App\Notifications\FarmApprovedNotification;
 use App\Notifications\PayoutProcessedNotification;
@@ -17,68 +17,81 @@ use App\Notifications\PayoutProcessedNotification;
 class SuperAdminController extends Controller
 {
     /**
-     * عرض الإحصائيات والأرباح للمنصة (النسخة المدمجة)
+     * Display the Unified Super Admin Dashboard. (Jules Metrics)
      */
-    public function index(Request $request)
+    public function index()
     {
-        // 1. إعداد فلتر الوقت
-        $timeframe = $request->query('timeframe', 'month');
-        $queryDate = Carbon::now();
-
-        if ($timeframe === 'week') {
-            $queryDate->subWeek();
-        } elseif ($timeframe === 'month') {
-            $queryDate->subMonth();
-        } elseif ($timeframe === 'year') {
-            $queryDate->subYear();
-        } elseif ($timeframe === 'all') {
-            $queryDate = Carbon::create(2000, 1, 1);
-        }
-
-        // 2. حساب عمولات المنصة (من كودك + الجديد)
-        $farmCommissions = FarmBooking::where('created_at', '>=', $queryDate)->sum('commission_amount');
-        $transportCommissions = Transport::where('created_at', '>=', $queryDate)->sum('commission_amount');
-        $supplyCommissions = SupplyOrder::where('created_at', '>=', $queryDate)->sum('commission_amount');
-
-        $totalCommissions = $farmCommissions + $transportCommissions + $supplyCommissions;
-
-        // حساب الضرائب (من كودك الأصلي)
-        $taxRate = 0.16; // 16% VAT
-        $taxes = $totalCommissions * $taxRate;
-
-        // 3. حساب إجمالي الأموال (Gross Volume)
-        $totalGrossIncome = FarmBooking::where('created_at', '>=', $queryDate)->sum('total_price')
-            + Transport::where('created_at', '>=', $queryDate)->sum('price')
-            + SupplyOrder::where('created_at', '>=', $queryDate)->sum('total_price');
-
-        // تجهيز المصفوفة المالية المدمجة
-        $financials = [
-            'gross_volume' => $totalGrossIncome, // اسم جديد من واجهة جولز
-            'total_income' => $totalGrossIncome, // اسم قديم من كودك
-            'net_revenue' => $totalCommissions,  // اسم جديد من واجهة جولز
-            'total_commissions' => $totalCommissions, // اسم قديم من كودك
-            'farm_rev' => $farmCommissions, // اسم جديد
-            'farm_commissions' => $farmCommissions, // اسم قديم
-            'transport_rev' => $transportCommissions, // اسم جديد
-            'transport_commissions' => $transportCommissions, // اسم قديم
-            'supply_rev' => $supplyCommissions, // اسم جديد
-            'supply_commissions' => $supplyCommissions, // اسم قديم
-            'taxes' => $taxes, // من كودك
-        ];
-
-        // 4. إحصائيات النظام (مدمجة)
+        // ---------------------------------------------------------
+        // 1. GLOBAL METRICS (All Time)
+        // ---------------------------------------------------------
         $totalUsers = User::count();
-        $systemStats = [
-            'total_users' => $totalUsers,
-            'total_farms' => Farm::count(),
-            'approved_farms' => Farm::where('is_approved', true)->count(),
-            'pending_farms' => Farm::where('is_approved', false)->count(),
-        ];
+        $totalPartners = User::whereIn('role', ['farm_owner', 'supply_company', 'transport_company'])->count();
+        $totalFarms = Farm::count();
 
-        // جلب المزارع المعتمدة للخريطة (من كودك الأصلي)
-        $verifiedFarms = Farm::where('is_approved', true)->get(['id', 'name', 'latitude', 'longitude', 'location']);
+        // ---------------------------------------------------------
+        // 2. FINANCIAL OVERSIGHT (Platform Commissions & Revenue)
+        // ---------------------------------------------------------
+        $adminId = auth()->id();
 
-        return view('admin.dashboard.index', compact('financials', 'timeframe', 'systemStats', 'totalUsers', 'verifiedFarms'));
+        // Total platform commissions earned (all time)
+        $totalCommissionEarned = FinancialTransaction::where('user_id', $adminId)
+            ->where('transaction_type', 'credit')
+            ->sum('amount');
+
+        // Revenue breakdown by sector (Completed/Confirmed only)
+        // Note: Using total_price for volume indication
+        $farmRevenue = FarmBooking::whereIn('status', ['confirmed', 'completed'])->sum('total_price');
+        $supplyRevenue = SupplyOrder::whereIn('status', ['paid', 'delivered', 'completed'])->sum('total_price');
+        $transportRevenue = Transport::whereIn('status', ['completed'])->sum('price');
+
+        $totalGrossVolume = $farmRevenue + $supplyRevenue + $transportRevenue;
+
+        // ---------------------------------------------------------
+        // 3. ECOSYSTEM ACTIVITY (Current Status)
+        // ---------------------------------------------------------
+
+        // FARMS (Emerald)
+        $activeFarmsCount = Farm::where('is_approved', true)->count();
+        $pendingFarmBookings = FarmBooking::whereIn('status', ['pending', 'pending_verification', 'pending_payment'])->count();
+        $activeFarmBookings = FarmBooking::where('status', 'confirmed')->whereDate('start_time', '>=', now())->count();
+
+        // SUPPLIES (Green/Lime)
+        $pendingSupplyOrders = SupplyOrder::where('status', 'pending')->count();
+        $inTransitSupplies = SupplyOrder::whereIn('status', ['waiting_driver', 'in_way'])->count();
+        $completedSupplies = SupplyOrder::where('status', 'delivered')->count();
+
+        // TRANSPORT LOGISTICS (Cyan/Blue)
+        $pendingTransports = Transport::where('status', 'pending')->count();
+        $inProgressTransports = Transport::whereIn('status', ['in_progress', 'in_way'])->count();
+        $completedTransports = Transport::where('status', 'completed')->count();
+
+        // ---------------------------------------------------------
+        // 4. VERIFICATIONS & ACTION CENTER (Pending Approvals)
+        // ---------------------------------------------------------
+        $farmsAwaitingApproval = Farm::where('is_approved', false)->count();
+        $paymentsAwaitingVerification = FarmBooking::where('status', 'pending_verification')->count() +
+                                        SupplyOrder::where('status', 'pending_verification')->count();
+
+        $actionRequiredCount = $farmsAwaitingApproval + $paymentsAwaitingVerification;
+
+        // ---------------------------------------------------------
+        // 5. RECENT TRANSACTIONS FEED
+        // ---------------------------------------------------------
+        $recentTransactions = FinancialTransaction::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get();
+
+        return view('admin.dashboard', compact(
+            'totalUsers', 'totalPartners', 'totalFarms',
+            'totalCommissionEarned', 'totalGrossVolume',
+            'farmRevenue', 'supplyRevenue', 'transportRevenue',
+            'activeFarmsCount', 'pendingFarmBookings', 'activeFarmBookings',
+            'pendingSupplyOrders', 'inTransitSupplies', 'completedSupplies',
+            'pendingTransports', 'inProgressTransports', 'completedTransports',
+            'actionRequiredCount', 'farmsAwaitingApproval', 'paymentsAwaitingVerification',
+            'recentTransactions'
+        ));
     }
 
     /**
@@ -91,22 +104,21 @@ class SuperAdminController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        // جلب المزارع اللي بتستنى الموافقة (كودك الأصلي)
+        // جلب المزارع اللي بتستنى الموافقة
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
 
-        // Fetch pending Farm Bookings (كود Jules للـ CliQ)
+        // Fetch pending Farm Bookings (CliQ)
         $farmBookings = FarmBooking::with(['farm', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
             ->get();
 
-        // Fetch pending Supply Orders (كود Jules للـ CliQ)
+        // Fetch pending Supply Orders (CliQ)
         $supplyOrders = SupplyOrder::with(['supply', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
             ->get();
 
-        // بنبعث كل الداتا المطلوبة للفيو
         return view('admin.verifications', compact('pendingFarms', 'farmBookings', 'supplyOrders'));
     }
 
@@ -125,7 +137,7 @@ class SuperAdminController extends Controller
 
         $action = $request->action;
 
-        // 1. معالجة موافقة/رفض إنشاء مزرعة جديدة (كودك الأصلي)
+        // 1. معالجة موافقة/رفض إنشاء مزرعة جديدة
         if ($type === 'farm_approval') {
             $farm = Farm::findOrFail($id);
 
@@ -139,7 +151,7 @@ class SuperAdminController extends Controller
             }
         }
 
-        // 2. معالجة حوالات الكليك لحجوزات المزارع (كود Jules)
+        // 2. معالجة حوالات الكليك لحجوزات المزارع
         elseif ($type === 'farm_booking') {
             $booking = FarmBooking::findOrFail($id);
 
@@ -168,7 +180,7 @@ class SuperAdminController extends Controller
             }
         }
 
-        // 3. معالجة حوالات الكليك لطلبات التوريد (كود Jules)
+        // 3. معالجة حوالات الكليك لطلبات التوريد
         elseif ($type === 'supply_order') {
             $order = SupplyOrder::findOrFail($id);
 
@@ -275,7 +287,7 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * عرض إعدادات النظام (من كودك الأصلي)
+     * عرض إعدادات النظام
      */
     public function system()
     {
@@ -286,7 +298,7 @@ class SuperAdminController extends Controller
     }
 
     /**
-     * تحديث إعدادات النظام (من كودك الأصلي)
+     * تحديث إعدادات النظام
      */
     public function updateSystem(Request $request)
     {
