@@ -77,6 +77,9 @@ class SuperAdminController extends Controller
         // ---------------------------------------------------------
         // 5. RECENT TRANSACTIONS FEED
         // ---------------------------------------------------------
+        // Fetch verified farms for the ecosystem map coverage
+        $verifiedFarms = Farm::where('is_approved', true)->select('id', 'name', 'latitude', 'longitude')->get();
+
         $recentTransactions = FinancialTransaction::with('user')
             ->orderBy('created_at', 'desc')
             ->take(6)
@@ -90,7 +93,7 @@ class SuperAdminController extends Controller
             'pendingSupplyOrders', 'inTransitSupplies', 'completedSupplies',
             'pendingTransports', 'inProgressTransports', 'completedTransports',
             'actionRequiredCount', 'farmsAwaitingApproval', 'paymentsAwaitingVerification',
-            'recentTransactions'
+            'recentTransactions', 'verifiedFarms'
         ));
     }
 
@@ -255,7 +258,7 @@ class SuperAdminController extends Controller
             ->take(20)
             ->get();
 
-        return view('admin.dashboard.payouts', compact('vendorsOwed', 'recentPayouts'));
+        return view('admin.payouts', compact('vendorsOwed', 'recentPayouts'));
     }
 
     /**
@@ -294,7 +297,7 @@ class SuperAdminController extends Controller
         $users = User::all();
         $defaultCommission = config('app.default_commission_rate', 10);
 
-        return view('admin.dashboard.system', compact('users', 'defaultCommission'));
+        return view('admin.system', compact('users', 'defaultCommission'));
     }
 
     /**

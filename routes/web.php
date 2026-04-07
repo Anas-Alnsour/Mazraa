@@ -255,7 +255,7 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 // ==========================================================================
 
 // --- TRANSPORT DRIVER DASHBOARD ---
-Route::middleware(['auth', 'role:transport_driver'])->prefix('transport/driver')->name('transport.driver.')->group(function () {
+Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'dashboard'])->name('dashboard');
     Route::patch('/trips/{id}/status', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
 });

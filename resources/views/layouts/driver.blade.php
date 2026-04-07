@@ -8,7 +8,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-800 flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
+<body class="bg-slate-900 font-sans antialiased text-slate-200 flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
 
     <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-20 bg-gray-900/50 lg:hidden" @click="sidebarOpen = false"></div>
 
@@ -90,19 +90,19 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-10 shadow-sm shrink-0">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-900">
+        <header class="h-20 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 lg:px-10 shadow-sm shrink-0">
             <div class="flex items-center gap-4">
-                <button @click="sidebarOpen = true" class="lg:hidden p-2 text-gray-500 hover:text-blue-600 focus:outline-none bg-gray-50 rounded-lg transition-colors">
+                <button @click="sidebarOpen = true" class="lg:hidden p-2 text-slate-400 hover:text-blue-500 focus:outline-none bg-slate-800 rounded-lg transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
                 <div class="hidden sm:flex items-center gap-2">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1.5 rounded-lg">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-700 px-3 py-1.5 rounded-lg">
                         {{ Auth::user()->role === 'supply_driver' ? 'Delivery Operations' : 'Fleet Operations' }}
                     </span>
                 </div>
             </div>
-            <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm flex items-center gap-2">
+            <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-800 px-4 py-2 rounded-xl border border-slate-700 shadow-sm flex items-center gap-2">
                 <svg class="w-4 h-4 {{ Auth::user()->role === 'supply_driver' ? 'text-teal-500' : 'text-amber-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 {{ date('l, M j, Y') }}
             </div>

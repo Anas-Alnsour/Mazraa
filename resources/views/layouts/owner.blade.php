@@ -34,7 +34,7 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased bg-gray-50 text-gray-900" x-data="{ sidebarOpen: false }">
+<body class="font-sans antialiased bg-slate-900 text-slate-200" x-data="{ sidebarOpen: false }">
 
     <div class="flex h-screen overflow-hidden">
 
@@ -104,19 +104,19 @@
         </aside>
 
         <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col min-w-0 bg-[#f8f9fa]">
+        <div class="flex-1 flex flex-col min-w-0 bg-slate-900">
 
             <!-- Top Navbar (Glassmorphism) -->
-            <header class="sticky top-0 z-10 bg-white/70 backdrop-blur-xl border-b border-gray-200/80 shadow-sm">
+            <header class="sticky top-0 z-10 bg-slate-800/90 backdrop-blur-xl border-b border-slate-700 shadow-sm">
                 <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-20">
 
                     <!-- Mobile Menu Button -->
-                    <button @click="sidebarOpen = true" class="p-2 -ml-2 text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1d5c42]/50">
+                    <button @click="sidebarOpen = true" class="p-2 -ml-2 text-slate-400 rounded-lg lg:hidden hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-[#1d5c42]/50">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
 
                     <!-- Page Header injected via slot -->
-                    <div class="hidden lg:flex items-center text-xl font-bold text-[#020617] tracking-tight">
+                    <div class="hidden lg:flex items-center text-xl font-bold text-white tracking-tight">
                         {{ $header ?? 'Dashboard' }}
                     </div>
 
@@ -133,12 +133,12 @@
 
                         <!-- User Menu Dropdown -->
                         <div x-data="{ dropdownOpen: false }" class="relative">
-                            <button @click="dropdownOpen = !dropdownOpen" @click.away="dropdownOpen = false" class="flex items-center gap-3 p-1.5 pr-4 transition-all duration-200 rounded-full border border-gray-200 hover:border-[#c2a265]/50 bg-white shadow-sm hover:shadow-md">
+                            <button @click="dropdownOpen = !dropdownOpen" @click.away="dropdownOpen = false" class="flex items-center gap-3 p-1.5 pr-4 transition-all duration-200 rounded-full border border-slate-700 hover:border-[#c2a265]/50 bg-slate-800 shadow-sm hover:shadow-md">
                                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-[#1d5c42] to-[#154531] flex items-center justify-center text-white font-bold text-sm shadow-inner">
                                     {{ substr(Auth::user()->name ?? 'O', 0, 1) }}
                                 </div>
                                 <div class="hidden md:block text-left">
-                                    <p class="text-sm font-bold text-[#020617] leading-none">{{ Auth::user()->name ?? 'Owner Name' }}</p>
+                                    <p class="text-sm font-bold text-white leading-none">{{ Auth::user()->name ?? 'Owner Name' }}</p>
                                     <p class="text-xs text-[#c2a265] font-semibold mt-1">Farm Owner</p>
                                 </div>
                                 <svg class="w-4 h-4 text-gray-400 hidden md:block transition-transform duration-200" :class="dropdownOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -152,14 +152,14 @@
                                  x-transition.leave="transition ease-in duration-150"
                                  x-transition.leave-start="transform opacity-100 scale-100 translate-y-0"
                                  x-transition.leave-end="transform opacity-0 scale-95 translate-y-2"
-                                 class="absolute right-0 w-56 mt-3 origin-top-right bg-white border border-gray-100 rounded-2xl shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden"
+                                 class="absolute right-0 w-56 mt-3 origin-top-right bg-slate-800 border border-slate-700 rounded-2xl shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden"
                                  style="display: none;">
-                                <div class="p-2 bg-gray-50 border-b border-gray-100 md:hidden">
-                                    <p class="text-sm font-bold text-[#020617]">{{ Auth::user()->name ?? 'Owner Name' }}</p>
+                                <div class="p-2 bg-slate-700/50 border-b border-slate-700 md:hidden">
+                                    <p class="text-sm font-bold text-white">{{ Auth::user()->name ?? 'Owner Name' }}</p>
                                     <p class="text-xs text-[#c2a265] font-semibold">{{ Auth::user()->email ?? 'owner@mazraa.com' }}</p>
                                 </div>
                                 <div class="p-1">
-                                    <a href="{{ route('owner.profile.edit') ?? '#' }}" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 rounded-xl hover:bg-gray-50 hover:text-[#1d5c42] transition-colors">
+                                    <a href="{{ route('owner.profile.edit') ?? '#' }}" class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-300 rounded-xl hover:bg-slate-700 hover:text-white transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                         Account Settings
                                     </a>

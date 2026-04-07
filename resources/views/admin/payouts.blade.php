@@ -5,7 +5,7 @@
 
     <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Financial Payouts</h1>
+            <h1 class="text-4xl font-black text-white tracking-tight">Financial Payouts</h1>
             <p class="text-sm font-bold text-slate-400 mt-2 uppercase tracking-widest">Manage outstanding balances and record bank transfers</p>
         </div>
     </div>
@@ -19,10 +19,10 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2">
-            <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
-                <div class="p-8 border-b border-slate-100 flex items-center justify-between">
-                    <h3 class="text-lg font-black text-slate-900">Outstanding Vendor Balances</h3>
-                    <span class="bg-amber-100 text-amber-800 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">{{ $vendorsOwed->count() }} Owed</span>
+            <div class="bg-slate-800 rounded-[2.5rem] shadow-sm border border-slate-700 overflow-hidden">
+                <div class="p-8 border-b border-slate-700 flex items-center justify-between">
+                    <h3 class="text-lg font-black text-white">Outstanding Vendor Balances</h3>
+                    <span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">{{ $vendorsOwed->count() }} Owed</span>
                 </div>
 
                 @if($vendorsOwed->count() > 0)
@@ -30,16 +30,16 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Vendor Info</th>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Account Type</th>
-                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right border-b border-slate-100">Owed Balance</th>
+                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-700">Vendor Info</th>
+                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-700">Account Type</th>
+                                    <th class="px-6 py-5 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right border-b border-slate-700">Owed Balance</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-50">
+                            <tbody class="divide-y divide-slate-700">
                                 @foreach($vendorsOwed as $vendor)
-                                    <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <tr class="hover:bg-slate-700/50 transition-colors">
                                         <td class="px-6 py-6">
-                                            <p class="text-sm font-black text-slate-900">{{ $vendor->name }}</p>
+                                            <p class="text-sm font-black text-white">{{ $vendor->name }}</p>
                                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $vendor->email }}</p>
                                         </td>
                                         <td class="px-6 py-6">
@@ -49,16 +49,16 @@
                                                     'transport_company' => 'bg-blue-50 text-blue-600 border-blue-100',
                                                     'supply_company' => 'bg-amber-50 text-amber-600 border-amber-100',
                                                 ];
-                                                $badgeClass = $badges[$vendor->role] ?? 'bg-slate-50 text-slate-600 border-slate-100';
+                                                $badgeClass = $badges[$vendor->role] ?? 'bg-slate-700 text-slate-300 border-slate-600';
                                             @endphp
                                             <span class="inline-block px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border {{ $badgeClass }}">
                                                 {{ str_replace('_', ' ', $vendor->role) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-6 text-right">
-                                            <button onclick="document.getElementById('user_id').value = '{{ $vendor->id }}'; document.getElementById('amount').value = '{{ $vendor->balance }}'; window.scrollTo({top: 0, behavior: 'smooth'});" class="group flex flex-col items-end justify-center w-full focus:outline-none bg-emerald-50 hover:bg-emerald-100 p-4 rounded-2xl transition-colors border border-emerald-100">
-                                                <p class="text-xl font-black text-emerald-600 group-hover:text-emerald-700 transition-colors">{{ number_format($vendor->balance, 2) }} <span class="text-[10px] text-emerald-500 uppercase tracking-widest">JOD</span></p>
-                                                <span class="text-[9px] font-bold text-emerald-600/70 group-hover:text-emerald-700 uppercase tracking-widest mt-1 flex items-center gap-1">
+                                            <button onclick="document.getElementById('user_id').value = '{{ $vendor->id }}'; document.getElementById('amount').value = '{{ $vendor->balance }}'; window.scrollTo({top: 0, behavior: 'smooth'});" class="group flex flex-col items-end justify-center w-full focus:outline-none bg-emerald-500/10 hover:bg-emerald-500/20 p-4 rounded-2xl transition-colors border border-emerald-500/20">
+                                                <p class="text-xl font-black text-emerald-400 group-hover:text-emerald-300 transition-colors">{{ number_format($vendor->balance, 2) }} <span class="text-[10px] text-emerald-500 uppercase tracking-widest">JOD</span></p>
+                                                <span class="text-[9px] font-bold text-emerald-500/70 group-hover:text-emerald-400 uppercase tracking-widest mt-1 flex items-center gap-1">
                                                     Click to Load <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                                                 </span>
                                             </button>
@@ -70,10 +70,10 @@
                     </div>
                 @else
                     <div class="p-20 text-center">
-                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-50 mb-6 border border-emerald-100">
-                            <svg class="h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/10 mb-6 border border-emerald-500/20">
+                            <svg class="h-10 w-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                         </div>
-                        <h4 class="text-2xl font-black text-slate-900 mb-2">All Settled Up!</h4>
+                        <h4 class="text-2xl font-black text-white mb-2">All Settled Up!</h4>
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">There are no outstanding balances owed to any vendors.</p>
                     </div>
                 @endif

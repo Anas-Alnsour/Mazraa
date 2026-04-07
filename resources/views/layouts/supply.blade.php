@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="font-sans antialiased bg-gray-50 flex h-screen overflow-hidden selection:bg-indigo-500 selection:text-white">
+<body class="font-sans antialiased bg-slate-900 text-slate-200 flex h-screen overflow-hidden selection:bg-indigo-500 selection:text-white">
 
     {{-- Sidebar (Indigo Theme) --}}
     <aside class="w-64 bg-[#1e1b4b] text-white flex flex-col hidden md:flex shadow-xl z-20">
@@ -46,12 +46,12 @@
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-900">
         {{-- Header Bar --}}
-        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10">
-            <h1 class="text-2xl font-black text-gray-900 tracking-tight">@yield('title', 'Supply Hub')</h1>
+        <header class="h-20 bg-slate-800 shadow-sm flex items-center justify-between px-8 z-10 border-b border-slate-700">
+            <h1 class="text-2xl font-black text-white tracking-tight">@yield('title', 'Supply Hub')</h1>
             <div class="flex items-center gap-4">
-                <span class="text-xs font-black uppercase tracking-widest text-indigo-700 bg-indigo-50 px-4 py-2.5 rounded-xl border border-indigo-100 flex items-center gap-2">
+                <span class="text-xs font-black uppercase tracking-widest text-indigo-400 bg-indigo-900/50 px-4 py-2.5 rounded-xl border border-indigo-700/50 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                     {{ Auth::user()->name }}
                 </span>

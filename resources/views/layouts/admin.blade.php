@@ -8,7 +8,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-800 flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
+<body class="bg-slate-900 font-sans antialiased text-slate-200 flex h-screen overflow-hidden" x-data="{ sidebarOpen: false }">
 
     <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-20 bg-slate-900/50 lg:hidden" @click="sidebarOpen = false"></div>
 
@@ -61,14 +61,14 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50">
-        <header class="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-6 lg:px-10 shadow-sm shrink-0">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-900">
+        <header class="h-20 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-6 lg:px-10 shadow-sm shrink-0">
             <div class="flex items-center gap-4">
-                <button @click="sidebarOpen = true" class="lg:hidden p-2 text-gray-500 hover:text-emerald-600 focus:outline-none bg-gray-50 rounded-lg transition-colors">
+                <button @click="sidebarOpen = true" class="lg:hidden p-2 text-slate-400 hover:text-emerald-500 focus:outline-none bg-slate-800 rounded-lg transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
                 <div class="hidden sm:flex items-center gap-2">
-                    <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1.5 rounded-lg">God Mode Activated</span>
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-700 px-3 py-1.5 rounded-lg">God Mode Activated</span>
                 </div>
             </div>
             <div class="flex items-center gap-4">

@@ -157,18 +157,34 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var map = L.map('farmMap').setView([31.9522, 35.9334], 7);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+
+        // Dark Mode Tiles: CartoDB Dark Matter
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
         }).addTo(map);
 
-        // Fetch verified farms from controller if they exist
+        // Custom dark-themed marker icon
+        var darkIcon = L.divIcon({
+            className: '',
+            html: '<div style="width:14px;height:14px;background:#10b981;border:2px solid #34d399;border-radius:50%;box-shadow:0 0 10px rgba(16,185,129,0.6);"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+        });
+
+        // Fetch verified farms from controller data
         var farms = @json($verifiedFarms ?? []);
 
         farms.forEach(function(farm) {
             if(farm.latitude && farm.longitude) {
-                var marker = L.marker([parseFloat(farm.latitude), parseFloat(farm.longitude)]).addTo(map);
-                marker.bindPopup("<div class='text-center'><b class='font-black text-slate-800 text-sm'>" + farm.name + "</b></div>");
+                var marker = L.marker([parseFloat(farm.latitude), parseFloat(farm.longitude)], { icon: darkIcon }).addTo(map);
+                marker.bindPopup(
+                    '<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;min-width:140px;">'
+                    + '<p style="color:#f1f5f9;font-weight:900;font-size:13px;margin:0 0 4px 0;">' + farm.name + '</p>'
+                    + '<p style="color:#10b981;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0;">Verified Farm</p>'
+                    + '</div>',
+                    { className: 'dark-popup' }
+                );
             }
         });
     });
