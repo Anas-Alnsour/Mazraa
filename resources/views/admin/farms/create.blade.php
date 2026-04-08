@@ -1,136 +1,199 @@
-@extends('layouts.app')
-
-@section('title', 'Add New Farm')
+@extends('layouts.admin')
 
 @section('content')
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Add New Farm</h1>
-                <p class="mt-1 text-gray-500 text-sm">Create a new farm listing for users to book.</p>
-            </div>
-            <a href="{{ route('admin.farms.index') }}" class="text-gray-500 hover:text-green-600 transition flex items-center gap-1 text-sm font-semibold">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Cancel
-            </a>
+<div class="space-y-8 animate-[fade-in_0.8s_ease-out]">
+    {{-- Header Section --}}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-800/50 p-8 rounded-[2rem] border border-slate-700/50 backdrop-blur-xl">
+        <div>
+            <h1 class="text-4xl font-black text-white tracking-tighter mb-2">Add New <span class="text-emerald-400">Farm</span></h1>
+            <p class="text-slate-400 font-medium">Create a high-fidelity farm listing for the platform.</p>
         </div>
+        <a href="{{ route('admin.farms.index') }}" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all border border-slate-600 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to List
+        </a>
+    </div>
 
-        @if ($errors->any())
-            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <ul class="list-disc pl-5 space-y-1 text-sm text-red-700">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        @endif
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        .leaflet-container { z-index: 1 !important; background: #0f172a; }
+        .form-input { @apply w-full bg-slate-900/50 border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all shadow-inner; }
+    </style>
 
-        <form action="{{ route('admin.farms.store') }}" method="POST" enctype="multipart/form-data"
-              class="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 space-y-8"
-              x-data="{ mainPreview: null, galleryPreviews: [] }">
+    <form action="{{ route('admin.farms.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8 pb-20">
+        @csrf
 
-            @csrf
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Farm Name</label>
-                    <input type="text" name="name" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all placeholder-gray-400" placeholder="e.g. Green Valley Farm" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                    <div class="relative">
-                        <input type="text" name="location" class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all placeholder-gray-400" placeholder="City, Area" required>
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {{-- Main Details --}}
+            <div class="lg:col-span-2 space-y-8">
+                {{-- General Info --}}
+                <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+                    <h3 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+                        <span class="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center text-sm">01</span>
+                        General Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Farm Name</label>
+                            <input type="text" name="name" value="{{ old('name') }}" class="form-input" placeholder="e.g. Royal Green Escape" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Max Capacity</label>
+                            <input type="number" name="capacity" value="{{ old('capacity') }}" class="form-input" placeholder="e.g. 25" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Initial Rating</label>
+                            <input type="number" step="0.1" min="0" max="5" name="rating" value="{{ old('rating', 5.0) }}" class="form-input" required>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Price Per Night (JD)</label>
-                    <input type="number" name="price_per_night" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all" placeholder="0.00" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Capacity</label>
-                    <input type="number" name="capacity" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all" placeholder="People count" required>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Rating (1-5)</label>
-                    <input type="number" name="rating" step="0.1" min="1" max="5" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all" placeholder="5.0" required>
-                </div>
-            </div>
-
-            <hr class="border-gray-100">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Main Image</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition relative cursor-pointer group">
-                        <input type="file" name="main_image" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                               @change="mainPreview = URL.createObjectURL($event.target.files[0])">
-
-                        <div x-show="!mainPreview">
-                            <svg class="mx-auto h-12 w-12 text-gray-400 group-hover:text-green-500 transition" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                            <p class="mt-1 text-sm text-gray-600">Click to upload main image</p>
+                {{-- Location & Map --}}
+                <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+                    <h3 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+                        <span class="w-8 h-8 bg-blue-500/10 text-blue-400 rounded-lg flex items-center justify-center text-sm">02</span>
+                        Location & Geolocation
+                    </h3>
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Governorate</label>
+                                <select name="governorate" class="form-input appearance-none cursor-pointer" required>
+                                    <option value="" disabled selected>Select Governorate</option>
+                                    @foreach(['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Balqa', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
+                                        <option value="{{ $gov }}" {{ old('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Specific Address</label>
+                                <input type="text" name="location" value="{{ old('location') }}" class="form-input" placeholder="e.g. Near Dead Sea Hotel" required>
+                            </div>
                         </div>
 
-                        <div x-show="mainPreview" class="relative">
-                            <img :src="mainPreview" class="mx-auto h-40 w-full object-cover rounded-xl shadow-md">
-                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-xl">
-                                <span class="text-white text-sm font-bold">Change Image</span>
+                        <div>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Google Maps Link (Optional)</label>
+                            <input type="url" name="location_link" value="{{ old('location_link') }}" class="form-input" placeholder="https://goo.gl/maps/...">
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-1 px-1">Interactive Map Pin</label>
+                            <p class="text-xs text-slate-400 font-medium px-1 italic">Click on map to set coordinates for logistics module.</p>
+                            <div id="admin-farm-map" class="h-80 w-full rounded-2xl border border-slate-700 shadow-inner"></div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="text" name="latitude" id="lat" value="{{ old('latitude', '31.9522') }}" readonly class="form-input bg-slate-950/50 text-slate-500 cursor-not-allowed text-xs font-mono">
+                                <input type="text" name="longitude" id="lng" value="{{ old('longitude', '35.2332') }}" readonly class="form-input bg-slate-950/50 text-slate-500 cursor-not-allowed text-xs font-mono">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Gallery Images</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:bg-gray-50 transition relative cursor-pointer group h-full flex flex-col justify-center">
-                        <input type="file" name="images[]" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                               @change="galleryPreviews = Array.from($event.target.files).map(file => URL.createObjectURL(file))">
-
-                        <div x-show="galleryPreviews.length === 0">
-                            <svg class="mx-auto h-12 w-12 text-gray-400 group-hover:text-green-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            <p class="mt-1 text-sm text-gray-600">Upload multiple photos</p>
+                {{-- Pricing --}}
+                <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+                    <h3 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+                        <span class="w-8 h-8 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center text-sm">03</span>
+                        Pricing Configuration (JOD)
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/30">
+                            <label class="block text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">Base Price (Display)</label>
+                            <input type="number" step="0.01" name="price_per_night" value="{{ old('price_per_night', 50) }}" class="form-input" required>
                         </div>
-
-                        <div x-show="galleryPreviews.length > 0" class="grid grid-cols-3 gap-2 mt-2">
-                            <template x-for="img in galleryPreviews">
-                                <img :src="img" class="h-16 w-full object-cover rounded-lg border border-gray-200">
-                            </template>
+                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/30">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Morning Shift</label>
+                            <input type="number" step="0.01" name="price_per_morning_shift" value="{{ old('price_per_morning_shift', 30) }}" class="form-input" required>
+                        </div>
+                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-700/30">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Evening Shift</label>
+                            <input type="number" step="0.01" name="price_per_evening_shift" value="{{ old('price_per_evening_shift', 40) }}" class="form-input" required>
+                        </div>
+                        <div class="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20">
+                            <label class="block text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Full Day (24h)</label>
+                            <input type="number" step="0.01" name="price_per_full_day" value="{{ old('price_per_full_day', 60) }}" class="form-input border-emerald-500/30" required>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea name="description" rows="5" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 outline-none transition-all resize-none placeholder-gray-400" placeholder="Detailed description about the farm amenities..." required></textarea>
-            </div>
+            {{-- Sidebar (Images & Status) --}}
+            <div class="space-y-8">
+                {{-- Status Card --}}
+                <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+                    <h3 class="text-lg font-black text-white mb-6">Approval Status</h3>
+                    <div class="space-y-4">
+                        <select name="status" class="form-input bg-emerald-500/5 border-emerald-500/20 text-emerald-400 font-bold uppercase tracking-widest text-xs" required>
+                            <option value="approved" selected>Approved (Visible)</option>
+                            <option value="pending">Pending Audit</option>
+                            <option value="rejected">Rejected / Hidden</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 font-medium text-center">Approved farms appear in search results immediately.</p>
+                    </div>
+                </div>
 
-            <div class="pt-4">
-                <button type="submit" class="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg hover:shadow-green-200 transition-all transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Add Farm
+                {{-- Images --}}
+                <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+                    <h3 class="text-lg font-black text-white mb-6">Media Upload</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Main Cover</label>
+                            <div class="relative group h-40 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center hover:border-emerald-500/50 transition-all overflow-hidden cursor-pointer">
+                                <input type="file" name="main_image" class="absolute inset-0 opacity-0 cursor-pointer z-10" required>
+                                <div class="text-center">
+                                    <svg class="w-8 h-8 text-slate-500 group-hover:text-emerald-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Upload Cover</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Gallery Photos</label>
+                            <div class="relative group h-24 rounded-2xl border-2 border-dashed border-slate-700 flex items-center justify-center hover:border-emerald-500/50 transition-all cursor-pointer">
+                                <input type="file" name="images[]" multiple class="absolute inset-0 opacity-0 cursor-pointer z-10">
+                                <div class="text-center">
+                                    <svg class="w-6 h-6 text-slate-500 group-hover:text-emerald-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Action --}}
+                <button type="submit" class="w-full py-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-[2rem] shadow-2xl shadow-emerald-900/40 transition-all flex items-center justify-center gap-3 transform active:scale-95 group uppercase tracking-widest text-sm">
+                    Register Farm
+                    <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </div>
+        </div>
 
-        </form>
-    </div>
+        {{-- Description --}}
+        <div class="bg-slate-800/30 p-8 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-md">
+            <h3 class="text-xl font-black text-white mb-6">Detailed Description</h3>
+            <textarea name="description" rows="6" class="form-input resize-none" placeholder="Enter amenities, rules, and property details..." required>{{ old('description') }}</textarea>
+        </div>
+    </form>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var map = L.map('admin-farm-map').setView([31.9522, 35.2332], 9);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        var marker = L.marker([31.9522, 35.2332], {draggable: true}).addTo(map);
+        
+        function updateCoords(lat, lng) {
+            document.getElementById('lat').value = lat.toFixed(8);
+            document.getElementById('lng').value = lng.toFixed(8);
+        }
+
+        marker.on('dragend', function(e) {
+            updateCoords(marker.getLatLng().lat, marker.getLatLng().lng);
+        });
+
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            updateCoords(e.latlng.lat, e.latlng.lng);
+        });
+    });
+</script>
 @endsection

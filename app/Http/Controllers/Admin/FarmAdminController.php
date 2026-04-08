@@ -24,39 +24,47 @@ class FarmAdminController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'location'        => 'required|string|max:255',
-            'price_per_night' => 'required|numeric|min:0',
-            'capacity'        => 'required|numeric|min:1',
-            'rating'          => 'required|numeric|min:1|max:5',
-            'description'     => 'required|string',
-            'main_image'      => 'nullable|image|max:10240', // 10MB
-            'images.*'        => 'image|max:10240',
+            'name'                      => 'required|string|max:255',
+            'governorate'               => 'required|string|max:255',
+            'location'                  => 'required|string|max:255',
+            'location_link'             => 'nullable|url|max:255',
+            'latitude'                  => 'required|numeric',
+            'longitude'                 => 'required|numeric',
+            'price_per_night'           => 'required|numeric|min:0',
+            'price_per_morning_shift'   => 'required|numeric|min:0',
+            'price_per_evening_shift'   => 'required|numeric|min:0',
+            'price_per_full_day'        => 'required|numeric|min:0',
+            'capacity'                  => 'required|numeric|min:1',
+            'rating'                    => 'required|numeric|min:0|max:5',
+            'description'               => 'required|string',
+            'main_image'                => 'nullable|image|max:10240',
+            'status'                    => 'required|string|in:pending,approved,rejected',
+            'images.*'                  => 'nullable|image|max:10240',
         ]);
 
-        // التعامل مع الصورة الرئيسية
+        // Handle Main Image
         $mainImagePath = null;
         if ($request->hasFile('main_image')) {
-            $mainImagePath = $request->file('main_image')->store('farms', 'public');
+            $mainImagePath = $request->file('main_image')->store('farms/covers', 'public');
         }
 
-        // إنشاء المزرعة (نستثني مصفوفة الصور من البيانات المباشرة)
+        // Create Farm
         $farmData = collect($validated)->except(['images', 'main_image'])->toArray();
         $farmData['main_image'] = $mainImagePath;
+        $farmData['owner_id'] = auth()->id(); // Admin defaults to creator if not specified
+        $farmData['is_approved'] = ($validated['status'] === 'approved');
 
         $farm = Farm::create($farmData);
 
-        // التعامل مع صور المعرض
+        // Handle Gallery
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $img) {
-                $path = $img->store('farm_gallery', 'public');
-                $farm->images()->create([
-                    'image_url' => $path
-                ]);
+                $path = $img->store('farms/gallery', 'public');
+                $farm->images()->create(['image_url' => $path]);
             }
         }
 
-        return redirect()->route('admin.farms.index')->with('success', 'Farm added successfully.');
+        return redirect()->route('admin.farms.index')->with('success', 'Farm created successfully.');
     }
 
     public function show(Farm $farm)
@@ -72,41 +80,38 @@ class FarmAdminController extends Controller
     public function update(Request $request, Farm $farm)
     {
         $validated = $request->validate([
-            'name'            => 'required|string|max:255',
-            'location'        => 'required|string|max:255',
-            'price_per_night' => 'required|numeric|min:0',
-            'capacity'        => 'required|numeric|min:1',
-            'rating'          => 'required|numeric|min:1|max:5',
-            'description'     => 'required|string',
-            'main_image'      => 'nullable|image|max:10240',
-            'images.*'        => 'nullable|image|max:10240',
+            'name'                      => 'required|string|max:255',
+            'governorate'               => 'required|string|max:255',
+            'location'                  => 'required|string|max:255',
+            'location_link'             => 'nullable|url|max:255',
+            'latitude'                  => 'required|numeric',
+            'longitude'                 => 'required|numeric',
+            'price_per_night'           => 'required|numeric|min:0',
+            'price_per_morning_shift'   => 'required|numeric|min:0',
+            'price_per_evening_shift'   => 'required|numeric|min:0',
+            'price_per_full_day'        => 'required|numeric|min:0',
+            'capacity'                  => 'required|numeric|min:1',
+            'rating'                    => 'required|numeric|min:0|max:5',
+            'description'               => 'required|string',
+            'main_image'                => 'nullable|image|max:10240',
+            'status'                    => 'required|string|in:pending,approved,rejected',
+            'images.*'                  => 'nullable|image|max:10240',
         ]);
 
-        // تحضير البيانات للتحديث (بدون الصور مؤقتاً)
         $data = collect($validated)->except(['images', 'main_image'])->toArray();
+        $data['is_approved'] = ($validated['status'] === 'approved');
 
-        // 1. التعامل مع الصورة الرئيسية (حذف أو استبدال)
-        if ($request->boolean('remove_main_image')) {
-            // إذا طلب المستخدم حذف الصورة
+        // Handle Main Image replacement
+        if ($request->hasFile('main_image')) {
             if ($farm->main_image) {
                 Storage::disk('public')->delete($farm->main_image);
             }
-            $data['main_image'] = null;
-        } elseif ($request->hasFile('main_image')) {
-            // إذا رفع صورة جديدة، نحذف القديمة ونرفع الجديدة
-            if ($farm->main_image) {
-                Storage::disk('public')->delete($farm->main_image);
-            }
-            $data['main_image'] = $request->file('main_image')->store('farms', 'public');
-        } else {
-            // إبقاء الصورة القديمة
-            $data['main_image'] = $farm->main_image;
+            $data['main_image'] = $request->file('main_image')->store('farms/covers', 'public');
         }
 
-        // 2. تحديث بيانات المزرعة الأساسية
         $farm->update($data);
 
-        // 3. حذف صور المعرض المحددة
+        // Handle Gallery removal
         $removeIds = $request->input('remove_gallery_images', []);
         if (!empty($removeIds)) {
             $imagesToDelete = $farm->images()->whereIn('id', $removeIds)->get();
@@ -116,19 +121,15 @@ class FarmAdminController extends Controller
             }
         }
 
-        // 4. إضافة صور جديدة للمعرض
+        // Handle new Gallery images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
-                $path = $imgFile->store('farm_gallery', 'public');
-                $farm->images()->create([
-                    'image_url' => $path,
-                ]);
+                $path = $imgFile->store('farms/gallery', 'public');
+                $farm->images()->create(['image_url' => $path]);
             }
         }
 
-        return redirect()
-            ->route('admin.farms.index')
-            ->with('success', 'Farm updated successfully.');
+        return redirect()->route('admin.farms.index')->with('success', 'Farm updated successfully.');
     }
 
     public function destroy(Farm $farm)
