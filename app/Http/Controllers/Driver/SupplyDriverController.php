@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
 use App\Models\SupplyOrder;
+use App\Models\FinancialTransaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -73,6 +75,35 @@ class SupplyDriverController extends Controller
                     ->where('id', Auth::id())
                     ->where('orders_count', '>', 0)
                     ->decrement('orders_count');
+
+                // --- 💰 ESCROW PAYOUT TRIGGER 💰 ---
+                // Trigger financials for ALL orders in this invoice
+                $adminId = User::where('role', 'admin')->value('id');
+
+                foreach ($orders as $order) {
+                    // Admin commission
+                    FinancialTransaction::create([
+                        'user_id'          => $adminId,
+                        'reference_type'   => 'supply_order',
+                        'reference_id'     => $order->id,
+                        'amount'           => $order->commission_amount,
+                        'transaction_type' => 'credit',
+                        'description'      => "Platform commission — Delivered Supply Order #{$order->id}",
+                    ]);
+
+                    // Supply company net
+                    $companyId = $order->supply->company_id ?? $order->supply->user_id;
+                    if ($companyId) {
+                        FinancialTransaction::create([
+                            'user_id'          => $companyId,
+                            'reference_type'   => 'supply_order',
+                            'reference_id'     => $order->id,
+                            'amount'           => $order->net_company_amount,
+                            'transaction_type' => 'credit',
+                            'description'      => "Net payout — Delivered Supply Order #{$order->id}",
+                        ]);
+                    }
+                }
             }
 
             DB::commit();

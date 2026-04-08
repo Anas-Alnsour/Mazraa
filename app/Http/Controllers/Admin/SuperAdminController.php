@@ -135,34 +135,14 @@ class SuperAdminController extends Controller
             return redirect()->route('admin.verifications')->with('success', 'Farm rejected and removed.');
         }
 
-        // ── 2. CliQ for Farm Booking ──────────────────────────────
-        elseif ($type === 'farm_booking') {
+        // ── 2. CliQ for Booking ──────────────────────────────
+        elseif ($type === 'booking') {
             $booking = FarmBooking::with('farm')->findOrFail($id);
 
             if ($action === 'approve') {
                 $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
 
-                $adminId = User::where('role', 'admin')->value('id');
-
-                // Admin commission
-                FinancialTransaction::create([
-                    'user_id'          => $adminId,
-                    'reference_type'   => 'farm_booking',
-                    'reference_id'     => $booking->id,
-                    'amount'           => $booking->commission_amount,
-                    'transaction_type' => 'credit',
-                    'description'      => "Platform commission — CliQ Booking #{$booking->id}",
-                ]);
-
-                // Farm owner net
-                FinancialTransaction::create([
-                    'user_id'          => $booking->farm->owner_id,
-                    'reference_type'   => 'farm_booking',
-                    'reference_id'     => $booking->id,
-                    'amount'           => $booking->net_owner_amount,
-                    'transaction_type' => 'credit',
-                    'description'      => "Net payout — CliQ Booking #{$booking->id}",
-                ]);
+                // Financial transactions removed from here - now triggered upon booking completion by owner
 
                 return back()->with('success', 'Farm Booking CliQ payment verified and funds distributed!');
             }
@@ -178,29 +158,7 @@ class SuperAdminController extends Controller
             if ($action === 'approve') {
                 $order->update(['status' => 'pending']);
 
-                $adminId = User::where('role', 'admin')->value('id');
-
-                // Admin commission
-                FinancialTransaction::create([
-                    'user_id'          => $adminId,
-                    'reference_type'   => 'supply_order',
-                    'reference_id'     => $order->id,
-                    'amount'           => $order->commission_amount,
-                    'transaction_type' => 'credit',
-                    'description'      => "Platform commission — CliQ Supply Order #{$order->id}",
-                ]);
-
-                // Supply company net
-                if ($order->supply && $order->supply->company_id) {
-                    FinancialTransaction::create([
-                        'user_id'          => $order->supply->company_id,
-                        'reference_type'   => 'supply_order',
-                        'reference_id'     => $order->id,
-                        'amount'           => $order->net_company_amount,
-                        'transaction_type' => 'credit',
-                        'description'      => "Net payout — CliQ Supply Order #{$order->id}",
-                    ]);
-                }
+                // Financial transactions removed from here - now triggered upon delivery completion by driver
 
                 return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
             }
@@ -224,13 +182,12 @@ class SuperAdminController extends Controller
 
         $vendors = User::whereIn('role', $vendorRoles)
             ->with(['financialTransactions' => function ($q) {
-                $q->selectRaw('user_id, transaction_type, SUM(amount) as total_amount')
-                  ->groupBy('user_id', 'transaction_type');
+                $q->select('user_id', 'transaction_type', 'amount', 'created_at');
             }])
             ->get()
             ->map(function ($user) {
-                $credits  = $user->financialTransactions->where('transaction_type', 'credit')->sum('total_amount');
-                $debits   = $user->financialTransactions->where('transaction_type', 'debit')->sum('total_amount');
+                $credits  = $user->financialTransactions->where('transaction_type', 'credit')->sum('amount');
+                $debits   = $user->financialTransactions->where('transaction_type', 'debit')->sum('amount');
                 $user->balance = round($credits - $debits, 2);
                 return $user;
             })

@@ -40,7 +40,7 @@ class StripeWebhookController extends Controller
             if (isset($session->metadata->type)) {
                 $type = $session->metadata->type;
 
-                if ($type === 'farm_booking') {
+                if ($type === 'booking') {
                     $this->handleFarmBooking($session);
                 } elseif ($type === 'supply_order') {
                     $this->handleSupplyOrder($session);
@@ -69,27 +69,7 @@ class StripeWebhookController extends Controller
             'stripe_payment_intent_id' => $session->payment_intent,
         ]);
 
-        $adminId = User::where('role', 'admin')->value('id');
-
-        // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
-        FinancialTransaction::create([
-            'user_id'          => $adminId,
-            'reference_type'   => 'farm_booking',
-            'reference_id'     => $booking->id,
-            'amount'           => $booking->commission_amount,
-            'transaction_type' => 'credit',
-            'description'      => "Platform commission (Booking #{$booking->id})",
-        ]);
-
-        // --- FINANCIAL SPLIT: OWNER NET PROFIT ---
-        FinancialTransaction::create([
-            'user_id'          => $booking->farm->owner_id,
-            'reference_type'   => 'farm_booking',
-            'reference_id'     => $booking->id,
-            'amount'           => $booking->net_owner_amount,
-            'transaction_type' => 'credit',
-            'description'      => "Net payout for farm booking #{$booking->id}",
-        ]);
+        // Financial transactions removed from here - now triggered upon booking completion by owner
 
         // --- 📩 SEND NOTIFICATIONS ---
         if ($booking->user) {
@@ -108,40 +88,18 @@ class StripeWebhookController extends Controller
         $orderId = $session->metadata->order_id;
 
         // Fetch all items within that specific order batch which are pending
-        $orders = SupplyOrder::where('order_id', $orderId)
+        $orders = SupplyOrder::with(['supply', 'user', 'driver', 'booking.farm'])
+            ->where('order_id', $orderId)
             ->where('status', 'pending_payment')
-            ->with('supply.company')
             ->get();
 
         if ($orders->isEmpty()) return;
-
-        $adminId = User::where('role', 'admin')->value('id');
 
         foreach ($orders as $order) {
             // Confirm the order into 'pending' dispatch state
             $order->update(['status' => 'pending']);
 
-            // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
-            FinancialTransaction::create([
-                'user_id'          => $adminId,
-                'reference_type'   => 'supply_order',
-                'reference_id'     => $order->id,
-                'amount'           => $order->commission_amount ?? ($order->total_price * 0.05), // fallback if commission missing
-                'transaction_type' => 'credit',
-                'description'      => "Platform commission (Supply Order #{$order->id})",
-            ]);
-
-            // --- FINANCIAL SPLIT: SUPPLY COMPANY NET PROFIT ---
-            $companyId = $order->supply->company_id ?? $order->supply->user_id; // Support both structures depending on model
-            
-            FinancialTransaction::create([
-                'user_id'          => $companyId,
-                'reference_type'   => 'supply_order',
-                'reference_id'     => $order->id,
-                'amount'           => $order->net_company_amount ?? ($order->total_price * 0.95), // fallback
-                'transaction_type' => 'credit',
-                'description'      => "Net payout for Supply Order #{$order->id}",
-            ]);
+            // Financial transactions removed from here - now triggered upon delivery completion by driver
         }
     }
 }

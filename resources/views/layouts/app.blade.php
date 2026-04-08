@@ -242,7 +242,7 @@
     </header>
 
     {{-- Flash Messages --}}
-    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 6000)" class="fixed top-24 right-5 z-[110] flex flex-col gap-3 pointer-events-none">
+    <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 8000)" class="fixed top-24 right-5 z-[110] flex flex-col gap-3 pointer-events-none">
         @if (session('success'))
             <div x-show="show" x-transition.duration.500ms class="pointer-events-auto bg-white/90 backdrop-blur-xl border border-green-200 rounded-2xl shadow-2xl p-4 flex items-start gap-4 w-80 transform hover:scale-105 transition-transform">
                 <div class="bg-green-100 p-2 rounded-full text-green-600 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>
@@ -254,6 +254,20 @@
             <div x-show="show" x-transition.duration.500ms class="pointer-events-auto bg-white/90 backdrop-blur-xl border border-red-200 rounded-2xl shadow-2xl p-4 flex items-start gap-4 w-80 transform hover:scale-105 transition-transform">
                 <div class="bg-red-100 p-2 rounded-full text-red-600 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>
                 <div class="flex-1"><h4 class="font-black text-gray-900 text-sm uppercase tracking-wider">Error</h4><p class="text-gray-500 text-xs mt-1 font-medium leading-relaxed">{{ session('error') }}</p></div>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-800"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+        @endif
+        @if ($errors->any())
+            <div x-show="show" x-transition.duration.500ms class="pointer-events-auto bg-white/90 backdrop-blur-xl border border-amber-200 rounded-2xl shadow-2xl p-4 flex items-start gap-4 w-80 transform hover:scale-105 transition-transform">
+                <div class="bg-amber-100 p-2 rounded-full text-amber-600 flex-shrink-0"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                <div class="flex-1">
+                    <h4 class="font-black text-gray-900 text-sm uppercase tracking-wider">Attention</h4>
+                    <ul class="list-disc list-inside text-gray-500 text-[10px] mt-1 font-medium leading-relaxed">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-800"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
         @endif

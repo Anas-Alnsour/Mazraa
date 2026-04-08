@@ -83,7 +83,7 @@ class PaymentController extends Controller
             'cancel_url' => route('payment.cancel', ['booking' => $booking->id]),
             'metadata' => [
                 'booking_id' => $booking->id,
-                'type' => 'farm_booking'
+                'type' => 'booking'
             ]
         ]);
 
@@ -112,24 +112,7 @@ class PaymentController extends Controller
 
 
                 // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
-                FinancialTransaction::create([
-                    'user_id'          => \App\Models\User::where('role', 'admin')->value('id'),
-                    'reference_type'   => 'farm_booking',
-                    'reference_id'     => $booking->id,
-                    'amount'           => $booking->commission_amount,
-                    'transaction_type' => 'credit',
-                    'description'      => "Platform commission (Booking #{$booking->id})",
-                ]);
-
-                // --- FINANCIAL SPLIT: OWNER NET PROFIT ---
-                FinancialTransaction::create([
-                    'user_id'          => $booking->farm->owner_id,
-                    'reference_type'   => 'farm_booking',
-                    'reference_id'     => $booking->id,
-                    'amount'           => $booking->net_owner_amount,
-                    'transaction_type' => 'credit',
-                    'description'      => "Net payout for farm booking #{$booking->id}",
-                ]);
+                // Financial transactions removed from here - now triggered upon booking completion by owner
 
                 // --- 📩 SEND NOTIFICATIONS ---
                 $booking->user->notify(new BookingConfirmedNotification($booking));
@@ -237,34 +220,12 @@ class PaymentController extends Controller
                         ->with('success', 'Your order has already been confirmed!');
                 }
 
-                $adminId = \App\Models\User::where('role', 'admin')->value('id');
-
                 foreach ($orders as $order) {
                     // Move to 'pending' so the supply company sees and dispatches it
                     $order->update(['status' => 'pending']);
 
-                    // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
-                    \App\Models\FinancialTransaction::create([
-                        'user_id'          => $adminId,
-                        'reference_type'   => 'supply_order',
-                        'reference_id'     => $order->id,
-                        'amount'           => $order->commission_amount,
-                        'transaction_type' => 'credit',
-                        'description'      => "Platform commission (Supply Order #{$order->id})",
-                    ]);
-
-                    // --- FINANCIAL SPLIT: SUPPLY COMPANY NET ---
-                    if ($order->supply && $order->supply->company_id) {
-                        \App\Models\FinancialTransaction::create([
-                            'user_id'          => $order->supply->company_id,
-                            'reference_type'   => 'supply_order',
-                            'reference_id'     => $order->id,
-                            'amount'           => $order->net_company_amount,
-                            'transaction_type' => 'credit',
-                            'description'      => "Net payout for Supply Order #{$order->id}",
-                        ]);
-                    }
-                }
+                    // Financial transactions removed from here - now triggered upon delivery completion by driver
+                 }
 
                 return redirect()->route('supplies.my_orders')
                     ->with('success', 'Supply payment successful! Your order is now being processed.');

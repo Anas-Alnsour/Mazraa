@@ -214,6 +214,7 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::get('/bookings', [OwnerDashboardController::class, 'bookings'])->name('bookings.index');
     Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
+    Route::patch('/bookings/{id}/complete', [OwnerDashboardController::class, 'completeBooking'])->name('bookings.complete');
 
     // 💡 راوت المالية مع المنطق البرمجي
     Route::get('/financials', [OwnerDashboardController::class, 'financials'])->name('financials');

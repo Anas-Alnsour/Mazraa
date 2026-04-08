@@ -32,13 +32,6 @@
          ORDERS GRID (GROUPED BY INVOICE)
          ========================================== --}}
 
-    @if(session('success'))
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="font-bold text-sm">{{ session('success') }}</span>
-        </div>
-    @endif
-
     @if($groupedOrders->isEmpty())
         <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center flex flex-col items-center justify-center">
             <div class="w-24 h-24 bg-teal-50 text-teal-500 rounded-full flex items-center justify-center mb-6 shadow-inner">

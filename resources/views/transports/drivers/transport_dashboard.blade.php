@@ -3,45 +3,9 @@
 @section('title', 'Driver Dashboard')
 
 @section('content')
-<div class="bg-slate-900 min-h-screen text-slate-100 pb-24 font-sans">
+<div class="space-y-8 pb-12">
 
-    <header class="bg-slate-900/90 backdrop-blur-md shadow-lg border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-3xl mx-auto px-5 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                </div>
-                <div>
-                    <h1 class="text-xl font-black tracking-tight text-white leading-tight">Driver Console</h1>
-                    <p class="text-[10px] font-bold text-cyan-500 uppercase tracking-widest">Mazraa Logistics</p>
-                </div>
-            </div>
-            <div class="flex items-center">
-                <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-slate-800 border-2 border-slate-700 text-sm font-black text-white shadow-sm">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                </span>
-            </div>
-        </div>
-    </header>
-
-    <div class="max-w-3xl mx-auto px-5 mt-8">
-
-        @if (session('success'))
-            <div class="mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center shadow-lg">
-                <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mr-3 shrink-0">
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-                </div>
-                <p class="text-xs font-black text-emerald-400 tracking-widest uppercase">{{ session('success') }}</p>
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="mb-6 rounded-2xl bg-rose-500/10 border border-rose-500/20 p-4 flex items-center shadow-lg">
-                <div class="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center text-rose-400 mr-3 shrink-0">
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                </div>
-                <p class="text-xs font-black text-rose-400 tracking-widest uppercase">{{ session('error') }}</p>
-            </div>
-        @endif
+<div class="animate-fade-in-up">
 
         @if($activeTrip)
             <div class="mb-10">

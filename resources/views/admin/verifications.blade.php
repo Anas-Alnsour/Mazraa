@@ -68,9 +68,12 @@
                     </table>
                 </div>
             @else
-                <div class="p-16 text-center bg-slate-800 rounded-[2.5rem]">
-                    <h3 class="text-xl font-black text-white mb-2">No Pending Farms</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">All farm listings have been reviewed.</p>
+                <div class="p-20 text-center bg-slate-800 rounded-[2.5rem] border border-slate-700/50">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/10 mb-6 border border-emerald-500/20">
+                        <svg class="h-10 w-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-white mb-2">No Pending Farms</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">All farm listings have been successfully reviewed and processed.</p>
                 </div>
             @endif
         </div>
@@ -123,9 +126,12 @@
                     </table>
                 </div>
             @else
-                <div class="p-16 text-center bg-white rounded-[2.5rem]">
-                    <h3 class="text-xl font-black text-slate-900 mb-2">Queue is Empty</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending farm booking payments.</p>
+                <div class="p-20 text-center bg-slate-800 rounded-[2.5rem] border border-slate-700/50">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-500/10 mb-6 border border-indigo-500/20">
+                        <svg class="h-10 w-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-white mb-2">Queue is Empty</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending farm booking payments to verify.</p>
                 </div>
             @endif
         </div>
@@ -177,9 +183,12 @@
                     </table>
                 </div>
             @else
-                <div class="p-16 text-center bg-slate-800 rounded-[2.5rem]">
-                    <h3 class="text-xl font-black text-white mb-2">Queue is Empty</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending supply order payments.</p>
+                <div class="p-20 text-center bg-slate-800 rounded-[2.5rem] border border-slate-700/50">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rose-500/10 mb-6 border border-rose-500/20">
+                        <svg class="h-10 w-10 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-white mb-2">Queue is Empty</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No pending supply marketplace orders to verify.</p>
                 </div>
             @endif
         </div>

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmBooking;
 use App\Models\FarmBlockedDate;
+use App\Models\FinancialTransaction;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class OwnerDashboardController extends Controller
@@ -21,7 +23,7 @@ class OwnerDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $farms = Farm::where('owner_id', $user->id)->get();
+        $farms = Farm::where('owner_id', $user->id)->with(['images', 'owner'])->get();
         $farmIds = $farms->pluck('id');
 
         $totalFarms = $farms->count();
@@ -274,6 +276,67 @@ class OwnerDashboardController extends Controller
             ->paginate(15);
 
         return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
+    }
+
+    /**
+     * Mark a booking as completed and trigger the financial escrow payout.
+     */
+    public function completeBooking($id)
+    {
+        $booking = FarmBooking::with('farm')->findOrFail($id);
+
+        if ($booking->farm->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Only confirmed bookings can be completed
+        if ($booking->status !== 'confirmed') {
+            return back()->with('error', 'Only confirmed bookings can be marked as completed.');
+        }
+
+        // Idempotency: skip if already credited
+        $alreadyTransacted = FinancialTransaction::where('reference_type', 'booking')
+            ->where('reference_id', $booking->id)
+            ->exists();
+
+        if ($alreadyTransacted) {
+             $booking->update(['status' => 'completed']);
+             return back()->with('success', 'Booking finalized.');
+        }
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $adminId = User::where('role', 'admin')->value('id');
+
+            // 1. Admin Commission
+            FinancialTransaction::create([
+                'user_id'          => $adminId,
+                'reference_type'   => 'booking',
+                'reference_id'     => $booking->id,
+                'amount'           => $booking->commission_amount,
+                'transaction_type' => 'credit',
+                'description'      => "Platform commission — Completed Booking #{$booking->id}",
+            ]);
+
+            // 2. Owner Net Profit
+            FinancialTransaction::create([
+                'user_id'          => Auth::id(),
+                'reference_type'   => 'booking',
+                'reference_id'     => $booking->id,
+                'amount'           => $booking->net_owner_amount,
+                'transaction_type' => 'credit',
+                'description'      => "Net payout — Completed Booking #{$booking->id}",
+            ]);
+
+            $booking->update(['status' => 'completed']);
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Booking completed and funds cleared to your balance!');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Failed to finalize booking: ' . $e->getMessage());
+        }
     }
 
     /**

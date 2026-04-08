@@ -6,41 +6,7 @@
         </div>
     </x-slot>
 
-    @if(session('success'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 flex items-start gap-3 shadow-sm animate-fade-in-up">
-        <svg class="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <div>
-            <h3 class="text-sm font-bold text-green-800">Success</h3>
-            <p class="text-sm text-green-700 mt-0.5">{{ session('success') }}</p>
-        </div>
-        <button @click="show = false" class="ml-auto text-green-500 hover:text-green-700">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start gap-3 shadow-sm animate-fade-in-up">
-        <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <div>
-            <h3 class="text-sm font-bold text-red-800">Error</h3>
-            <p class="text-sm text-red-700 mt-0.5">{{ session('error') }}</p>
-        </div>
-        <button @click="show = false" class="ml-auto text-red-500 hover:text-red-700">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-    </div>
-    @endif
-
-    <div class="pb-10">
-        <div class="mb-6 flex gap-2 overflow-x-auto pb-2">
-            <a href="{{ route('owner.bookings.index') }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ !request('status') || request('status') == 'all' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">All Bookings</a>
-            <a href="{{ route('owner.bookings.index', ['status' => 'pending']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'pending' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Pending Approval</a>
-            <a href="{{ route('owner.bookings.index', ['status' => 'confirmed']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'confirmed' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Confirmed</a>
-            <a href="{{ route('owner.bookings.index', ['status' => 'cancelled']) }}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-colors whitespace-nowrap {{ request('status') == 'cancelled' ? 'bg-[#1d5c42] text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50' }}">Cancelled</a>
-        </div>
-
-        @if(isset($bookings) && $bookings->count() > 0)
+     @if(isset($bookings) && $bookings->count() > 0)
             <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h3 class="text-base font-bold text-[#020617] flex items-center gap-2">
@@ -164,13 +130,24 @@
                                                     </button>
                                                 </form>
                                             @elseif($status === 'confirmed')
-                                                <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this CONFIRMED booking?');">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors border border-red-100 hover:border-red-600 text-xs font-bold uppercase tracking-wider">
-                                                        Cancel
-                                                    </button>
-                                                </form>
+                                                 <div class="flex items-center gap-2">
+                                                     <form action="{{ route('owner.bookings.complete', $booking->id) }}" method="POST">
+                                                         @csrf
+                                                         @method('PATCH')
+                                                         <button type="submit" class="inline-flex items-center justify-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm" title="Complete Stay">
+                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                                             Complete
+                                                         </button>
+                                                     </form>
+
+                                                     <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this CONFIRMED booking?');">
+                                                         @csrf
+                                                         @method('PATCH')
+                                                         <button type="submit" class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-colors border border-red-100 hover:border-red-600 text-xs font-bold whitespace-nowrap">
+                                                             Cancel
+                                                         </button>
+                                                     </form>
+                                                 </div>
                                             @else
                                                 <span class="text-xs font-semibold text-gray-400 italic">No actions available</span>
                                             @endif
