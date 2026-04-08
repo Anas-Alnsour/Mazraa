@@ -65,9 +65,9 @@ class SupplyController extends Controller
     public function myOrders()
     {
         // استثناء الطلبات اللي لسا بالـ Cart (عشان ما تظهر بصفحة المشتريات)
-        $orders = SupplyOrder::with(['supply.company'])
+        $orders = SupplyOrder::with(['supply.company', 'booking.farm', 'driver'])
             ->where('user_id', auth()->id())
-            ->where('status', '!=', 'cart') // 👈 هذا التعديل المهم
+            ->where('status', '!=', 'cart')
             ->latest()
             ->get();
 

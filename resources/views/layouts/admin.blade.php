@@ -39,6 +39,17 @@
                 @endif
             </a>
 
+            @php $unreadMessages = \App\Models\ContactMessage::where('status', 'unread')->count(); @endphp
+            <a href="{{ route('admin.contacts.index') }}" class="flex items-center justify-between px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 {{ request()->routeIs('admin.contacts.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Messages
+                </div>
+                @if($unreadMessages > 0)
+                    <span class="bg-emerald-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm animate-pulse">{{ $unreadMessages }} NEW</span>
+                @endif
+            </a>
+
             <p class="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mt-8 mb-4">Management</p>
             <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-500 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>

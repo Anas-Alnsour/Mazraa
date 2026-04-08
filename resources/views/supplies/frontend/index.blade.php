@@ -31,27 +31,7 @@
 
 {{-- 💡 Alpine Data Scope for Cart Modal --}}
 <div x-data="{
-    showModal: false,
-    selectedItem: null,
-    quantity: 1,
-    selectedBooking: '',
-
-    openModal(supply) {
-        this.selectedItem = supply;
-        this.quantity = 1;
-        this.selectedBooking = '';
-        this.showModal = true;
-    },
-    closeModal() {
-        this.showModal = false;
-        setTimeout(() => { this.selectedItem = null; }, 300);
-    },
-    increment() {
-        if(this.quantity < this.selectedItem.stock) this.quantity++;
-    },
-    decrement() {
-        if(this.quantity > 1) this.quantity--;
-    }
+    // Sprint 4: Direct cart actions implemented on cards
 }">
 
     <div class="bg-[#f8fafc] min-h-screen pb-24 font-sans pt-36 selection:bg-[#1d5c42] selection:text-white relative">
@@ -169,84 +149,79 @@
                         <svg class="w-14 h-14 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <h3 class="text-3xl font-black text-gray-900 mb-3 tracking-tight">{{ $currentCategory ? 'No items in this category' : 'Marketplace is Empty' }}</h3>
-                    <p class="text-gray-500 mb-10 font-medium text-lg text-center max-w-lg">Our B2B vendors are currently restocking their premium supplies. Please check back soon!</p>
-                    @if($currentCategory)
-                        <a href="{{ route('supplies.market') }}" class="text-[#1d5c42] font-black uppercase tracking-widest text-sm hover:underline">View All Items</a>
-                    @endif
+                    <p class="text-gray-500 mb-10 font-medium text-lg text-center max-w-lg">Our partners are currently restocking. Please check back soon!</p>
                 </div>
             @else
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 lg:gap-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                     @foreach ($supplies as $index => $supply)
-                        <div class="product-card fade-in-up-stagger bg-white rounded-[2.5rem] shadow-[0_10px_30px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden group flex flex-col h-full relative" style="animation-delay: {{ 0.2 + ($index * 0.1) }}s;">
-
-                            {{-- Product Image & Overlays --}}
-                            <div class="relative h-64 overflow-hidden rounded-t-[2.5rem] bg-gray-50">
-                                @if($supply->image)
-                                    <img src="{{ Storage::url($supply->image) }}" alt="{{ $supply->name }}" class="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-105">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50/50">
-                                        <svg class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    </div>
-                                @endif
-
-                                {{-- Price Badge (Top Right) --}}
-                                <div class="absolute top-5 right-5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-sm font-black text-[#1d5c42] shadow-lg flex items-baseline gap-1 z-10 border border-white/50">
-                                    {{ number_format($supply->price, 2) }} <span class="text-[9px] text-gray-400 uppercase tracking-widest">JOD</span>
+                        <div class="group bg-white rounded-[2.5rem] border border-slate-100/80 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-12px_rgba(29,92,66,0.12)] transition-all duration-500 flex flex-col h-full overflow-hidden fade-in-up-stagger" style="animation-delay: {{ $index * 0.05 }}s">
+                            
+                            {{-- 📷 Image Section --}}
+                            <div class="relative h-56 overflow-hidden">
+                                <img src="{{ $supply->image ? Storage::url($supply->image) : 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=2070' }}" 
+                                     alt="{{ $supply->name }}" 
+                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                                
+                                {{-- Badges --}}
+                                <div class="absolute top-4 left-4 flex flex-col gap-2">
+                                    @if($supply->category)
+                                        <span class="bg-black/40 backdrop-blur-md text-white text-[9px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest border border-white/10">
+                                            {{ $supply->category }}
+                                        </span>
+                                    @endif
                                 </div>
 
-                                {{-- Category Badge (Top Left) --}}
-                                @if($supply->category)
-                                    <div class="absolute top-5 left-5 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg text-[9px] font-black text-white uppercase tracking-widest shadow-sm border border-white/10">
-                                        {{ $supply->category }}
-                                    </div>
-                                @endif
+                                <div class="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                             </div>
 
-                            {{-- Product Details --}}
-                            <div class="p-6 md:p-8 flex flex-col flex-1 bg-white">
-                                <h3 class="text-2xl font-black text-gray-900 mb-3 group-hover:text-[#1d5c42] transition-colors line-clamp-1 tracking-tight">{{ $supply->name }}</h3>
-
-                                <p class="text-xs font-bold text-gray-400 line-clamp-2 mb-6 flex-1 leading-relaxed">
-                                    {{ $supply->description ?: 'No description provided for this premium supply.' }}
+                            {{-- 📝 Content Section --}}
+                            <div class="p-6 flex flex-col flex-1">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-lg font-black text-slate-900 group-hover:text-[#1d5c42] transition-colors leading-tight line-clamp-1 truncate">
+                                        {{ $supply->name }}
+                                    </h3>
+                                </div>
+                                <p class="text-[11px] font-medium text-slate-400 line-clamp-2 mb-4 leading-relaxed h-8">
+                                    {{ $supply->description ?? 'Premium quality supply for your farm stay experience.' }}
                                 </p>
 
-                                {{-- Vendor & Stock Info Box --}}
-                                <div class="flex items-center justify-between mt-auto pb-5 border-b border-gray-100/80 mb-5">
-                                    <div class="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[#1d5c42] bg-[#1d5c42]/10 px-3 py-1.5 rounded-lg border border-[#1d5c42]/20">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-[#1d5c42] animate-pulse"></span>
-                                        {{ $supply->stock }} Left
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-2xl font-black text-emerald-600 tracking-tighter">{{ number_format($supply->price, 2) }}</span>
+                                        <span class="text-[10px] font-bold text-slate-400 uppercase">JOD</span>
                                     </div>
-                                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest truncate max-w-[110px] flex items-center gap-1" title="{{ $supply->company->name ?? 'Premium Vendor' }}">
-                                        <svg class="w-3 h-3 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                        {{ $supply->company->name ?? 'Vendor' }}
-                                    </span>
+                                    <div class="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                                        Stock: {{ $supply->stock }}
+                                    </div>
                                 </div>
 
-                                {{-- Actions --}}
-                                <div class="mt-auto flex flex-col sm:flex-row gap-3">
-                                    <a href="{{ route('supplies.show', $supply->id) }}" class="flex-1 text-center text-gray-500 hover:text-[#1d5c42] border-2 border-gray-100 hover:border-[#1d5c42]/30 font-black py-3.5 rounded-xl transition-all duration-200 uppercase tracking-widest text-[10px] bg-white hover:bg-gray-50 active:scale-95">
-                                        Details
-                                    </a>
-
-                                    {{-- 💡 Add to Cart Logic using Modal --}}
+                                {{-- 🛒 Action Bar (The Fix) --}}
+                                <div class="mt-auto">
                                     @auth
-                                        @if(auth()->user()->role === 'user' && !empty($eligibleBookings))
-                                            <button @click="openModal({{ $supply->toJson() }})" class="flex-1 bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-3.5 px-2 rounded-xl transition-all duration-300 uppercase tracking-widest text-[10px] shadow-md hover:shadow-[0_8px_20px_rgba(29,92,66,0.3)] transform active:scale-95 flex items-center justify-center gap-1.5">
-                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                                Add
-                                            </button>
-                                        @elseif(auth()->user()->role === 'user' && empty($eligibleBookings))
-                                            <button disabled class="flex-1 bg-gray-100 text-gray-400 font-black py-3.5 px-2 rounded-xl uppercase tracking-widest text-[8px] sm:text-[9px] cursor-not-allowed flex items-center justify-center text-center">
-                                                No Eligible Booking
-                                            </button>
+                                        @if(auth()->user()->role === 'user')
+                                            <form action="{{ route('cart.add', $supply->id) }}" method="POST" class="flex items-center gap-3">
+                                                @csrf
+                                                {{-- Qty Selector --}}
+                                                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-inner" x-data="{ qty: 1 }">
+                                                    <button type="button" @click="if(qty > 1) qty--" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm hover:text-red-500 transition-all font-black text-sm">-</button>
+                                                    <input type="number" name="quantity" x-model="qty" readonly class="w-10 text-center bg-transparent border-none focus:ring-0 text-sm font-black text-slate-800 p-0 pointer-events-none">
+                                                    <button type="button" @click="if(qty < {{ $supply->stock }}) qty++" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm hover:text-emerald-600 transition-all font-black text-sm">+</button>
+                                                </div>
+
+                                                {{-- Add Button --}}
+                                                <button type="submit" class="flex-1 bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-3.5 px-4 rounded-2xl transition-all duration-300 shadow-[0_10px_20px_rgba(29,92,66,0.15)] hover:shadow-[0_15px_30px_rgba(29,92,66,0.3)] active:scale-95 flex items-center justify-center gap-2 group/btn">
+                                                    <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                                    <span class="text-[10px] uppercase tracking-widest">Add</span>
+                                                </button>
+                                            </form>
                                         @else
-                                            <a href="{{ route('login') }}" class="flex-1 bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-3.5 px-2 rounded-xl transition-all duration-300 uppercase tracking-widest text-[10px] shadow-md text-center transform active:scale-95">
-                                                Login
-                                            </a>
+                                            <div class="w-full py-3.5 px-4 bg-slate-100 text-slate-400 font-black text-[10px] text-center rounded-2xl uppercase tracking-widest">
+                                                Customer Only
+                                            </div>
                                         @endif
                                     @else
-                                        <a href="{{ route('login') }}" class="flex-1 bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-3.5 px-2 rounded-xl transition-all duration-300 uppercase tracking-widest text-[10px] shadow-md text-center transform active:scale-95">
-                                            Login
+                                        <a href="{{ route('login') }}" class="block w-full text-center bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-4 rounded-2xl transition-all shadow-lg uppercase tracking-widest text-[10px]">
+                                            Login to Shop
                                         </a>
                                     @endauth
                                 </div>
@@ -283,73 +258,6 @@
                 </div>
             @endif
         @endauth
-
-        {{-- 💡 Add to Cart Modal (Alpine) 💡 --}}
-        <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-
-                <div x-show="showModal" x-transition.opacity class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeModal"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div x-show="showModal"
-                     x-transition:enter="ease-out duration-300"
-                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave="ease-in duration-200"
-                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                     class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100">
-
-                    <template x-if="selectedItem">
-                        <form :action="`/cart/add/${selectedItem.id}`" method="POST">
-                            @csrf
-
-                            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <h3 class="text-lg font-bold text-gray-900" x-text="selectedItem.name"></h3>
-                                <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-500 bg-white rounded-full p-1 shadow-sm border border-gray-200 focus:outline-none">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                            </div>
-
-                            <div class="p-6 space-y-6">
-                                <div>
-                                    <label for="booking_id" class="block text-sm font-bold text-gray-700 mb-2">Select Delivery Destination <span class="text-red-500">*</span></label>
-                                    <select id="booking_id" name="booking_id" x-model="selectedBooking" class="w-full rounded-2xl border-gray-200 focus:border-[#1d5c42] focus:ring-[#1d5c42] px-4 py-3 bg-gray-50 hover:bg-white transition-colors font-medium text-gray-900 appearance-none" required>
-                                        <option value="" disabled>Choose your active booking</option>
-                                        @foreach($eligibleBookings ?? [] as $booking)
-                                            <option value="{{ $booking->id }}">
-                                                {{ $booking->farm->name }} ({{ \Carbon\Carbon::parse($booking->start_time)->format('M d, H:i') }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <p class="text-xs text-gray-500 font-medium mt-2">Drivers will deliver your order directly to this farm.</p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Quantity</label>
-                                    <div class="flex items-center gap-4 bg-gray-50 p-2 rounded-2xl border border-gray-200 w-max shadow-inner">
-                                        <button type="button" @click="decrement" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-gray-600 shadow-sm hover:bg-gray-100 font-black transition-colors focus:outline-none">-</button>
-                                        <input type="number" name="quantity" x-model="quantity" readonly class="w-12 text-center bg-transparent border-none focus:ring-0 text-lg font-black text-gray-900 p-0 pointer-events-none">
-                                        <button type="button" @click="increment" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white text-gray-600 shadow-sm hover:bg-gray-100 font-black transition-colors focus:outline-none">+</button>
-                                    </div>
-                                </div>
-
-                                <div class="bg-emerald-50 rounded-2xl p-4 flex justify-between items-center border border-emerald-100">
-                                    <span class="text-sm font-bold text-emerald-900 uppercase tracking-widest">Total Price</span>
-                                    <span class="text-xl font-black text-[#1d5c42]" x-text="(selectedItem.price * quantity).toFixed(2) + ' JOD'"></span>
-                                </div>
-                            </div>
-
-                            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-                                <button type="button" @click="closeModal" class="flex-1 px-6 py-3.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-black text-[10px] sm:text-xs tracking-widest uppercase hover:bg-gray-50 transition-colors focus:outline-none">Cancel</button>
-                                <button type="submit" :disabled="!selectedBooking" :class="!selectedBooking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#154230] shadow-lg shadow-[#1d5c42]/30 active:scale-95'" class="flex-1 px-6 py-3.5 rounded-xl bg-[#1d5c42] text-white font-black text-[10px] sm:text-xs tracking-widest uppercase transition-all transform focus:outline-none">Confirm Order</button>
-                            </div>
-                        </form>
-                    </template>
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>

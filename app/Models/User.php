@@ -113,8 +113,16 @@ protected $fillable = [
     }
 
     // ==================================================
-    // [Sprint 4] Dispatch Algorithm Relationships
+    // [Sprint 4] Dispatch Algorithm Relationships & Scopes
     // ==================================================
+
+    /**
+     * Scope a query to only include users of a given role.
+     */
+    public function scopeRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
 
     /**
      * Transport jobs assigned to this driver.

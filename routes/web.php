@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FarmController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SupplyOrderController;
@@ -13,7 +14,7 @@ use App\Http\Controllers\TransportController;
 use App\Http\Controllers\Admin\FarmAdminController;
 use App\Http\Controllers\SupplyCompanyDashboardController;
 use App\Http\Controllers\TransportCompanyDashboardController;
-use App\Http\Controllers\Admin\ContactAdminController;
+use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\SupplyAdminController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -26,8 +27,6 @@ use App\Http\Controllers\SupplyItemController;
 use App\Http\Controllers\SupplyDriverController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Admin\FinancialController;
-
-// 💡 الكنترولرات الجديدة للداشبوردات
 use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyController;
 
 /*
@@ -45,7 +44,7 @@ Route::get('/', [PageController::class, 'home'])->name('home');
 Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.submit');
 Route::get('/explore', [FarmController::class, 'index'])->name('explore');
 Route::get('/farms', [FarmController::class, 'index'])->name('farms.index');
 Route::get('/farms/{farm}', [FarmController::class, 'show'])->name('farms.show');
@@ -192,11 +191,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Old resources mapped to admin logic
     Route::resource('farms', FarmAdminController::class);
     Route::resource('supplies', SupplyAdminController::class);
-    Route::get('/contact-messages', [ContactAdminController::class, 'index'])->name('contact.index');
-    Route::get('/contact-messages/{id}', [ContactAdminController::class, 'show'])->name('contact.show');
-    Route::delete('/contact-messages/{id}', [ContactAdminController::class, 'destroy'])->name('contact.destroy');
-    Route::patch('/contact-messages/{id}/read', [ContactAdminController::class, 'markAsRead'])->name('contact.markAsRead');
-    Route::get('/contact-messages-view', [PageController::class, 'showContactMessages'])->name('contact.view');
+    // Admin Message Management
+    Route::get('/contact-messages', [AdminContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contact-messages/{id}', [AdminContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contact-messages/{id}', [AdminContactController::class, 'destroy'])->name('contacts.destroy');
+    Route::patch('/contact-messages/{id}/read', [AdminContactController::class, 'markAsRead'])->name('contacts.markAsRead');
 });
 
 // --- [3] FARM OWNER ---

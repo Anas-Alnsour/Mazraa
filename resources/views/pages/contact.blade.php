@@ -173,6 +173,15 @@
                             </div>
                         </div>
 
+                        {{-- Subject Input --}}
+                        <div class="relative group">
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 pl-1 group-focus-within:text-[#c2a265] transition-colors" for="subject">Subject</label>
+                            <div class="relative">
+                                <input id="subject" name="subject" type="text" value="{{ old('subject') }}" required placeholder="How can we help?"
+                                       class="glass-input w-full px-4 py-4 rounded-2xl text-white placeholder-gray-600 font-medium text-sm outline-none" />
+                            </div>
+                        </div>
+
                         {{-- Message Textarea --}}
                         <div class="relative group">
                             <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 pl-1 group-focus-within:text-[#c2a265] transition-colors" for="message">Your Message</label>

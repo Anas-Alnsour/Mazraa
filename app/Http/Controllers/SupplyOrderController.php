@@ -30,21 +30,19 @@ class SupplyOrderController extends Controller
     {
         $request->validate([
             'quantity' => 'required|integer|min:1|max:' . $supply->stock,
-            'booking_id' => 'required|exists:farm_bookings,id'
         ]);
 
-        $booking = FarmBooking::findOrFail($request->booking_id);
-
-        if ($booking->user_id !== Auth::id() || !$booking->isWithinSupplyCheckoutWindow()) {
-            return back()->with('error', 'Checkout Policy Violation: Supply checkout is only allowed within your booking duration or exactly 2 hours before it starts.');
-        }
+        // [Sprint 4 UX] Booking is no longer required at Add to Cart. 
+        // It will be selected at the final Checkout step in the Cart.
+        $bookingId = null; 
+        $booking = null;
 
         $quantity = $request->quantity;
         $totalPrice = $supply->price * $quantity;
 
         $existingOrder = SupplyOrder::where('user_id', Auth::id())
             ->where('supply_id', $supply->id)
-            ->where('booking_id', $booking->id)
+            ->whereNull('booking_id') // Link to generic cart
             ->where('status', 'cart')
             ->first();
 
@@ -61,7 +59,7 @@ class SupplyOrderController extends Controller
             SupplyOrder::create([
                 'user_id' => Auth::id(),
                 'supply_id' => $supply->id,
-                'booking_id' => $booking->id,
+                'booking_id' => null,
                 'quantity' => $quantity,
                 'total_price' => $totalPrice,
                 'status' => 'cart',
@@ -80,10 +78,24 @@ class SupplyOrderController extends Controller
             ->where('status', 'cart')
             ->get();
 
-        $totalPrice = $cartItems->sum('total_price');
+        $cartTotal = $cartItems->sum('total_price');
 
-        // ملاحظة: تأكد إنك منسق واجهة cart.blade.php صح (استخدم اللي أعطاك إياها جولز)
-        return view('supplies.cart', compact('cartItems', 'totalPrice'));
+        // [Sprint 4 UX] Global Booking Selection logic moved here from Index
+        $eligibleBookings = [];
+        if (Auth::user()->role === 'user') {
+            $userBookings = FarmBooking::with('farm')
+                ->where('user_id', Auth::id())
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->get();
+
+            foreach ($userBookings as $booking) {
+                if ($booking->isWithinSupplyCheckoutWindow()) {
+                    $eligibleBookings[] = $booking;
+                }
+            }
+        }
+
+        return view('supplies.frontend.cart', compact('cartItems', 'cartTotal', 'eligibleBookings'));
     }
 
     public function updateCart(Request $request, $id)
@@ -142,6 +154,16 @@ class SupplyOrderController extends Controller
             return redirect()->route('cart.view')->with('error', 'Your cart is empty.');
         }
 
+        $request->validate([
+            'booking_id' => 'required|exists:farm_bookings,id'
+        ]);
+
+        $activeBooking = FarmBooking::with('farm')->findOrFail($request->booking_id);
+
+        if ($activeBooking->user_id !== Auth::id() || !$activeBooking->isWithinSupplyCheckoutWindow()) {
+            return back()->with('error', 'Checkout Policy Violation: Supply checkout is only allowed within your booking duration or exactly 2 hours before it starts.');
+        }
+
         // 1. حماية: فحص المخزون قبل أي عملية خصم
         foreach ($cartOrders as $item) {
             if ($item->quantity > $item->supply->stock) {
@@ -149,13 +171,12 @@ class SupplyOrderController extends Controller
             }
         }
 
+        // [Sprint 4] All items in this order will now be linked to the global destination
+        $farmGovernorate = $activeBooking->farm->governorate ?? 'Amman';
+
         // 2. إنشاء رقم فاتورة موحد
         $invoiceId = 'INV-' . strtoupper(Str::random(8));
         $commissionRate = 0.10;
-
-        // نفترض إن كل المنتجات بالسلة لنفس الحجز (أو نأخذ أول حجز)
-        $activeBooking = $cartOrders->first()->booking;
-        $farmGovernorate = $activeBooking->farm->governorate ?? 'Amman';
 
         try {
             DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate) {
@@ -168,7 +189,7 @@ class SupplyOrderController extends Controller
                     \Illuminate\Support\Facades\Log::warning("No supply driver found in {$farmGovernorate} region for invoice {$invoiceId}");
                 }
 
-                $adminId = \App\Models\User::where('role', 'admin')->value('id');
+                $adminId = \App\Models\User::where('role', '=', 'admin')->first()->id ?? 1;
 
                 foreach ($cartOrders as $item) {
                     // Lock the supply row for update to prevent race conditions
@@ -184,12 +205,13 @@ class SupplyOrderController extends Controller
                     // Decrement stock
                     $supply->decrement('stock', $item->quantity);
 
-                    // Move from cart → pending_payment
+                    // Move from cart → pending_payment, updating with the final destination
                     $item->update([
                         'order_id'                => $invoiceId,
+                        'booking_id'              => $activeBooking->id, // Final assignment
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment', // New status if no driver
+                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment', 
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);
@@ -217,7 +239,7 @@ class SupplyOrderController extends Controller
 
     public function myOrders()
     {
-        $orders = SupplyOrder::with(['supply.company', 'driver'])
+        $orders = SupplyOrder::with(['supply.company', 'booking.farm', 'driver'])
             ->where('user_id', auth()->id())
             ->where('status', '!=', 'cart')
             ->latest()

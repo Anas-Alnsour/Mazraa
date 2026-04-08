@@ -146,7 +146,7 @@ class PaymentController extends Controller
     {
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
-            ->where('status', 'pending_payment')
+            ->whereIn('status', ['pending_payment', 'pending_assignment'])
             ->get();
 
         if ($orders->isEmpty()) {
@@ -164,7 +164,7 @@ class PaymentController extends Controller
         // 💡 التعديل الأهم: فحص حالة pending_payment بدلاً من pending
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
-            ->where('status', 'pending_payment')
+            ->whereIn('status', ['pending_payment', 'pending_assignment'])
             ->get();
 
         if ($orders->isEmpty()) {
@@ -210,7 +210,7 @@ class PaymentController extends Controller
             if ($session->payment_status === 'paid') {
                 $orders = SupplyOrder::where('order_id', $order_id)
                     ->where('user_id', auth()->id())
-                    ->where('status', 'pending_payment')
+                    ->whereIn('status', ['pending_payment', 'pending_assignment'])
                     ->with('supply.company')
                     ->get();
 
@@ -244,7 +244,7 @@ class PaymentController extends Controller
     {
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
-            ->where('status', 'pending_payment')
+            ->whereIn('status', ['pending_payment', 'pending_assignment'])
             ->get();
 
         if ($orders->isEmpty()) {
@@ -263,7 +263,7 @@ class PaymentController extends Controller
 
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
-            ->where('status', 'pending_payment')
+            ->whereIn('status', ['pending_payment', 'pending_assignment'])
             ->get();
 
         foreach ($orders as $order) {

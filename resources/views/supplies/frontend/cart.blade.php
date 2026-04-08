@@ -109,12 +109,7 @@
                                                     {{ $item->supply->name ?? 'Product Unavailable' }}
                                                 </span>
 
-                                                {{-- 💡 Farm Destination Display --}}
-                                                @if($item->booking && $item->booking->farm)
-                                                    <span class="inline-block mt-2 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-md border border-emerald-100">
-                                                        Delivering to: {{ $item->booking->farm->name }}
-                                                    </span>
-                                                @endif
+                                                {{-- [Sprint 4 UX] Individual destination removed; destination is now selected globally at checkout --}}
 
                                                 <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
@@ -201,10 +196,35 @@
                             </div>
                         </div>
 
-                        {{-- 💡 الفورم بيبعت POST للكنترولر عشان ينشئ الفاتورة ويحولك لصفحة الدفع --}}
-                        <form action="{{ route('cart.place_order') }}" method="POST">
+                        {{-- [Sprint 4 UX] Global Destination Selection --}}
+                        <form action="{{ route('cart.place_order') }}" method="POST" class="space-y-6">
                             @csrf
-                            <button type="submit" class="w-full bg-[#1d5c42] hover:bg-[#154230] text-white font-black py-5 px-6 rounded-2xl shadow-[0_10px_20px_rgba(29,92,66,0.2)] hover:shadow-[0_15px_30px_rgba(29,92,66,0.3)] transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px] md:text-xs">
+                            
+                            <div>
+                                <label for="booking_id" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Delivery Destination <span class="text-red-500">*</span></label>
+                                @if(isset($eligibleBookings) && count($eligibleBookings) > 0)
+                                    <select id="booking_id" name="booking_id" class="w-full rounded-2xl border-gray-100 bg-gray-50 focus:border-[#1d5c42] focus:ring-[#1d5c42] px-5 py-4 text-xs font-bold text-gray-900 transition-all cursor-pointer hover:bg-gray-100/50" required>
+                                        <option value="" disabled selected>Select an active booking...</option>
+                                        @foreach($eligibleBookings as $booking)
+                                            <option value="{{ $booking->id }}">
+                                                {{ $booking->farm->name }} ({{ \Carbon\Carbon::parse($booking->start_time)->format('M d') }} stay)
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <p class="text-[9px] text-gray-400 font-bold mt-2 italic px-1">Note: Supplies are only delivered during your farm stay.</p>
+                                @else
+                                    <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 text-center">
+                                        <p class="text-[9px] font-black text-amber-700 uppercase tracking-widest">No Eligible Bookings</p>
+                                        <p class="text-[8px] text-amber-600 font-bold mt-1">Visit the Explore page to book a farm before ordering supplies.</p>
+                                        <a href="{{ route('explore') }}" class="inline-block mt-3 text-[9px] font-black text-[#1d5c42] hover:underline">Book Now</a>
+                                    </div>
+                                    {{-- Hidden input or disabled state could go here, but validation will catch it --}}
+                                @endif
+                            </div>
+
+                            <button type="submit" 
+                                @if(!isset($eligibleBookings) || count($eligibleBookings) === 0) disabled title="Please select a booking first" @endif
+                                class="w-full bg-[#1d5c42] hover:bg-[#154230] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed shadow-[0_10px_20px_rgba(29,92,66,0.2)] hover:shadow-[0_15px_30px_rgba(29,92,66,0.3)] text-white font-black py-5 px-6 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px] md:text-xs">
                                 Confirm & Checkout
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                             </button>

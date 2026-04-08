@@ -241,12 +241,12 @@
                                             <p class="text-[11px] font-bold text-gray-800 flex items-center gap-1.5">
                                                 <span class="text-gray-400">🚐</span>
                                                 {{ $transport->vehicle->name ?? $transport->vehicle->model ?? 'Shuttle' }}
-                                                @if($transport->vehicle->color)
+                                                @if(isset($transport->vehicle->color) && !empty($transport->vehicle->color))
                                                     <span class="text-gray-300 mx-0.5">|</span> {{ $transport->vehicle->color }}
                                                 @endif
                                             </p>
                                             <div class="bg-gray-100 border border-gray-200 px-2 py-0.5 rounded shadow-sm text-[9px] font-black text-gray-700 uppercase tracking-widest">
-                                                {{ $transport->vehicle->license_plate }}
+                                                {{ $transport->vehicle->license_plate ?? 'N/A' }}
                                             </div>
                                         </div>
                                     @else

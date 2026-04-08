@@ -20,6 +20,7 @@ protected $fillable = [
         'driver_id',
         'commission_amount',
         'net_company_amount',
+        'destination_governorate',
     ];
 
     public function user()
