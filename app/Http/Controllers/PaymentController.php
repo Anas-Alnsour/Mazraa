@@ -7,8 +7,9 @@ use App\Models\FinancialTransaction;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
-// use App\Notifications\BookingConfirmedNotification;
 use App\Models\SupplyOrder;
+use App\Notifications\BookingConfirmedNotification;
+use App\Notifications\NewBookingReceivedNotification;
 
 class PaymentController extends Controller
 {
@@ -109,6 +110,7 @@ class PaymentController extends Controller
                     'stripe_payment_intent_id' => $session->payment_intent,
                 ]);
 
+
                 // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
                 FinancialTransaction::create([
                     'user_id'          => \App\Models\User::where('role', 'admin')->value('id'),
@@ -128,6 +130,12 @@ class PaymentController extends Controller
                     'transaction_type' => 'credit',
                     'description'      => "Net payout for farm booking #{$booking->id}",
                 ]);
+
+                // --- 📩 SEND NOTIFICATIONS ---
+                $booking->user->notify(new BookingConfirmedNotification($booking));
+                if ($booking->farm && $booking->farm->owner_id) {
+                    \App\Models\User::find($booking->farm->owner_id)->notify(new BookingConfirmedNotification($booking));
+                }
 
                 return redirect()->route('bookings.show', $booking->id)
                     ->with('success', 'Payment successful! Your booking is confirmed.');
@@ -307,3 +315,4 @@ class PaymentController extends Controller
             ->with('success', 'Market payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
     }
 }
+

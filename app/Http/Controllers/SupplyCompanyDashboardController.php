@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\SupplyDriverAssignedNotification;
 
 class SupplyCompanyDashboardController extends Controller
 {
@@ -114,6 +115,9 @@ class SupplyCompanyDashboardController extends Controller
                 ->increment('orders_count');
 
             DB::commit();
+
+            // Notify driver
+            $driver->notify(new SupplyDriverAssignedNotification($invoiceId));
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to assign driver: ' . $e->getMessage());

@@ -51,6 +51,7 @@
         <header class="h-20 bg-slate-800 shadow-sm flex items-center justify-between px-8 z-10 border-b border-slate-700">
             <h1 class="text-2xl font-black text-white tracking-tight">@yield('title', 'Supply Hub')</h1>
             <div class="flex items-center gap-4">
+                <x-notification-bell />
                 <span class="text-xs font-black uppercase tracking-widest text-indigo-400 bg-indigo-900/50 px-4 py-2.5 rounded-xl border border-indigo-700/50 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                     {{ Auth::user()->name }}
@@ -65,3 +66,4 @@
     </main>
 </body>
 </html>
+

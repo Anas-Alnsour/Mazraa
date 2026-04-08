@@ -7,6 +7,7 @@ use App\Models\Transport;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\DriverAssignedNotification;
 
 class TransportCompanyDashboardController extends Controller
 {
@@ -171,6 +172,9 @@ class TransportCompanyDashboardController extends Controller
                 ->increment('trips_count');
 
             \Illuminate\Support\Facades\DB::commit();
+
+            // Notify the driver
+            $driver->notify(new DriverAssignedNotification($trip));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             return back()->with('error', 'Assignment failed: ' . $e->getMessage());

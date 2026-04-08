@@ -196,7 +196,7 @@ class BookingController extends Controller
     {
         $query = FarmBooking::where('user_id', Auth::id())
             ->where('end_time', '>=', now())
-            ->with(['farm', 'transport']);
+            ->with(['farm' => function($q) { $q->withTrashed(); }, 'transport']);
 
         if ($request->filled('filter_date')) {
             $query->whereDate('start_time', $request->filter_date);

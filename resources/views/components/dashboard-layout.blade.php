@@ -97,6 +97,8 @@
                 </div>
 
                 <div class="flex items-center gap-4">
+                    
+                    <x-notification-bell />
 
                     <x-dropdown align="right" width="64">
     <x-slot name="trigger">
@@ -170,3 +172,4 @@
 
 </body>
 </html>
+

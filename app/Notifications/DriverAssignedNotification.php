@@ -32,35 +32,22 @@ class DriverAssignedNotification extends Notification implements ShouldQueue
         return ['mail', 'database'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
             ->subject('New Transport Dispatch Assigned')
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line('You have been assigned to a new transport trip.')
-            ->line('Pickup Location: ' . $this->transport->start_and_return_point)
-            ->line('Destination Farm: ' . ($this->transport->farm->name ?? 'N/A'))
-            ->line('Pickup Time: ' . $this->transport->Farm_Arrival_Time->format('M d, Y h:i A'))
-            ->line('Number of Passengers: ' . $this->transport->passengers)
-            ->action('View Trip Details', route('transport.driver.dashboard'))
-            ->line('Please be ready at the pickup location on time.');
+            ->view('mail.driver-assigned', [
+                'transport' => $this->transport,
+                'notifiable' => $notifiable
+            ]);
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [
-            'transport_id' => $this->transport->id,
+            'title' => 'New Driver Assignment',
             'message' => 'You have been assigned to a new trip to ' . ($this->transport->farm->name ?? 'Farm'),
-            'pickup_time' => $this->transport->Farm_Arrival_Time->format('Y-m-d H:i:s'),
-            'passengers' => $this->transport->passengers,
+            'action_url' => route('transport.driver.dashboard')
         ];
     }
 }

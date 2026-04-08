@@ -164,17 +164,15 @@
                 </div>
             </div>
 
-            {{-- ⭐️ Company Reviews Section ⭐️ --}}
-            @if($supply->company)
-                <div class="fade-in-up delay-200">
-                    <x-reviews-section
-                        :reviews="$supply->company->receivedReviews"
-                        :reviewable-id="$supply->company->id"
-                        reviewable-type="supply_company"
-                        :average-rating="$supply->company->company_rating"
-                    />
-                </div>
-            @endif
+            {{-- ⭐️ Product Reviews Section ⭐️ --}}
+            <div class="fade-in-up delay-200">
+                <x-reviews-section
+                    :reviews="$supply->reviews"
+                    :reviewable-id="$supply->id"
+                    reviewable-type="supply"
+                    :average-rating="$supply->average_rating"
+                />
+            </div>
 
         </div>
 

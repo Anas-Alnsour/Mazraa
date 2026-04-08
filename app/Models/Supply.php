@@ -29,4 +29,14 @@ protected $fillable = [
     {
         return $this->hasMany(SupplyOrder::class);
     }
+
+    public function reviews()
+    {
+        return $this->morphMany(\App\Models\Review::class, 'reviewable');
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->reviews()->avg('rating') ?: 0;
+    }
 }

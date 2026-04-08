@@ -23,7 +23,26 @@
     }
 </style>
 
-<div class="bg-[#f8fafc] min-h-screen pb-24 font-sans pt-36 selection:bg-[#1d5c42] selection:text-white">
+<div class="bg-[#f8fafc] min-h-screen pb-24 font-sans pt-36 selection:bg-[#1d5c42] selection:text-white" x-data="{
+    reviewModalOpen: false,
+    reviewableId: null,
+    reviewableType: 'farm',
+    rating: 0,
+    hoverRating: 0,
+    comment: '',
+    farmName: '',
+    openReviewModal(id, name) {
+        this.reviewableId = id;
+        this.farmName = name;
+        this.rating = 0;
+        this.hoverRating = 0;
+        this.comment = '';
+        this.reviewModalOpen = true;
+    },
+    closeReviewModal() {
+        this.reviewModalOpen = false;
+    }
+}">
 
     {{-- ==========================================
          1. HERO SECTION (MINI)
@@ -135,7 +154,7 @@
 
                         {{-- Image Header --}}
                         <div class="relative h-64 overflow-hidden rounded-t-[2.5rem]">
-                            <img src="{{ $booking->farm->main_image ? asset('storage/' . $booking->farm->main_image) : asset('backgrounds/home.JPG') }}"
+                            <img src="{{ $booking->farm?->main_image ? asset('storage/' . $booking->farm->main_image) : asset('backgrounds/home.JPG') }}"
                                  onerror="this.onerror=null;this.src='{{ asset('backgrounds/home.JPG') }}';"
                                  alt="Farm Image"
                                  class="booking-image w-full h-full object-cover transition-transform duration-[1.5s] ease-out text-transparent">
@@ -145,7 +164,7 @@
                             {{-- Rating Badge --}}
                             <div class="absolute top-5 right-5 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-xs font-black text-gray-900 shadow-lg flex items-center gap-1.5 z-10 border border-white/50">
                                 <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                {{ number_format($booking->farm->average_rating ?? 0, 1) }}
+                                {{ number_format($booking->farm?->average_rating ?? 0, 1) }}
                             </div>
 
                             {{-- Booking Date --}}
@@ -184,7 +203,7 @@
                             </div>
 
                             <h2 class="text-2xl font-black text-gray-900 mb-6 group-hover:text-[#1d5c42] transition-colors line-clamp-1 tracking-tight">
-                                {{ $booking->farm->name }}
+                                {{ $booking->farm?->name ?? 'Deleted Farm' }}
                             </h2>
 
                             {{-- Clean Info Box --}}
@@ -222,7 +241,7 @@
                                 </a>
 
                                 {{-- Cancel Form (Only if pending or not completed) --}}
-                                @if($rawStatus !== 'cancelled' && $rawStatus !== 'completed')
+                                @if($rawStatus !== 'cancelled' && $rawStatus !== 'completed' && $rawStatus !== 'finished')
                                 <form action="{{ route('bookings.destroy', $booking->id) }}" method="POST"
                                       onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');"
                                       class="w-full h-full">
@@ -233,6 +252,12 @@
                                         Cancel
                                     </button>
                                 </form>
+                                @elseif($rawStatus === 'completed' || $rawStatus === 'finished')
+                                <button type="button" @click="openReviewModal({{ $booking->farm?->id ?? 'null' }}, '{{ addslashes($booking->farm?->name ?? 'Deleted Farm') }}')"
+                                        class="w-full h-full py-4 bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-emerald-100 hover:border-emerald-300 transition-colors border-2 border-emerald-100 text-center shadow-sm active:scale-95 flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    Leave a Review
+                                </button>
                                 @else
                                 <div class="py-4 bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest rounded-2xl border-2 border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-1.5 h-full shadow-inner">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -247,5 +272,75 @@
         @endif
 
     </div>
+
+    {{-- 💡 Write a Review Modal (AlpineJS) --}}
+    <div x-show="reviewModalOpen" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="reviewModalOpen" x-transition.opacity.duration.300ms class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeReviewModal"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="reviewModalOpen"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full border border-gray-100">
+
+                <form action="{{ route('reviews.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="reviewable_id" x-model="reviewableId">
+                    <input type="hidden" name="reviewable_type" x-model="reviewableType">
+                    <input type="hidden" name="rating" x-model="rating">
+
+                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="text-lg font-black text-gray-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[#1d5c42]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            Rate your Experience
+                        </h3>
+                        <button type="button" @click="closeReviewModal" class="text-gray-400 hover:text-gray-600 bg-white rounded-full p-1 shadow-sm border border-gray-200 focus:outline-none transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="p-6 space-y-6">
+                        <div class="text-center">
+                            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">How was your stay at</p>
+                            <h4 class="text-xl font-bold text-gray-900" x-text="farmName"></h4>
+                        </div>
+
+                        {{-- Dynamic Stars --}}
+                        <div class="flex justify-center items-center gap-1 cursor-pointer" @mouseleave="hoverRating = 0">
+                            <template x-for="star in 5">
+                                <svg
+                                    @click="rating = star"
+                                    @mouseenter="hoverRating = star"
+                                    :class="{'text-amber-400': (hoverRating || rating) >= star, 'text-gray-200': (hoverRating || rating) < star}"
+                                    class="h-10 w-10 fill-current transition-colors transform hover:scale-110 drop-shadow-sm"
+                                    viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </template>
+                        </div>
+                        <p class="text-xs text-center font-bold" :class="rating > 0 ? 'text-[#1d5c42]' : 'text-transparent'" x-text="rating + ' out of 5 Stars'"></p>
+
+                        <div>
+                            <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Comment (Optional)</label>
+                            <textarea name="comment" x-model="comment" rows="3" placeholder="Tell us what you loved..."
+                                class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1d5c42] focus:border-[#1d5c42] transition-colors resize-none text-sm shadow-inner"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+                        <button type="submit" :disabled="rating === 0" :class="rating === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#154230] shadow-lg shadow-[#1d5c42]/30 active:scale-95'" class="w-full px-6 py-3.5 rounded-xl bg-[#1d5c42] text-white font-black text-xs tracking-widest uppercase transition-all transform focus:outline-none">
+                            Submit Review
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection

@@ -99,6 +99,28 @@ Route::middleware('auth')->group(function () {
     Route::post('/payment/checkout/{booking}', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+
+    // 🔔 Notifications
+    Route::get('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+
+    Route::get('/debug-bell', function () {
+        $user = auth()->user();
+        
+        // Force create a raw database notification directly
+        $user->notifications()->create([
+            'id' => \Illuminate\Support\Str::uuid(),
+            'type' => 'SystemDebugTest',
+            'data' => [
+                'title' => 'System Debug Test',
+                'message' => 'If you can see this, the bell UI and database are working perfectly!',
+                'action_url' => '#'
+            ],
+            'read_at' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Debug notification pushed directly to database. Check your bell!');
+    });
 });
 
 // ==========================================================================
@@ -292,5 +314,17 @@ Route::middleware('auth')->group(function () {
 Route::get('/become-partner', function () {
     return view('auth.portal-login');
 })->withoutMiddleware(['auth', 'guest'])->name('become.partner');
-
 require __DIR__ . '/auth.php';
+
+Route::get('/test-bell', function () {
+    // Find the first farm owner and the first booking
+    $owner = \App\Models\User::where('role', 'farm_owner')->first();
+    $booking = \App\Models\FarmBooking::first();
+
+    if ($owner && $booking) {
+        // Force send the notification directly
+        $owner->notify(new \App\Notifications\BookingConfirmedNotification($booking));
+        return 'Success! Notification explicitly sent to Owner: ' . $owner->name . '. Please log in as them and check the bell.';
+    }
+    return 'Error: No Farm Owner or Farm Booking found in the database to run the test.';
+});

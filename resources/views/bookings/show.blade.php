@@ -186,7 +186,7 @@
                             <dl class="space-y-3 relative z-10">
                                 <div class="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-cyan-200/50 shadow-sm flex justify-between items-center">
                                     <dt class="text-[10px] font-black text-cyan-700 uppercase tracking-widest">Pickup</dt>
-                                    <dd class="text-sm font-bold text-slate-900 truncate max-w-[200px]" title="{{ $booking->transport->pickup_location }}">{{ $booking->transport->pickup_location ?? 'Custom Location' }}</dd>
+                                    <dd class="text-sm font-bold text-slate-900 truncate max-w-[200px]" title="{{ $booking->transport->start_and_return_point ?? 'Custom Location' }}">{{ $booking->transport->start_and_return_point ?? 'Custom Location' }}</dd>
                                 </div>
 
                                 @if($booking->transport->driver)

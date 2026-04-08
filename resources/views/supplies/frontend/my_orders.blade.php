@@ -16,7 +16,27 @@
         }
     </style>
 
-    <div class="bg-gray-50 min-h-screen py-12 fade-in-up">
+    <div class="bg-gray-50 min-h-screen py-12 fade-in-up" x-data="{
+    reviewModalOpen: false,
+    reviewableId: null,
+    reviewableType: 'supply',
+    rating: 0,
+    hoverRating: 0,
+    comment: '',
+    itemName: '',
+    openReviewModal(id, name) {
+        if (!id) return;
+        this.reviewableId = id;
+        this.itemName = name;
+        this.rating = 0;
+        this.hoverRating = 0;
+        this.comment = '';
+        this.reviewModalOpen = true;
+    },
+    closeReviewModal() {
+        this.reviewModalOpen = false;
+    }
+}">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {{-- 🌟 Flash Messages --}}
@@ -196,6 +216,14 @@
                                                             </button>
                                                         </form>
                                                     </div>
+                                                @elseif($invoiceStatus === 'delivered')
+                                                    <div class="flex items-center gap-2 border-l border-gray-100 pl-6">
+                                                        <button type="button" @click="openReviewModal({{ $item->supply->id ?? 'null' }}, '{{ addslashes($item->supply->name ?? 'Product') }}')"
+                                                            class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300 border border-emerald-100 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
+                                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                            Rate Item
+                                                        </button>
+                                                    </div>
                                                 @endif
                                             </div>
                                         </li>
@@ -240,6 +268,75 @@
                 </div>
             @endif
 
+        </div>
+
+        {{-- 💡 Write a Review Modal (AlpineJS) --}}
+        <div x-show="reviewModalOpen" style="display: none;" class="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="reviewModalOpen" x-transition.opacity.duration.300ms class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" @click="closeReviewModal"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div x-show="reviewModalOpen"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full border border-gray-100">
+
+                    <form action="{{ route('reviews.store') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="reviewable_id" x-model="reviewableId">
+                        <input type="hidden" name="reviewable_type" x-model="reviewableType">
+                        <input type="hidden" name="rating" x-model="rating">
+
+                        <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h3 class="text-lg font-black text-gray-900 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-[#1d5c42]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                Rate this Item
+                            </h3>
+                            <button type="button" @click="closeReviewModal" class="text-gray-400 hover:text-gray-600 bg-white rounded-full p-1 shadow-sm border border-gray-200 focus:outline-none transition-colors">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="p-6 space-y-6">
+                            <div class="text-center">
+                                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">How did you like</p>
+                                <h4 class="text-xl font-bold text-gray-900" x-text="itemName"></h4>
+                            </div>
+
+                            {{-- Dynamic Stars --}}
+                            <div class="flex justify-center items-center gap-1 cursor-pointer" @mouseleave="hoverRating = 0">
+                                <template x-for="star in 5">
+                                    <svg
+                                        @click="rating = star"
+                                        @mouseenter="hoverRating = star"
+                                        :class="{'text-amber-400': (hoverRating || rating) >= star, 'text-gray-200': (hoverRating || rating) < star}"
+                                        class="h-10 w-10 fill-current transition-colors transform hover:scale-110 drop-shadow-sm"
+                                        viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </template>
+                            </div>
+                            <p class="text-xs text-center font-bold" :class="rating > 0 ? 'text-[#1d5c42]' : 'text-transparent'" x-text="rating + ' out of 5 Stars'"></p>
+
+                            <div>
+                                <label class="block text-xs font-black text-gray-700 uppercase tracking-widest mb-2">Comment (Optional)</label>
+                                <textarea name="comment" x-model="comment" rows="3" placeholder="Tell us what you loved..."
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1d5c42] focus:border-[#1d5c42] transition-colors resize-none text-sm shadow-inner"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+                            <button type="submit" :disabled="rating === 0" :class="rating === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#154230] shadow-lg shadow-[#1d5c42]/30 active:scale-95'" class="w-full px-6 py-3.5 rounded-xl bg-[#1d5c42] text-white font-black text-xs tracking-widest uppercase transition-all transform focus:outline-none">
+                                Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </x-app-layout>

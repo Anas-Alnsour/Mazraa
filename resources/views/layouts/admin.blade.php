@@ -83,6 +83,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                
+                <x-notification-bell />
+                
                 <div class="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 shadow-sm hidden sm:flex items-center gap-2">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     {{ date('l, M j, Y') }}
@@ -99,3 +102,4 @@
     </div>
 </body>
 </html>
+

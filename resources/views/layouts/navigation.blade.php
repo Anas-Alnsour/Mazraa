@@ -66,6 +66,8 @@
                 @endguest
 
                 @auth
+                    <x-notification-bell />
+
                     <a href="{{ Auth::user()->role === 'user' ? route('dashboard') : url(match(Auth::user()->role){'admin'=>'/admin','farm_owner'=>'/owner/dashboard','supply_company'=>'/supplies/dashboard','transport_company'=>'/transport/dashboard','supply_driver'=>'/delivery/orders','transport_driver'=>'/shuttle/trips',default=>'/'}) }}" class="px-4 py-2 text-sm font-bold text-gray-600 hover:text-[#1d5c42] transition">
                         My Dashboard
                     </a>
@@ -143,3 +145,4 @@
         </div>
     </div>
 </nav>
+

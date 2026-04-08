@@ -21,18 +21,25 @@ class PayoutProcessedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
                     ->subject('Payout Successfully Processed')
-                    ->greeting('Hello ' . $notifiable->name . ',')
-                    ->line('We have successfully processed a payout to your account.')
-                    ->line('Amount Transferred: ' . number_format($this->transaction->amount, 2) . ' JOD')
-                    ->line('The funds should appear in your bank account shortly.')
-                    ->action('Login to Portal', url('/portal/login'))
-                    ->line('Thank you for partnering with Mazraa.com!');
+                    ->view('mail.payout-processed', [
+                        'transaction' => $this->transaction,
+                        'notifiable' => $notifiable
+                    ]);
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => 'Payout Processed',
+            'message' => 'A payout of ' . number_format($this->transaction->amount ?? 0, 2) . ' JOD was successfully processed.',
+            'action_url' => url('/portal/login')
+        ];
     }
 }

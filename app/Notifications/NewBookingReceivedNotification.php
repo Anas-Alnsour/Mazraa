@@ -2,21 +2,21 @@
 
 namespace App\Notifications;
 
-use App\Models\Farm;
+use App\Models\FarmBooking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class FarmApprovedNotification extends Notification implements ShouldQueue
+class NewBookingReceivedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public $farm;
+    public $booking;
 
-    public function __construct(Farm $farm)
+    public function __construct(FarmBooking $booking)
     {
-        $this->farm = $farm;
+        $this->booking = $booking;
     }
 
     public function via(object $notifiable): array
@@ -27,9 +27,9 @@ class FarmApprovedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject('Congratulations! Your Farm is Approved')
-                    ->view('mail.farm-approved', [
-                        'farm' => $this->farm,
+                    ->subject('New Booking Received: ' . $this->booking->farm->name)
+                    ->view('mail.new-booking-received', [
+                        'booking' => $this->booking,
                         'notifiable' => $notifiable
                     ]);
     }
@@ -37,8 +37,8 @@ class FarmApprovedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Farm Approved',
-            'message' => 'Your farm listing "' . ($this->farm->name ?? 'N/A') . '" has been approved.',
+            'title' => 'New Booking Received',
+            'message' => 'You have received a new paid booking for ' . ($this->booking->farm->name ?? 'your farm') . '.',
             'action_url' => url('/owner/dashboard')
         ];
     }

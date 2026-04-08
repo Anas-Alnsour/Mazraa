@@ -19,12 +19,13 @@ class ReviewController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'comment' => 'nullable|string|max:1000',
             'reviewable_id' => 'required|integer',
-            'reviewable_type' => 'required|string|in:farm,supply_company,transport_company'
+            'reviewable_type' => 'required|string|in:farm,supply,transport_company'
         ]);
 
         $modelClass = match($validated['reviewable_type']) {
             'farm' => Farm::class,
-            'supply_company', 'transport_company' => User::class,
+            'supply' => \App\Models\Supply::class,
+            'transport_company' => User::class,
         };
 
         $entity = $modelClass::findOrFail($validated['reviewable_id']);
@@ -45,16 +46,14 @@ class ReviewController extends Controller
             if (!$isVerified) {
                 return back()->with('error', 'You can only review a farm after completing a booking there.');
             }
-        } elseif ($validated['reviewable_type'] === 'supply_company') {
+        } elseif ($validated['reviewable_type'] === 'supply') {
             $isVerified = SupplyOrder::where('user_id', $userId)
-                ->whereIn('status', ['completed', 'delivered']) // 👈 التعديل المعماري
-                ->whereHas('supply', function ($query) use ($entity) {
-                    $query->where('company_id', $entity->id);
-                })
+                ->where('status', 'delivered')
+                ->where('supply_id', $entity->id)
                 ->exists();
 
             if (!$isVerified) {
-                return back()->with('error', 'You can only review a supply company after receiving an order from them.');
+                return back()->with('error', 'You can only review a supply item after receiving an order for it.');
             }
         } elseif ($validated['reviewable_type'] === 'transport_company') {
             $isVerified = Transport::where('user_id', $userId)

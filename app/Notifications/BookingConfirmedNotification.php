@@ -4,11 +4,10 @@ namespace App\Notifications;
 
 use App\Models\FarmBooking;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class BookingConfirmedNotification extends Notification implements ShouldQueue
+class BookingConfirmedNotification extends Notification
 {
     use Queueable;
 
@@ -21,19 +20,25 @@ class BookingConfirmedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
                     ->subject('Booking Confirmed: ' . $this->booking->farm->name)
-                    ->greeting('Hello ' . $notifiable->name . ',')
-                    ->line('Your booking for "' . $this->booking->farm->name . '" has been successfully confirmed.')
-                    ->line('Check-in: ' . \Carbon\Carbon::parse($this->booking->start_time)->format('F j, Y, g:i a'))
-                    ->line('Check-out: ' . \Carbon\Carbon::parse($this->booking->end_time)->format('F j, Y, g:i a'))
-                    ->line('Total Paid: ' . number_format($this->booking->total_price, 2) . ' JOD')
-                    ->action('View My Bookings', url('/my-bookings-list'))
-                    ->line('Thank you for choosing Mazraa.com!');
+                    ->view('mail.booking-confirmed', [
+                        'booking' => $this->booking,
+                        'notifiable' => $notifiable
+                    ]);
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return [
+            'title' => 'New Booking Confirmed',
+            'message' => 'Farm: ' . $this->booking->farm->name,
+            'action_url' => route('bookings.show', $this->booking->id)
+        ];
     }
 }

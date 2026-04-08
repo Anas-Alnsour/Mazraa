@@ -96,6 +96,10 @@
 
                         <div class="h-6 w-px bg-gray-200 mx-1"></div>
 
+                        
+
+                        <x-notification-bell />
+
                         <div class="relative" x-data="{ profileOpen: false }" @click.away="profileOpen = false">
                             <button @click="profileOpen = !profileOpen" class="flex items-center gap-3 focus:outline-none group">
                                 <div class="text-right hidden xl:block">
@@ -360,3 +364,5 @@
     @stack('scripts')
 </body>
 </html>
+
+
