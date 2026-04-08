@@ -116,22 +116,7 @@
 
                     <div class="flex items-center gap-5 ml-auto">
 
-                        <div x-data="{ notifOpen: false }" class="relative">
-                            <button @click="notifOpen = !notifOpen" @click.away="notifOpen = false" class="relative p-2 text-gray-400 transition-colors rounded-full hover:bg-gray-100 hover:text-[#c2a265] focus:outline-none">
-                                <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#c2a265] rounded-full ring-2 ring-white"></span>
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                            </button>
-
-                            <div x-show="notifOpen" x-transition x-cloak class="absolute right-0 mt-3 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 overflow-hidden">
-                                <div class="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                                    <h3 class="text-sm font-bold text-[#020617]">Notifications</h3>
-                                </div>
-                                <div class="p-6 text-center">
-                                    <svg class="w-10 h-10 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                                    <p class="text-xs text-gray-500 font-medium">You have no new notifications.</p>
-                                </div>
-                            </div>
-                        </div>
+                        <x-notification-bell />
 
                         <div class="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
@@ -181,3 +166,4 @@
     </div>
 </body>
 </html>
+

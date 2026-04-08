@@ -328,3 +328,25 @@ Route::get('/test-bell', function () {
     }
     return 'Error: No Farm Owner or Farm Booking found in the database to run the test.';
 });
+
+Route::get('/test-my-bell', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return 'Please log in first!';
+    }
+
+    // Force create a notification for whoever is currently logged in
+    $user->notifications()->create([
+        'id' => \Illuminate\Support\Str::uuid(),
+        'type' => 'RoleTestNotification',
+        'data' => [
+            'title' => 'Test Success: ' . strtoupper($user->role),
+            'message' => 'The dynamic bell is working for ' . $user->name . ' on the ' . $user->role . ' dashboard!',
+            'action_url' => '#'
+        ],
+        'read_at' => null,
+    ]);
+
+    return redirect()->back()->with('success', 'Test notification sent! Check your bell.');
+})->middleware('auth');
