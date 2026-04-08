@@ -16,39 +16,32 @@ class FarmController extends Controller
      */
     public function index(Request $request)
     {
-        // عرض المزارع التي تمت الموافقة عليها فقط من قبل الأدمن
-        $query = Farm::where('is_approved', true);
+        // عرض المزارع التي تمت الموافقة عليها وتكون نشطة
+        $query = Farm::where('is_approved', true)->where('status', 'active');
 
-        // فلترة حسب الموقع
-        if ($request->filled('location')) {
-            $query->where('location', 'like', '%' . $request->location . '%');
+        // فلترة حسب الاسم
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
         }
 
-        // Filter by minimum price (uses the lowest shift price as the comparison basis)
-        if ($request->filled('min_price')) {
-            $query->where(function($q) use ($request) {
-                $q->where('price_per_morning_shift', '>=', $request->min_price)
-                  ->orWhere('price_per_evening_shift', '>=', $request->min_price)
-                  ->orWhere('price_per_full_day', '>=', $request->min_price);
+        // فلترة حسب المحافظة
+        if ($request->filled('governorate')) {
+            $query->where('governorate', $request->governorate);
+        }
+
+        // فلترة حسب السعر لجميع أوقات الحجز (صباحي، مسائي، يوم كامل)
+        if ($request->filled('min_price') || $request->filled('max_price')) {
+            $min = $request->min_price ?? 0;
+            $max = $request->max_price ?? 999999;
+            $query->where(function($q) use ($min, $max) {
+                $q->whereBetween('price_per_morning_shift', [$min, $max])
+                  ->orWhereBetween('price_per_evening_shift', [$min, $max])
+                  ->orWhereBetween('price_per_full_day', [$min, $max]);
             });
         }
 
-        // Filter by maximum price (farm is eligible if ANY shift fits the budget)
-        if ($request->filled('max_price')) {
-            $query->where(function($q) use ($request) {
-                $q->where('price_per_morning_shift', '<=', $request->max_price)
-                  ->orWhere('price_per_evening_shift', '<=', $request->max_price)
-                  ->orWhere('price_per_full_day', '<=', $request->max_price);
-            });
-        }
-
-        // فلترة حسب السعة (عدد الأشخاص)
-        if ($request->filled('capacity')) {
-            $query->where('capacity', '>=', $request->capacity);
-        }
-
-        // 👈 تطبيق الـ Eager Loading اللي طلبه Jules مع الحفاظ على الفلترة تبعتك
-        $farms = $query->with(['images', 'owner', 'reviews'])->latest()->paginate(12)->withQueryString();
+        // 👈 تطبيق الـ Eager Loading
+        $farms = $query->with(['images', 'owner', 'reviews'])->latest()->paginate(12)->appends(request()->query());
 
         return view('public_farms.explore', compact('farms'));
     }

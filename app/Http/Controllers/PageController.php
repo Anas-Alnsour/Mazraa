@@ -7,6 +7,14 @@ use App\Models\ContactUs;
 
 class PageController extends Controller
 {
+    // Home page
+    public function home()
+    {
+        // Fallback or explicit featured farms if needed by home.blade.php
+        $featuredFarms = \App\Models\Farm::where('is_approved', true)->where('status', 'active')->latest()->take(6)->get();
+        return view('home', compact('featuredFarms'));
+    }
+
     // About Us page
     public function about()
     {

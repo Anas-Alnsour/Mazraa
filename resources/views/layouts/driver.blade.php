@@ -14,7 +14,7 @@
 
     <aside :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}" class="fixed inset-y-0 left-0 z-30 w-72 bg-slate-900 text-white transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-2xl">
         <div class="flex items-center justify-center h-20 border-b border-slate-800">
-            <a href="#" class="text-2xl font-black tracking-tighter text-white flex items-center">
+            <a href="{{ Auth::user()->role === 'supply_driver' ? route('supply.driver.dashboard') : route('transport.driver.dashboard') }}" class="text-2xl font-black tracking-tighter text-white flex items-center">
                 Mazraa<span class="{{ Auth::user()->role === 'supply_driver' ? 'text-teal-400' : 'text-amber-500' }}">.Driver</span>
             </a>
         </div>
@@ -32,12 +32,12 @@
                     Active Deliveries
                 </a>
 
-                <a href="#" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
+                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Delivery History
                 </a>
 
-                <a href="#" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
+                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Driver Profile
                 </a>
@@ -54,12 +54,12 @@
                     My Schedule
                 </a>
 
-                <a href="#" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
+                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Trip History
                 </a>
 
-                <a href="#" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
+                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Driver Profile
                 </a>

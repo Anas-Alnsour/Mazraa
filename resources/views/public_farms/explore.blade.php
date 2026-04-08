@@ -86,15 +86,32 @@
         <div class="search-dock rounded-[2rem] md:rounded-full p-2 transition-all duration-300">
             <form method="GET" action="{{ route('explore') }}" class="flex flex-col md:flex-row items-center w-full divide-y md:divide-y-0 md:divide-x divide-gray-200">
 
-                {{-- Destination --}}
-                <div class="w-full md:w-[35%] px-6 py-3 hover:bg-gray-50 rounded-[1.5rem] md:rounded-full transition-colors cursor-pointer group">
-                    <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Where</label>
-                    <input type="text" name="location" value="{{ request('location') }}" placeholder="Search destinations..."
+                {{-- Name --}}
+                <div class="w-full md:w-[25%] px-6 py-3 hover:bg-gray-50 rounded-[1.5rem] md:rounded-l-full transition-colors cursor-pointer group">
+                    <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Farm Name</label>
+                    <input type="text" name="name" value="{{ request('name') }}" placeholder="Search by name..."
                            class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none truncate transition-all">
                 </div>
 
+                {{-- Governorate --}}
+                <div class="w-full md:w-[25%] px-6 py-3 hover:bg-gray-50 transition-colors group">
+                    <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Governorate</label>
+                    <select name="governorate" class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none transition-all appearance-none cursor-pointer">
+                        <option value="">Anywhere</option>
+                        <option value="Amman" {{ request('governorate') == 'Amman' ? 'selected' : '' }}>Amman</option>
+                        <option value="Irbid" {{ request('governorate') == 'Irbid' ? 'selected' : '' }}>Irbid</option>
+                        <option value="Zarqa" {{ request('governorate') == 'Zarqa' ? 'selected' : '' }}>Zarqa</option>
+                        <option value="Aqaba" {{ request('governorate') == 'Aqaba' ? 'selected' : '' }}>Aqaba</option>
+                        <option value="Jerash" {{ request('governorate') == 'Jerash' ? 'selected' : '' }}>Jerash</option>
+                        <option value="Madaba" {{ request('governorate') == 'Madaba' ? 'selected' : '' }}>Madaba</option>
+                        <option value="Salt" {{ request('governorate') == 'Salt' ? 'selected' : '' }}>Salt</option>
+                        <option value="Karak" {{ request('governorate') == 'Karak' ? 'selected' : '' }}>Karak</option>
+                        <option value="Ajloun" {{ request('governorate') == 'Ajloun' ? 'selected' : '' }}>Ajloun</option>
+                    </select>
+                </div>
+
                 {{-- Price Range --}}
-                <div class="w-full md:w-[40%] flex px-6 py-3 hover:bg-gray-50 rounded-[1.5rem] md:rounded-full transition-colors group">
+                <div class="w-full md:w-[35%] flex px-6 py-3 hover:bg-gray-50 transition-colors group">
                     <div class="w-1/2 pr-3">
                         <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Min Price</label>
                         <div class="flex items-center text-gray-900">
@@ -114,15 +131,15 @@
                     </div>
                 </div>
 
-                {{-- Guests & Search Button --}}
-                <div class="w-full md:w-[25%] pl-6 pr-2 py-2 flex items-center justify-between hover:bg-gray-50 rounded-[1.5rem] md:rounded-full transition-colors group">
-                    <div class="flex-1 py-1">
-                        <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Guests</label>
-                        <input type="number" name="capacity" value="{{ request('capacity') }}" placeholder="Add guests"
-                               class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none transition-all">
-                    </div>
-                    <button type="submit" class="bg-[#1d5c42] hover:bg-[#154230] text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex-shrink-0 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                {{-- Buttons --}}
+                <div class="w-full md:w-[15%] px-3 py-2 flex items-center justify-end gap-2 hover:bg-gray-50 rounded-[1.5rem] md:rounded-r-full transition-colors">
+                    @if(request()->anyFilled(['name', 'governorate', 'min_price', 'max_price']))
+                        <a href="{{ route('explore') }}" title="Clear Filters" class="bg-red-50 hover:bg-red-100 text-red-600 p-3.5 rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-95 flex-shrink-0 flex items-center justify-center border border-red-200">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </a>
+                    @endif
+                    <button type="submit" title="Search" class="bg-[#1d5c42] hover:bg-[#154230] text-white p-3.5 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex-shrink-0 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
                 </div>
 
@@ -171,7 +188,7 @@
                     </div>
 
                     {{-- Guest Favorite Badge --}}
-                    @if(isset($farm->rating) && $farm->rating >= 4.5)
+                    @if(isset($farm->average_rating) && $farm->average_rating >= 4.5)
                         <div class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-gray-100">
                             <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                             <span class="text-[10px] font-bold uppercase tracking-widest text-gray-900">Top Rated</span>
@@ -198,7 +215,10 @@
                             <h3 class="text-xl font-bold text-gray-900 truncate pr-4 group-hover:text-[#1d5c42] transition-colors">{{ $farm->name }}</h3>
                             <div class="flex items-center gap-1 shrink-0 bg-gray-50 px-2 py-1 rounded border border-gray-100">
                                 <svg class="w-3.5 h-3.5 text-[#1d5c42]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                <span class="text-sm font-bold text-gray-800">{{ $farm->rating ?? 'New' }}</span>
+                                <span class="text-sm font-bold text-gray-800">{{ $farm->average_rating > 0 ? $farm->average_rating : 'New' }}</span>
+                                @if($farm->reviews_count > 0)
+                                    <span class="text-[10px] text-gray-400 font-medium">({{ $farm->reviews_count }})</span>
+                                @endif
                             </div>
                         </div>
 
@@ -218,10 +238,10 @@
                         {{-- Price Footer --}}
                         <div class="border-t border-gray-100 pt-4 flex justify-between items-center mt-2">
                             <div>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Price / Night</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Starts from</span>
                                 <div class="flex items-baseline gap-1">
-                                    <span class="text-xl font-black text-[#1d5c42]">{{ number_format($farm->price_per_morning_shift, 0) }}</span>
-                                    <span class="text-xs font-bold text-gray-500">JOD</span>
+                                    <span class="text-xl font-black text-[#1d5c42]">{{ number_format(min(array_filter([$farm->price_per_morning_shift, $farm->price_per_evening_shift, $farm->price_per_full_day]) ?: [0]), 0) }}</span>
+                                    <span class="text-xs font-bold text-gray-500">JOD / Shift</span>
                                 </div>
                             </div>
                             <span class="text-xs font-bold text-white bg-gray-900 group-hover:bg-[#1d5c42] px-5 py-2.5 rounded-xl transition-colors duration-300">

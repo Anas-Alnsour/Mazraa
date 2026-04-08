@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-       \Illuminate\Support\Facades\DB::statement("ALTER TABLE financial_transactions MODIFY COLUMN reference_type ENUM('farm_booking', 'supply_order') NOT NULL");
+        Schema::table('financial_transactions', function (Blueprint $table) {
+            $table->string('reference_type')->nullable()->change();
+        });
     }
 
     /**
@@ -19,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        \Illuminate\Support\Facades\DB::statement("ALTER TABLE financial_transactions MODIFY COLUMN reference_type ENUM('farm_booking') NOT NULL");
+        Schema::table('financial_transactions', function (Blueprint $table) {
+            $table->enum('reference_type', ['farm_booking', 'supply_order'])->change();
+        });
     }
 };

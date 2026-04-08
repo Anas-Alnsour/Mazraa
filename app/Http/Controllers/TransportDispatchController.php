@@ -86,10 +86,13 @@ class TransportDispatchController extends Controller
             abort(403, 'Unauthorized or invalid job status.');
         }
 
-        $drivers = User::where('company_id', Auth::id())->where('role', 'transport_driver')->get();
-        $vehicles = Vehicle::where('company_id', Auth::id())->get();
+        // Load drivers WITH their linked vehicle so UI can display it
+        $drivers = User::where('company_id', Auth::id())
+            ->where('role', 'transport_driver')
+            ->with('transportVehicle')
+            ->get();
 
-        return view('transports.dispatch.edit', compact('job', 'drivers', 'vehicles'));
+        return view('transports.dispatch.edit', compact('job', 'drivers'));
     }
 
     /**
@@ -105,31 +108,36 @@ class TransportDispatchController extends Controller
 
         $request->validate([
             'driver_id' => 'required|exists:users,id',
-            'vehicle_id' => 'required|exists:vehicles,id',
         ]);
 
-        $driver = User::where('company_id', Auth::id())->where('role', 'transport_driver')->find($request->driver_id);
-        $vehicle = Vehicle::where('company_id', Auth::id())->find($request->vehicle_id);
+        $driver = User::where('company_id', Auth::id())
+            ->where('role', 'transport_driver')
+            ->with('transportVehicle')
+            ->find($request->driver_id);
 
-        if (!$driver || !$vehicle) {
-            return back()->withErrors(['driver_id' => 'Invalid driver or vehicle selection.'])->withInput();
+        if (!$driver) {
+            return back()->withErrors(['driver_id' => 'Invalid driver selection.'])->withInput();
         }
 
-        // Increment driver's active TRIPS count (transport drivers use trips_count, not orders_count)
+        if (!$driver->transportVehicle) {
+            return back()->withErrors(['driver_id' => 'This driver has no vehicle assigned. Please assign a vehicle to this driver first.'])->withInput();
+        }
+
+        // Increment driver's active TRIPS count
         if ($job->status === 'accepted') {
             $driver->increment('trips_count');
         }
 
-        // 💡 التعديل هون: تحديث الـ driver_id, vehicle_id والـ status حسب الفورم
+        // Auto-pull vehicle from driver's permanent link — no manual input needed
         $job->update([
-            'driver_id' => $driver->id,
-            'vehicle_id' => $vehicle->id,
-            'status' => $request->status ?? 'assigned'
+            'driver_id'  => $driver->id,
+            'vehicle_id' => $driver->transportVehicle->id,
+            'status'     => $request->status ?? 'assigned'
         ]);
 
-        // Mark vehicle as in_use so it can't be double-booked
-        $vehicle->update(['status' => 'in_use']);
+        // Mark vehicle as in_use
+        $driver->transportVehicle->update(['status' => 'in_use']);
 
-        return redirect()->route('transport.dispatch.index')->with('success', 'Resources assigned successfully. The driver has been notified.');
+        return redirect()->route('transport.dispatch.index')->with('success', 'Driver assigned successfully. Vehicle auto-linked from driver profile.');
     }
 }

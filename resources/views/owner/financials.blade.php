@@ -89,30 +89,18 @@
                                 <th class="py-4 px-4">Date</th>
                                 <th class="py-4 px-4">Description</th>
                                 <th class="py-4 px-4 text-right">Amount</th>
-                                <th class="py-4 px-4 text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @foreach($transactions as $transaction)
                                 <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="py-4 px-4 text-sm font-medium text-gray-600">{{ \Carbon\Carbon::parse($transaction->created_at)->format('M d, Y') }}</td>
+                                    <td class="py-4 px-4 text-sm font-medium text-gray-600">{{ $transaction->created_at->format('M d, Y') }}</td>
                                     <td class="py-4 px-4">
-                                        <p class="font-bold text-[#020617] text-sm">{{ $transaction->description ?? 'Farm Booking Revenue' }}</p>
-                                        <p class="text-xs text-gray-500">Ref: #{{ $transaction->reference_id ?? rand(10000, 99999) }}</p>
+                                        <p class="font-bold text-[#020617] text-sm">{{ $transaction->description ?? 'Transaction' }}</p>
+                                        <p class="text-xs text-gray-500">Ref: {{ ucwords(str_replace('_', ' ', $transaction->reference_type)) }} #{{ $transaction->reference_id }}</p>
                                     </td>
-                                    <td class="py-4 px-4 text-right font-extrabold text-[#1d5c42]">
-                                        +{{ number_format($transaction->amount ?? 0, 2) }} JOD
-                                    </td>
-                                    <td class="py-4 px-4 text-center">
-                                        @if($transaction->status === 'completed')
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Cleared
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Pending
-                                            </span>
-                                        @endif
+                                    <td class="py-4 px-4 text-right font-extrabold {{ $transaction->transaction_type === 'credit' ? 'text-[#1d5c42]' : 'text-red-500' }}">
+                                        {{ $transaction->transaction_type === 'credit' ? '+' : '-' }}{{ number_format($transaction->amount ?? 0, 2) }} JOD
                                     </td>
                                 </tr>
                             @endforeach
@@ -172,7 +160,8 @@
                             </div>
                         @endif
 
-                        <form @submit.prevent="isProcessing = true; setTimeout(() => { isProcessing = false; isSuccess = true; }, 1500)">
+                        <form action="{{ route('owner.payout.request') }}" method="POST" @submit="isProcessing = true">
+                            @csrf
                             <button type="submit" :disabled="isProcessing || {{ ($availableBalance ?? 0) <= 0 ? 'true' : 'false' }} || !{{ $hasBankDetails ? 'true' : 'false' }}" class="w-full py-4 bg-[#1d5c42] hover:bg-[#154531] text-white text-sm font-bold rounded-xl transition-all shadow-lg flex justify-center items-center gap-2 mb-3 disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span x-show="!isProcessing">Confirm & Withdraw</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">

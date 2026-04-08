@@ -239,4 +239,74 @@ class OwnerDashboardController extends Controller
 
         return back()->with('success', 'Booking has been rejected/cancelled.');
     }
+
+    /**
+     * Display the financial overview for the owner
+     */
+    public function financials()
+    {
+        $userId = Auth::id();
+
+        // Total Lifetime Earnings (Sum of all completed credits)
+        $lifetimeEarnings = \App\Models\FinancialTransaction::where('user_id', $userId)
+            ->where('transaction_type', 'credit')
+            ->sum('amount');
+
+        // Total Payouts Received (Sum of all debits)
+        $totalPayouts = \App\Models\FinancialTransaction::where('user_id', $userId)
+            ->where('transaction_type', 'debit')
+            ->sum('amount');
+
+        // Available Balance for payout
+        $availableBalance = round($lifetimeEarnings - $totalPayouts, 2);
+
+        // Calculate pending revenue (future/pending bookings that haven't cleared)
+        $farmIds = Farm::where('owner_id', $userId)->pluck('id');
+        $pendingRevenue = FarmBooking::whereIn('farm_id', $farmIds)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('end_time', '>=', now())
+            ->get()
+            ->sum('net_owner_amount');
+
+        // Recent Transactions History
+        $transactions = \App\Models\FinancialTransaction::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
+    }
+
+    /**
+     * Handle manual Payout Request
+     */
+    public function requestPayout(Request $request)
+    {
+        $user = Auth::user();
+
+        $credits = \App\Models\FinancialTransaction::where('user_id', $user->id)
+            ->where('transaction_type', 'credit')
+            ->sum('amount');
+
+        $debits = \App\Models\FinancialTransaction::where('user_id', $user->id)
+            ->where('transaction_type', 'debit')
+            ->sum('amount');
+
+        $availableBalance = round($credits - $debits, 2);
+
+        if ($availableBalance <= 0) {
+            return back()->with('error', 'You have no available funds to request.');
+        }
+
+        if (empty($user->bank_name) || empty($user->account_holder_name) || empty($user->iban)) {
+            return back()->with('error', 'Bank details are incomplete. Please update your profile first.');
+        }
+
+        // Notify Admins
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            $admin->notify(new \App\Notifications\PayoutRequestedNotification($user, $availableBalance));
+        }
+
+        return back()->with('success', 'Your payout request of ' . number_format($availableBalance, 2) . ' JOD has been sent to the administration team successfully!');
+    }
 }

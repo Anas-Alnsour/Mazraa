@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +23,18 @@ class TransportDriverController extends Controller
 
     public function create()
     {
-        return view('transports.drivers.create');
+        // Only show UNASSIGNED vehicles (where no other active driver is using it)
+        $availableVehicles = Vehicle::where('company_id', Auth::id())
+            ->whereNotIn('id', User::where('role', 'transport_driver')
+                ->where('company_id', Auth::id())
+                ->whereNotNull('transport_vehicle_id')
+                ->pluck('transport_vehicle_id')
+            )
+            ->get();
+
+        $governorates = ['Amman', 'Zarqa', 'Irbid', 'Balqa', 'Madaba', 'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Maan', 'Aqaba'];
+
+        return view('transports.drivers.create', compact('availableVehicles', 'governorates'));
     }
 
     public function store(Request $request)
@@ -32,6 +44,7 @@ class TransportDriverController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
+            'transport_vehicle_id' => 'nullable|exists:vehicles,id',
         ]);
 
         User::create([
@@ -41,6 +54,7 @@ class TransportDriverController extends Controller
             'password' => Hash::make($validated['password']),
             'role' => 'transport_driver',
             'company_id' => Auth::id(),
+            'transport_vehicle_id' => $validated['transport_vehicle_id'] ?? null,
         ]);
 
         return redirect()->route('transport.drivers.index')
@@ -53,7 +67,21 @@ class TransportDriverController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        return view('transports.drivers.edit', compact('driver'));
+        // Show unassigned vehicles PLUS the one this driver already has
+        $availableVehicles = Vehicle::where('company_id', Auth::id())
+            ->where(function ($q) use ($driver) {
+                $q->whereNotIn('id', User::where('role', 'transport_driver')
+                    ->where('company_id', Auth::id())
+                    ->whereNotNull('transport_vehicle_id')
+                    ->where('id', '!=', $driver->id)
+                    ->pluck('transport_vehicle_id')
+                )->orWhere('id', $driver->transport_vehicle_id);
+            })
+            ->get();
+
+        $governorates = ['Amman', 'Zarqa', 'Irbid', 'Balqa', 'Madaba', 'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Maan', 'Aqaba'];
+
+        return view('transports.drivers.edit', compact('driver', 'availableVehicles', 'governorates'));
     }
 
     public function update(Request $request, User $driver)
@@ -67,11 +95,13 @@ class TransportDriverController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($driver->id)],
             'phone' => 'required|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
+            'transport_vehicle_id' => 'nullable|exists:vehicles,id',
         ]);
 
         $driver->name = $validated['name'];
         $driver->email = $validated['email'];
         $driver->phone = $validated['phone'];
+        $driver->transport_vehicle_id = $validated['transport_vehicle_id'] ?? null;
 
         if ($request->filled('password')) {
             $driver->password = Hash::make($validated['password']);

@@ -38,7 +38,7 @@ class BookingConfirmedNotification extends Notification
         return [
             'title' => 'New Booking Confirmed',
             'message' => 'Farm: ' . $this->booking->farm->name,
-            'action_url' => route('bookings.show', $this->booking->id)
+            'action_url' => $notifiable->role === 'farm_owner' ? route('owner.bookings.index') : route('bookings.my_bookings')
         ];
     }
 }

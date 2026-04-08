@@ -39,7 +39,7 @@ class FarmApprovedNotification extends Notification implements ShouldQueue
         return [
             'title' => 'Farm Approved',
             'message' => 'Your farm listing "' . ($this->farm->name ?? 'N/A') . '" has been approved.',
-            'action_url' => url('/owner/dashboard')
+            'action_url' => route('owner.dashboard')
         ];
     }
 }

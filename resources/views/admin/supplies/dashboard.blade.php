@@ -44,7 +44,7 @@
         <div class="bg-white overflow-hidden shadow-sm rounded-[2rem] border border-gray-100 p-8">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-black text-gray-800 tracking-tight">Dispatch Center & Orders</h3>
-                <a href="#" class="px-5 py-2.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-[10px] uppercase tracking-widest font-black rounded-xl transition-all shadow-md active:scale-95">
+                <a href="{{ route('supplies.drivers.create') }}" class="px-5 py-2.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-[10px] uppercase tracking-widest font-black rounded-xl transition-all shadow-md active:scale-95">
                     + Add New Driver
                 </a>
             </div>

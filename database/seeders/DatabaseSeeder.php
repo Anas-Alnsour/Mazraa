@@ -42,6 +42,30 @@ class DatabaseSeeder extends Seeder
         Transport::factory(10)->create();
         $this->call(TransportSeeder::class);
 
+        // 6. إضافة المعاملات المالية الوهمية (Phase 5)
+        $this->call(FinancialTransactionSeeder::class);
+
+        // 7. إضافة التقييمات الوهمية للمزارع (Phase 7)
+        $farms->each(function ($farm) use ($user) {
+            \App\Models\Review::create([
+                'user_id' => $user->id,
+                'reviewable_id' => $farm->id,
+                'reviewable_type' => 'farm',
+                'rating' => rand(3, 5),
+                'comment' => 'Great experience, highly recommend this place for family gatherings and weekend getaways!',
+                'created_at' => now()->subDays(rand(1, 30))
+            ]);
+            
+            \App\Models\Review::create([
+                'user_id' => User::factory()->create(['role' => 'user'])->id,
+                'reviewable_id' => $farm->id,
+                'reviewable_type' => 'farm',
+                'rating' => rand(4, 5),
+                'comment' => 'Beautiful views and clean amenities. Everything was exactly as described.',
+                'created_at' => now()->subDays(rand(1, 30))
+            ]);
+        });
+
         // رسالة تأكيد في التيرمينال
         $this->command->info('Database seeded successfully with all roles, dummy farms, bookings, supplies, and transports!');
     }

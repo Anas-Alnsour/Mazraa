@@ -39,7 +39,7 @@ class NewBookingReceivedNotification extends Notification implements ShouldQueue
         return [
             'title' => 'New Booking Received',
             'message' => 'You have received a new paid booking for ' . ($this->booking->farm->name ?? 'your farm') . '.',
-            'action_url' => url('/owner/dashboard')
+            'action_url' => route('owner.bookings.index')
         ];
     }
 }

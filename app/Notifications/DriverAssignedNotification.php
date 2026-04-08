@@ -47,7 +47,7 @@ class DriverAssignedNotification extends Notification implements ShouldQueue
         return [
             'title' => 'New Driver Assignment',
             'message' => 'You have been assigned to a new trip to ' . ($this->transport->farm->name ?? 'Farm'),
-            'action_url' => route('transport.driver.dashboard')
+            'action_url' => $notifiable->role === 'transport_driver' ? route('transport.driver.dashboard') : ($notifiable->role === 'transport_company' ? route('transport.dispatch.index') : route('dashboard'))
         ];
     }
 }

@@ -39,7 +39,7 @@ class PayoutProcessedNotification extends Notification implements ShouldQueue
         return [
             'title' => 'Payout Processed',
             'message' => 'A payout of ' . number_format($this->transaction->amount ?? 0, 2) . ' JOD was successfully processed.',
-            'action_url' => url('/portal/login')
+            'action_url' => $notifiable->role === 'farm_owner' ? route('owner.financials') : ($notifiable->role === 'supply_company' ? route('supplies.dashboard') : route('transport.dashboard'))
         ];
     }
 }

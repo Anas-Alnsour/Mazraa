@@ -39,7 +39,10 @@ use App\Http\Controllers\Driver\SupplyDriverController as DriverDashboardSupplyC
 // --------------------------------------------------------------------------
 // 🌐 Public Pages (No Auth Required)
 // --------------------------------------------------------------------------
-Route::get('/', function () { return view('home'); })->name('home');
+Route::get('/', [PageController::class, 'home'])->name('home');
+
+// Stripe Webhook Endpoint (No CSRF, No Auth)
+Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'submitContact'])->name('contact.submit');
@@ -213,25 +216,8 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
 
     // 💡 راوت المالية مع المنطق البرمجي
-    Route::get('/financials', function() {
-        $userId = auth()->id();
-        $farmIds = \App\Models\Farm::where('owner_id', $userId)->pluck('id');
-
-        $availableBalance = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
-            ->where('status', 'confirmed')
-            ->where('end_time', '<', now())
-            ->sum('total_price');
-
-        $pendingRevenue = \App\Models\FarmBooking::whereIn('farm_id', $farmIds)
-            ->whereIn('status', ['confirmed', 'pending'])
-            ->where('end_time', '>=', now())
-            ->sum('total_price');
-
-        $lifetimeEarnings = $availableBalance;
-        $transactions = collect();
-
-        return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
-    })->name('financials');
+    Route::get('/financials', [OwnerDashboardController::class, 'financials'])->name('financials');
+    Route::post('/financials/request-payout', [OwnerDashboardController::class, 'requestPayout'])->name('payout.request');
 
     Route::get('/financials/export-csv', function () {
         $filename = "mazraa_financial_report_" . date('Y-m-d') . ".csv";

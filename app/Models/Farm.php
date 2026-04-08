@@ -45,6 +45,12 @@ class Farm extends Model
 
     public function getAverageRatingAttribute()
     {
-        return $this->reviews()->avg('rating') ?: 0;
+        $avg = $this->reviews()->avg('rating');
+        return $avg ? round($avg, 1) : 0;
+    }
+
+    public function getReviewsCountAttribute()
+    {
+        return $this->reviews()->count();
     }
 }

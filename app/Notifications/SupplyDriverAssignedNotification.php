@@ -39,7 +39,7 @@ class SupplyDriverAssignedNotification extends Notification implements ShouldQue
         return [
             'title' => 'New Driver Assignment',
             'message' => 'You have been assigned to deliver supply order #' . $this->invoiceId,
-            'action_url' => url('/supply-companies/dashboard') // supply drivers use same dashboard or similar
+            'action_url' => $notifiable->role === 'supply_driver' ? route('supply.driver.dashboard') : ($notifiable->role === 'admin' ? route('admin.dashboard') : route('supplies.dashboard'))
         ];
     }
 }

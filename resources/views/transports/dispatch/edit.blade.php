@@ -7,7 +7,7 @@
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
                 <h1 class="text-4xl font-black text-slate-900 tracking-tight">Manage Dispatch #{{ $job->id }}</h1>
-                <p class="text-sm font-bold text-cyan-600 mt-2 uppercase tracking-widest">Assign a fleet vehicle and driver to this request</p>
+                <p class="text-sm font-bold text-cyan-600 mt-2 uppercase tracking-widest">Assign a driver to this request &mdash; vehicle is auto-linked</p>
             </div>
             <a href="{{ route('transport.dispatch.index') }}" class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 font-black py-3.5 px-8 rounded-2xl transition-all shadow-sm transform active:scale-95 text-[10px] uppercase tracking-widest">
                 <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -102,50 +102,34 @@
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="relative">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assign Vehicle</label>
-                        @if($vehicles->count() > 0)
-                            <select name="vehicle_id" required
-                                class="w-full px-5 py-4 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-cyan-500 text-sm font-bold text-white transition-colors appearance-none cursor-pointer">
-                                <option value="" disabled>Select an available vehicle...</option>
-                                @foreach($vehicles as $vehicle)
-                                    <option value="{{ $vehicle->id }}" {{ old('vehicle_id', $job->vehicle_id) == $vehicle->id ? 'selected' : '' }}>
-                                        {{ $vehicle->license_plate ?? $vehicle->plate_number }} - {{ $vehicle->type }} ({{ $vehicle->capacity }} pax)
-                                    </option>
-                                @endforeach
-                            </select>
-                            <div class="absolute inset-y-0 right-0 top-6 flex items-center px-4 pointer-events-none text-slate-400">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        @else
-                            <div class="px-5 py-4 bg-rose-500/10 text-rose-400 rounded-2xl text-sm font-bold border border-rose-500/20">
-                                No available vehicles. Please add vehicles to your fleet.
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="relative">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assign Driver</label>
-                        @if($drivers->count() > 0)
+                <div class="mb-8">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assign Driver <span class="text-slate-500 font-medium normal-case tracking-normal">&mdash; vehicle is automatically linked</span></label>
+                    @if($drivers->count() > 0)
+                        <div class="relative">
                             <select name="driver_id" required
                                 class="w-full px-5 py-4 bg-slate-800 border border-slate-700 rounded-2xl focus:ring-2 focus:ring-cyan-500 text-sm font-bold text-white transition-colors appearance-none cursor-pointer">
                                 <option value="" disabled>Select a driver...</option>
                                 @foreach($drivers as $driver)
+                                    @php
+                                        $vehicleLabel = $driver->transportVehicle
+                                            ? ' — ' . $driver->transportVehicle->type . ' (' . $driver->transportVehicle->license_plate . ')'
+                                            : ' — ⚠️ No Vehicle Linked';
+                                    @endphp
                                     <option value="{{ $driver->id }}" {{ old('driver_id', $job->driver_id) == $driver->id ? 'selected' : '' }}>
-                                        {{ $driver->name }} ({{ $driver->phone }})
+                                        {{ $driver->name }}{{ $vehicleLabel }}
                                     </option>
                                 @endforeach
                             </select>
-                            <div class="absolute inset-y-0 right-0 top-6 flex items-center px-4 pointer-events-none text-slate-400">
+                            <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
-                        @else
-                            <div class="px-5 py-4 bg-rose-500/10 text-rose-400 rounded-2xl text-sm font-bold border border-rose-500/20">
-                                No drivers found. Please add drivers to your fleet.
-                            </div>
-                        @endif
-                    </div>
+                        </div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Selecting a driver will automatically assign their permanently linked vehicle to this trip.</p>
+                    @else
+                        <div class="px-5 py-4 bg-rose-500/10 text-rose-400 rounded-2xl text-sm font-bold border border-rose-500/20">
+                            No drivers found. Please <a href="{{ route('transport.drivers.create') }}" class="underline">add drivers</a> to your fleet.
+                        </div>
+                    @endif
                 </div>
 
                 <div class="mb-10 relative">
@@ -164,8 +148,8 @@
                 </div>
 
                 <div class="pt-6 border-t border-slate-800 flex justify-end">
-                    <button type="submit" class="w-full md:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-black py-4 px-10 rounded-2xl shadow-lg shadow-cyan-600/20 transition-all transform active:scale-95 uppercase tracking-widest text-xs flex items-center justify-center gap-2" {{ !isset($vehicles) || $vehicles->count() == 0 || $drivers->count() == 0 ? 'disabled' : '' }}>
-                        Save Fleet Assignment
+                    <button type="submit" class="w-full md:w-auto bg-cyan-600 hover:bg-cyan-500 text-white font-black py-4 px-10 rounded-2xl shadow-lg shadow-cyan-600/20 transition-all transform active:scale-95 uppercase tracking-widest text-xs flex items-center justify-center gap-2" {{ $drivers->count() == 0 ? 'disabled' : '' }}>
+                        Save Dispatch Assignment
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                     </button>
                 </div>

@@ -1,31 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-@php
-    // Direct DB queries to fetch exact financial streams based on your requested schema.
-    // 'credit' transactions where user_id is the Admin ID.
-    $adminId = auth()->id(); // Assuming the logged-in user viewing this is the super admin.
 
-    $farmProfit = DB::table('financial_transactions')
-        ->where('user_id', $adminId)
-        ->where('transaction_type', 'credit')
-        ->where('reference_type', 'farm_booking')
-        ->sum('amount');
-
-    $transportProfit = DB::table('financial_transactions')
-        ->where('user_id', $adminId)
-        ->where('transaction_type', 'credit')
-        ->where('reference_type', 'transport')
-        ->sum('amount');
-
-    $supplyProfit = DB::table('financial_transactions')
-        ->where('user_id', $adminId)
-        ->where('transaction_type', 'credit')
-        ->where('reference_type', 'supply_order')
-        ->sum('amount');
-
-    $totalCombinedProfit = $farmProfit + $transportProfit + $supplyProfit;
-@endphp
 
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
     <div class="mb-8 border-b border-gray-200 pb-5">
@@ -58,7 +34,7 @@
             </div>
             <div class="bg-gray-50 px-5 py-3">
                 <div class="text-sm">
-                    <a href="#" class="font-medium text-indigo-600 hover:text-indigo-900">View transactions</a>
+                    <a href="{{ route('admin.financials') }}" class="font-medium text-indigo-600 hover:text-indigo-900">View transactions</a>
                 </div>
             </div>
         </div>
@@ -85,7 +61,7 @@
             </div>
             <div class="bg-gray-50 px-5 py-3">
                 <div class="text-sm">
-                    <a href="#" class="font-medium text-blue-600 hover:text-blue-900">View transactions</a>
+                    <a href="{{ route('admin.financials') }}" class="font-medium text-blue-600 hover:text-blue-900">View transactions</a>
                 </div>
             </div>
         </div>
@@ -112,7 +88,7 @@
             </div>
             <div class="bg-gray-50 px-5 py-3">
                 <div class="text-sm">
-                    <a href="#" class="font-medium text-yellow-600 hover:text-yellow-900">View transactions</a>
+                    <a href="{{ route('admin.financials') }}" class="font-medium text-yellow-600 hover:text-yellow-900">View transactions</a>
                 </div>
             </div>
         </div>
@@ -144,6 +120,46 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="mt-8 bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h3 class="text-lg font-bold leading-6 text-gray-900">Recent Transactions</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">User</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Reference</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($recentTransactions as $tx)
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $tx->created_at->format('Y-m-d H:i') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ $tx->user->name ?? 'System' }} <br><span class="text-xs text-gray-500 uppercase">{{ $tx->user->role ?? '' }}</span></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ucwords(str_replace('_', ' ', $tx->reference_type)) }} #{{ $tx->reference_id }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ $tx->description }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-right {{ $tx->transaction_type === 'credit' ? 'text-green-600' : 'text-red-600' }}">
+                                {{ $tx->transaction_type === 'credit' ? '+' : '-' }}{{ number_format($tx->amount, 2) }} JOD
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No transactions found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200">
+            {{ $recentTransactions->links() }}
+        </div>
     </div>
 </div>
 @endsection

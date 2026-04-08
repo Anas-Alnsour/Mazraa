@@ -187,8 +187,8 @@
                         </div>
                         <div class="ml-3 text-sm">
                             <label for="terms" class="font-medium text-gray-600 cursor-pointer">
-                                I agree to the <a href="#" class="font-bold text-[#1d5c42] hover:text-[#154531] transition-colors border-b border-transparent hover:border-[#154531]">Terms and Conditions</a>
-                                and <a href="#" class="font-bold text-[#1d5c42] hover:text-[#154531] transition-colors border-b border-transparent hover:border-[#154531]">Privacy Policy</a>.
+                                I agree to the <a href="javascript:void(0);" class="font-bold text-[#1d5c42] hover:text-[#154531] transition-colors border-b border-transparent hover:border-[#154531]">Terms and Conditions</a>
+                                and <a href="javascript:void(0);" class="font-bold text-[#1d5c42] hover:text-[#154531] transition-colors border-b border-transparent hover:border-[#154531]">Privacy Policy</a>.
                             </label>
                         </div>
                     </div>

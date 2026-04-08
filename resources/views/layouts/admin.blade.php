@@ -40,7 +40,7 @@
             </a>
 
             <p class="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mt-8 mb-4">Management</p>
-            <a href="#" class="flex items-center gap-3 px-4 py-4 text-slate-500 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
+            <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-500 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 Users & Roles
             </a>

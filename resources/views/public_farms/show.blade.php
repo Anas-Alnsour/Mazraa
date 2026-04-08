@@ -212,7 +212,7 @@
                             </div>
                             <div>
                                 <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Guest Rating</p>
-                                <p class="font-black text-gray-900 text-lg">{{ number_format($farm->average_rating, 1) }} <span class="text-sm font-bold text-gray-400">/ 5.0</span></p>
+                                <p class="font-black text-gray-900 text-lg">{{ number_format($farm->average_rating, 1) }} <span class="text-sm font-bold text-gray-400">/ 5.0 @if($farm->reviews_count > 0)({{ $farm->reviews_count }} Reviews)@endif</span></p>
                             </div>
                         </div>
                     </div>
@@ -243,12 +243,22 @@
                     @endif
 
                     {{-- ⭐️ Reviews Section --}}
+                    @php
+                        $canReview = false;
+                        if(auth()->check()) {
+                            $canReview = \App\Models\FarmBooking::where('user_id', auth()->id())
+                                ->where('farm_id', $farm->id)
+                                ->whereIn('status', ['completed', 'finished'])
+                                ->exists();
+                        }
+                    @endphp
                     <div class="pt-6">
                         <x-reviews-section
                             :reviews="$farm->reviews"
                             :reviewable-id="$farm->id"
                             reviewable-type="farm"
                             :average-rating="$farm->average_rating"
+                            :can-review="$canReview"
                         />
                     </div>
                 </div>

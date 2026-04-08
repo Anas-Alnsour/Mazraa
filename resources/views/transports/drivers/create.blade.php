@@ -80,6 +80,31 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Vehicle Assignment (Permanent 1-to-1 Pairing) --}}
+                <div class="md:col-span-2 pt-4 border-t border-slate-100">
+                    <label for="transport_vehicle_id" class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Assigned Vehicle <span class="text-slate-400 font-medium normal-case tracking-normal">(permanent 1-to-1 pairing)</span></label>
+                    <div class="relative">
+                        @if($availableVehicles->count() > 0)
+                            <select name="transport_vehicle_id" id="transport_vehicle_id" class="block w-full rounded-2xl border-slate-200 bg-slate-50 shadow-inner focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 sm:text-sm font-bold text-slate-900 px-5 py-4 appearance-none cursor-pointer transition-all">
+                                <option value="">No vehicle assigned yet</option>
+                                @foreach($availableVehicles as $vehicle)
+                                    <option value="{{ $vehicle->id }}" {{ old('transport_vehicle_id') == $vehicle->id ? 'selected' : '' }}>
+                                        {{ $vehicle->type }} &mdash; {{ $vehicle->license_plate }} ({{ $vehicle->capacity }} seats)
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <div class="px-5 py-4 bg-amber-50 text-amber-700 rounded-2xl text-sm font-bold border border-amber-200">
+                                All vehicles are currently assigned. <a href="{{ route('transport.vehicles.create') }}" class="underline text-cyan-600">Add a new vehicle</a> first.
+                            </div>
+                        @endif
+                        <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-2 pl-1">Dispatcher will auto-assign this vehicle — no manual pickup needed at dispatch time.</p>
+                </div>
             </div>
 
             <div class="pt-8 mt-4 border-t border-slate-100 flex flex-col md:flex-row justify-end gap-4">

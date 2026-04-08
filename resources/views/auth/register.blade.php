@@ -309,9 +309,9 @@
                         <div class="ml-3 text-sm">
                             <label for="terms" class="font-medium text-gray-600 cursor-pointer">
                                 I agree to the
-                                <a href="#" class="font-bold {{ $textAccent }} {{ $textAccentHover }} transition-colors border-b border-transparent {{ $borderAccentHover }}">Terms and Conditions</a>
+                                <a href="javascript:void(0);" class="font-bold {{ $textAccent }} {{ $textAccentHover }} transition-colors border-b border-transparent {{ $borderAccentHover }}">Terms and Conditions</a>
                                 and
-                                <a href="#" class="font-bold {{ $textAccent }} {{ $textAccentHover }} transition-colors border-b border-transparent {{ $borderAccentHover }}">Privacy Policy</a>.
+                                <a href="javascript:void(0);" class="font-bold {{ $textAccent }} {{ $textAccentHover }} transition-colors border-b border-transparent {{ $borderAccentHover }}">Privacy Policy</a>.
                             </label>
                         </div>
                     </div>

@@ -25,9 +25,11 @@ protected $fillable = [
         'role',
         'phone',
         'governorate',
-        'bank_name',            // 👈 جديد
-        'account_holder_name',  // 👈 جديد
-        'iban',                 // 👈 جديد
+        'bank_name',
+        'account_holder_name',
+        'iban',
+        'company_id',
+        'transport_vehicle_id', // 👈 1-to-1 permanent vehicle link for transport drivers
     ];
 
     /**
@@ -66,6 +68,12 @@ protected $fillable = [
     public function transportCompanyJobs()
     {
         return $this->hasMany(\App\Models\Transport::class, 'company_id');
+    }
+
+    // 1b. علاقة السائق بالمركبة المخصصة له بشكل دائم (1-to-1)
+    public function transportVehicle()
+    {
+        return $this->belongsTo(\App\Models\Vehicle::class, 'transport_vehicle_id');
     }
 
     // 2. علاقة صاحب المزرعة بالمزارع تبعته

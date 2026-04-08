@@ -94,7 +94,7 @@
             </a>
 
             {{-- Card 2: My Bookings --}}
-            <a href="{{ route('bookings.my_bookings') ?? '#' }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-amber-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.5s;">
+            <a href="{{ route('bookings.my_bookings') }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-amber-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.5s;">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50/80 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 group-hover:bg-amber-100/50 ease-out"></div>
                 <div class="relative z-10 w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-500 shadow-sm border border-amber-100/50">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -108,7 +108,7 @@
             </a>
 
             {{-- Card 3: Supply Market --}}
-            <a href="{{ route('supplies.market') ?? '#' }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.6s;">
+            <a href="{{ route('supplies.market') }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-blue-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.6s;">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50/80 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 group-hover:bg-blue-100/50 ease-out"></div>
                 <div class="relative z-10 w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-500 shadow-sm border border-blue-100/50">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -122,7 +122,7 @@
             </a>
 
             {{-- Card 4: Transport --}}
-            <a href="{{ route('transports.index') ?? '#' }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.7s;">
+            <a href="{{ route('transports.index') }}" class="fade-in-up-stagger group bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_10px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] border border-gray-100 hover:border-purple-500/30 transition-all duration-500 hover:-translate-y-2 overflow-hidden relative flex flex-col h-full" style="animation-delay: 0.7s;">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-purple-50/80 rounded-bl-[4rem] -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 group-hover:bg-purple-100/50 ease-out"></div>
                 <div class="relative z-10 w-16 h-16 bg-purple-50 text-purple-500 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-purple-500 group-hover:text-white transition-colors duration-500 shadow-sm border border-purple-100/50">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
