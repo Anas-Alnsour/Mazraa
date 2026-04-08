@@ -195,12 +195,12 @@
                     </div>
 
                     {{-- Submit Button --}}
-                    <div class="pt-6 transition-all duration-700 delay-500 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <button type="submit"
-                            class="relative w-full flex justify-center py-5 px-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-rose-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-[0_10px_25px_rgba(225,29,72,0.4)] focus:outline-none transition-all duration-300 ease-out overflow-hidden group hover:-translate-y-1 active:translate-y-0 active:scale-[0.98]">
-                            <span class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                            <span class="relative z-10 flex items-center gap-2">
-                                Sign In
+                    <div class="pt-2">
+                        <button type="submit" 
+                            class="relative w-full flex justify-center py-5 px-4 rounded-2xl text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 focus:outline-none focus:ring-4 focus:ring-blue-500/20 shadow-[0_10px_30px_-5px_rgba(37,99,235,0.4)] transition-all transform active:scale-[0.98] group overflow-hidden">
+                            <span class="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform translate-y-1 group-hover:translate-y-0 transition-transform"></span>
+                            <span class="relative flex items-center gap-2">
+                                Sign In to Portal
                                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             </span>
                         </button>

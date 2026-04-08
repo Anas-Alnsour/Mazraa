@@ -61,11 +61,11 @@
         </nav>
 
 
-        <div class="p-6 border-t border-slate-800">
+        <div class="px-6 py-6 border-t border-slate-700">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-400 bg-red-400/10 hover:bg-red-500 hover:text-white rounded-xl font-black uppercase tracking-widest text-[10px] transition-all border border-red-500/20 hover:border-red-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-xl transition-all font-bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Secure Logout
                 </button>
             </form>
@@ -90,8 +90,37 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     {{ date('l, M j, Y') }}
                 </div>
-                <div class="h-10 w-10 rounded-full bg-slate-900 text-emerald-400 flex items-center justify-center font-black border-2 border-emerald-400 shadow-sm cursor-pointer">
-                    SA
+                
+                {{-- Admin Profile Dropdown --}}
+                <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                    <div @click="open = !open" class="h-10 w-10 rounded-full bg-slate-900 text-emerald-400 flex items-center justify-center font-black border-2 border-emerald-400 shadow-sm cursor-pointer hover:bg-emerald-400 hover:text-slate-900 transition-all">
+                        SA
+                    </div>
+                    
+                    <div x-show="open" 
+                         x-transition:enter="transition ease-out duration-100" 
+                         x-transition:enter-start="transform opacity-0 scale-95" 
+                         x-transition:enter-end="transform opacity-100 scale-100" 
+                         x-transition:leave="transition ease-in duration-75" 
+                         x-transition:leave-start="transform opacity-100 scale-100" 
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-3 w-48 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl py-2 z-50">
+                        <div class="px-4 py-2 border-b border-slate-700 mb-2">
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Admin</p>
+                            <p class="text-xs font-bold text-white truncate">{{ auth()->user()->email }}</p>
+                        </div>
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-emerald-400 hover:bg-slate-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            Profile Settings
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold text-rose-400 hover:bg-rose-500/10 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                Log Out
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </header>

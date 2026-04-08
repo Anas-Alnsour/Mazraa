@@ -82,64 +82,64 @@
     {{-- ==========================================
          2. CLEAR & PROMINENT SEARCH DOCK
          ========================================== --}}
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30 -mt-28 mb-24 animate-[fade-in-up_1s_ease-out_0.6s_both]">
-        <div class="search-dock rounded-[2rem] md:rounded-full p-2 transition-all duration-300">
-            <form method="GET" action="{{ route('explore') }}" class="flex flex-col md:flex-row items-center w-full divide-y md:divide-y-0 md:divide-x divide-gray-200">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30 -mt-24 mb-24 animate-[fade-in-up_1s_ease-out_0.6s_both]">
+        <div class="search-dock rounded-3xl md:rounded-full p-2 transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)]">
+            <form method="GET" action="{{ route('explore') }}" class="flex flex-col md:flex-row items-center w-full md:divide-x divide-gray-100">
 
                 {{-- Name --}}
-                <div class="w-full md:w-[25%] px-6 py-3 hover:bg-gray-50 rounded-[1.5rem] md:rounded-l-full transition-colors cursor-pointer group">
-                    <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Farm Name</label>
-                    <input type="text" name="name" value="{{ request('name') }}" placeholder="Search by name..."
-                           class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none truncate transition-all">
+                <div class="w-full md:w-[30%] px-8 py-4 hover:bg-gray-50/80 rounded-t-3xl md:rounded-l-full transition-all duration-300 group">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Farm Name</label>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-300 group-hover:text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" name="name" value="{{ request('name') }}" placeholder="Search estates..."
+                               class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
+                    </div>
                 </div>
 
                 {{-- Governorate --}}
-                <div class="w-full md:w-[25%] px-6 py-3 hover:bg-gray-50 transition-colors group">
-                    <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Governorate</label>
-                    <select name="governorate" class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none transition-all appearance-none cursor-pointer">
-                        <option value="">Anywhere</option>
-                        <option value="Amman" {{ request('governorate') == 'Amman' ? 'selected' : '' }}>Amman</option>
-                        <option value="Irbid" {{ request('governorate') == 'Irbid' ? 'selected' : '' }}>Irbid</option>
-                        <option value="Zarqa" {{ request('governorate') == 'Zarqa' ? 'selected' : '' }}>Zarqa</option>
-                        <option value="Aqaba" {{ request('governorate') == 'Aqaba' ? 'selected' : '' }}>Aqaba</option>
-                        <option value="Jerash" {{ request('governorate') == 'Jerash' ? 'selected' : '' }}>Jerash</option>
-                        <option value="Madaba" {{ request('governorate') == 'Madaba' ? 'selected' : '' }}>Madaba</option>
-                        <option value="Salt" {{ request('governorate') == 'Salt' ? 'selected' : '' }}>Salt</option>
-                        <option value="Karak" {{ request('governorate') == 'Karak' ? 'selected' : '' }}>Karak</option>
-                        <option value="Ajloun" {{ request('governorate') == 'Ajloun' ? 'selected' : '' }}>Ajloun</option>
-                    </select>
+                <div class="w-full md:w-[25%] px-8 py-4 hover:bg-gray-50/80 transition-all duration-300 group">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Governorate</label>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-300 group-hover:text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                        <select name="governorate" class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none appearance-none cursor-pointer">
+                            <option value="">All Regions</option>
+                            @foreach(['Amman', 'Irbid', 'Zarqa', 'Aqaba', 'Jerash', 'Madaba', 'Salt', 'Karak', 'Ajloun'] as $gov)
+                                <option value="{{ $gov }}" {{ request('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 {{-- Price Range --}}
-                <div class="w-full md:w-[35%] flex px-6 py-3 hover:bg-gray-50 transition-colors group">
-                    <div class="w-1/2 pr-3">
-                        <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Min Price</label>
-                        <div class="flex items-center text-gray-900">
-                            <span class="text-xs font-bold text-gray-400 mr-1">JOD</span>
+                <div class="w-full md:w-[30%] flex divide-x divide-gray-100 group">
+                    <div class="w-1/2 px-8 py-4 hover:bg-gray-50/80 transition-all duration-300">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Min Price</label>
+                        <div class="flex items-center">
+                            <span class="text-[10px] font-black text-gray-300 mr-1.5">JOD</span>
                             <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="0"
-                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none transition-all">
+                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
                         </div>
                     </div>
-                    <div class="w-px h-8 bg-gray-200 my-auto mx-2"></div>
-                    <div class="w-1/2 pl-3">
-                        <label class="block text-[11px] font-black text-gray-800 uppercase tracking-widest mb-1 group-hover:text-[#1d5c42] transition-colors">Max Price</label>
-                        <div class="flex items-center text-gray-900">
-                            <span class="text-xs font-bold text-gray-400 mr-1">JOD</span>
+                    <div class="w-1/2 px-8 py-4 hover:bg-gray-50/80 transition-all duration-300">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Max Price</label>
+                        <div class="flex items-center">
+                            <span class="text-[10px] font-black text-gray-300 mr-1.5">JOD</span>
                             <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Any"
-                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-semibold text-base outline-none transition-all">
+                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
                         </div>
                     </div>
                 </div>
 
                 {{-- Buttons --}}
-                <div class="w-full md:w-[15%] px-3 py-2 flex items-center justify-end gap-2 hover:bg-gray-50 rounded-[1.5rem] md:rounded-r-full transition-colors">
+                <div class="w-full md:w-[15%] p-2 flex items-center justify-center md:justify-end gap-2 rounded-b-3xl md:rounded-r-full">
                     @if(request()->anyFilled(['name', 'governorate', 'min_price', 'max_price']))
-                        <a href="{{ route('explore') }}" title="Clear Filters" class="bg-red-50 hover:bg-red-100 text-red-600 p-3.5 rounded-full shadow-sm hover:shadow-md transition-all transform active:scale-95 flex-shrink-0 flex items-center justify-center border border-red-200">
+                        <a href="{{ route('explore') }}" title="Clear Filters" class="bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 p-4 rounded-full transition-all transform active:scale-95 flex items-center justify-center border border-transparent hover:border-red-100 group">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
                     @endif
-                    <button type="submit" title="Search" class="bg-[#1d5c42] hover:bg-[#154230] text-white p-3.5 rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex-shrink-0 flex items-center justify-center">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <button type="submit" class="bg-[#1d5c42] hover:bg-[#154230] text-white px-8 py-4 md:p-4 rounded-full md:rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 group w-full md:w-auto">
+                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <span class="md:hidden font-black uppercase text-xs tracking-widest">Search</span>
                     </button>
                 </div>
 

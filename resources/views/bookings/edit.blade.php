@@ -144,7 +144,7 @@
                         <input type="hidden" name="pickup_lng" id="pickup_lng" value="{{ $booking->pickup_lng }}">
 
                         <div class="flex items-baseline gap-2 border-b border-gray-200/60 pb-6 mb-8">
-                            <span class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($farm->price_per_night, 0) }}</span>
+                            <span class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($farm->price_per_full_day, 0) }}</span>
                             <span class="text-lg font-bold text-gray-900">JOD</span>
                             <span class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">/ Shift Base</span>
                         </div>

@@ -35,7 +35,7 @@
 
         <div class="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-[#020617]/70 to-[#f8fafc]/10"></div>
         <div class="absolute top-1/4 left-1/3 w-96 h-96 bg-[#1d5c42]/30 rounded-full blur-[100px] pointer-events-none"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#blue-600]/20 rounded-full blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div class="relative z-10 text-center px-4 max-w-4xl mx-auto mt-4">
             <h1 class="text-5xl md:text-7xl font-black text-white tracking-tighter mb-4 drop-shadow-2xl fade-in-up">
@@ -174,7 +174,7 @@
                                 <p class="font-black text-xl tracking-tight leading-none drop-shadow-lg flex items-center gap-2">
                                     {{ optional($transport->Farm_Arrival_Time)->format('M d, Y') ?? 'N/A' }}
                                     @if($transport->Farm_Arrival_Time)
-                                        <span class="text-xs font-bold text-white/80 bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">{{ $transport->Farm_Arrival_Time->format('h:i A') }}</span>
+                                        <span class="text-xs font-bold text-white/80 bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">{{ optional($transport->Farm_Arrival_Time)->format('h:i A') }}</span>
                                     @endif
                                 </p>
                             </div>
