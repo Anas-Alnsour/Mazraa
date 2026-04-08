@@ -32,20 +32,21 @@ class PartnerRegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => ['required', 'string', 'in:farm_owner,supply_company,transport_company'],
 
-            // بيانات البنك (اختيارية عند التسجيل بس بنعملها فاليشن إذا تعبت)
+            // Bank details (Optional)
             'bank_name' => ['nullable', 'string', 'max:255'],
             'account_holder_name' => ['nullable', 'string', 'max:255'],
             'iban' => ['nullable', 'string', 'max:255'],
         ]);
 
-        // إنشاء الحساب وإعطاؤه صلاحية صاحب مزرعة
+        // Create the user with the selected role
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'role' => 'farm_owner', // 👈 أهم سطر عشان السيستم يتعرف عليه كصاحب مزرعة
+            'role' => $request->role, 
             'bank_name' => $request->bank_name,
             'account_holder_name' => $request->account_holder_name,
             'iban' => $request->iban,
@@ -55,7 +56,12 @@ class PartnerRegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // توجيهه فوراً للداشبورد تبع الملاك
-        return redirect()->route('owner.dashboard');
+        // Dynamic Redirection based on selected role
+        return match ($user->role) {
+            'farm_owner'        => redirect()->route('owner.dashboard'),
+            'supply_company'    => redirect()->route('supplies.dashboard'),
+            'transport_company' => redirect()->route('transport.dashboard'),
+            default             => redirect()->route('dashboard'),
+        };
     }
 }

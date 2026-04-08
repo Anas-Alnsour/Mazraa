@@ -184,9 +184,30 @@
                             </div>
 
                             <dl class="space-y-3 relative z-10">
-                                <div class="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-cyan-200/50 shadow-sm flex justify-between items-center">
-                                    <dt class="text-[10px] font-black text-cyan-700 uppercase tracking-widest">Pickup</dt>
-                                    <dd class="text-sm font-bold text-slate-900 truncate max-w-[200px]" title="{{ $booking->transport->start_and_return_point ?? 'Custom Location' }}">{{ $booking->transport->start_and_return_point ?? 'Custom Location' }}</dd>
+                                <div class="bg-white/70 backdrop-blur-md p-3 rounded-2xl border border-cyan-200/50 shadow-sm flex flex-col gap-2">
+                                    <dt class="text-[10px] font-black text-cyan-700 uppercase tracking-widest flex items-center gap-1.5">
+                                        <svg class="w-3 h-3 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        Pickup Location
+                                    </dt>
+                                    <dd class="text-sm font-bold text-slate-900 w-full">
+                                        @php
+                                            $pickup_location = $booking->transport->start_and_return_point ?? 'Custom Location';
+                                            $lat = $booking->transport->pickup_lat ?? $booking->pickup_lat;
+                                            $lng = $booking->transport->pickup_lng ?? $booking->pickup_lng;
+                                            
+                                            if ($lat && $lng) {
+                                                $mapQuery = $lat . ',' . $lng;
+                                            } else {
+                                                $mapQuery = urlencode($pickup_location);
+                                            }
+                                        @endphp
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ $mapQuery }}" 
+                                           target="_blank" 
+                                           class="inline-flex items-center gap-1.5 hover:text-cyan-600 transition-colors group">
+                                            <span class="truncate max-w-[250px] underline decoration-cyan-500/30 underline-offset-4">{{ $pickup_location }}</span>
+                                            <svg class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                        </a>
+                                    </dd>
                                 </div>
 
                                 @if($booking->transport->driver)
@@ -199,7 +220,10 @@
                                             <div class="flex justify-between items-center">
                                                 <div>
                                                     <div class="font-black text-white text-base mb-0.5">{{ $booking->transport->driver->name }}</div>
-                                                    <a href="tel:{{ $booking->transport->driver->phone }}" class="text-cyan-400 text-xs hover:text-cyan-300">{{ $booking->transport->driver->phone ?? 'N/A' }}</a>
+                                                    <a href="tel:{{ $booking->transport->driver->phone }}" class="inline-flex items-center gap-1.5 text-cyan-400 text-xs font-bold hover:text-cyan-300 transition-colors">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                                        {{ $booking->transport->driver->phone ?? 'N/A' }}
+                                                    </a>
                                                 </div>
                                                 @if($booking->transport->vehicle)
                                                     <div class="text-right">
@@ -222,7 +246,7 @@
                         <div class="text-center sm:text-left w-full">
                             <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Total Payment</p>
                             <div class="flex items-baseline justify-center sm:justify-start gap-1">
-                                <p class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($booking->total_price ?? ($booking->farm->price_per_night * 1.16), 2) }}</p>
+                                <p class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($booking->total_price, 2) }}</p>
                                 <span class="text-sm font-bold text-gray-500">JOD</span>
                             </div>
                         </div>

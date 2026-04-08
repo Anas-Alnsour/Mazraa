@@ -54,10 +54,12 @@
                             <x-dropdown-link :href="route('login')" class="font-bold text-sm">Customer Login</x-dropdown-link>
                             <div class="border-t border-gray-100 my-1"></div>
 
-                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-gray-600">Admin / Farm Owner</x-dropdown-link>
-                            <x-dropdown-link :href="route('supply-driver.login')" class="text-xs font-bold text-gray-600">Supply Co. & Drivers</x-dropdown-link>
-                            <x-dropdown-link :href="route('transport-driver.login')" class="text-xs font-bold text-gray-600">Transport Co. & Drivers</x-dropdown-link>
-                            </x-slot>
+                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-[#1d5c42]">Admin / Farm Owner</x-dropdown-link>
+                            <x-dropdown-link :href="route('supply-company.login')" class="text-xs font-bold text-gray-600">Supply Company</x-dropdown-link>
+                            <x-dropdown-link :href="route('supply-driver.login')" class="text-xs font-bold text-gray-600">Supply Driver</x-dropdown-link>
+                            <x-dropdown-link :href="route('transport-company.login')" class="text-xs font-bold text-gray-600">Transport Company</x-dropdown-link>
+                            <x-dropdown-link :href="route('transport-driver.login')" class="text-xs font-bold text-gray-600">Transport Driver</x-dropdown-link>
+                        </x-slot>
                     </x-dropdown>
 
                     <a href="{{ route('partner.register') }}" class="ml-2 px-5 py-2.5 bg-[#1d5c42] hover:bg-[#154230] text-white text-xs font-black uppercase tracking-widest rounded-full transition-transform active:scale-95 shadow-md">
@@ -118,9 +120,11 @@
                 <div class="px-4 text-sm font-bold text-gray-500 mb-2 uppercase tracking-wider">Authentication</div>
                 <x-responsive-nav-link :href="route('login')">Customer Login</x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('portal.login')">Business Portal</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('supply-driver.login')">Supply Driver Login</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('transport-driver.login')">Transport Driver Login</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('portal.login')" class="font-bold text-[#1d5c42]">Admin / Farm Owner</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('supply-company.login')">Supply Company</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('supply-driver.login')">Supply Driver</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transport-company.login')">Transport Company</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transport-driver.login')">Transport Driver</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('register')">Register New Account</x-responsive-nav-link>
             @endguest
 

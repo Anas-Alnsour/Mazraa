@@ -134,15 +134,24 @@
                                 </a>
                                 <div class="border-t border-gray-100 my-1"></div>
                                 <a href="{{ route('portal.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-blue-50 transition-colors group">
-                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
-                                    Farm Owner / Admin
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
+                                    Admin / Farm Owner
                                 </a>
-                                <a href="{{ route('supply-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-teal-50 transition-colors group">
-                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-teal-500 group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg></div>
+                                <a href="{{ route('supply-company.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-teal-50 transition-colors group">
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
+                                    Supply Company
+                                </a>
+                                <a href="{{ route('supply-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-emerald-50 transition-colors group">
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 00-1 1h1m6-1a1 1 0 01-1 1h1m-6-1h4"></path></svg></div>
                                     Supply Driver
                                 </a>
+                                <div class="border-t border-gray-100 my-1"></div>
+                                <a href="{{ route('transport-company.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 transition-colors group">
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#c2a265] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg></div>
+                                    Transport Company
+                                </a>
                                 <a href="{{ route('transport-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 transition-colors group">
-                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-amber-500 group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg></div>
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#c2a265] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
                                     Transport Driver
                                 </a>
                             </div>

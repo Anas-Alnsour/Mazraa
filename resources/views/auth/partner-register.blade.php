@@ -140,6 +140,26 @@
                                 placeholder="••••••••">
                         </div>
                     </div>
+                    {{-- Partner Type Selection --}}
+                    <div class="group transition-all duration-700 delay-[450ms] transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
+                        <label for="role" class="block text-[11px] font-black uppercase tracking-widest text-[#1d5c42] mb-2 flex items-center gap-2">
+                            Select Partner Type <span class="text-red-500">*</span>
+                            <span class="px-2 py-0.5 bg-[#1d5c42]/10 rounded text-[9px] uppercase">Required</span>
+                        </label>
+                        <div class="relative">
+                            <select id="role" name="role" required
+                                class="block w-full bg-[#1d5c42]/5 border-2 border-[#1d5c42]/10 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] sm:text-sm py-4 px-5 font-bold transition-all duration-300 appearance-none cursor-pointer hover:bg-[#1d5c42]/10 {{ $errors->has('role') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}">
+                                <option value="" disabled selected>Select your business sector...</option>
+                                <option value="farm_owner" {{ old('role') === 'farm_owner' ? 'selected' : '' }}>Farm Owner (Property Listing)</option>
+                                <option value="supply_company" {{ old('role') === 'supply_company' ? 'selected' : '' }}>Supply Company (B2B Marketplace)</option>
+                                <option value="transport_company" {{ old('role') === 'transport_company' ? 'selected' : '' }}>Transport Company (Logistics)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-[#1d5c42]">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        <x-input-error :messages="$errors->get('role')" class="mt-2 text-xs text-red-600 font-bold" />
+                    </div>
 
                     {{-- BANK DETAILS SECTION --}}
                     <div class="pt-6 transition-all duration-700 delay-500 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
