@@ -42,9 +42,9 @@ class SupplyDriverController extends Controller
         }
 
         $request->validate([
-            // Drivers can only advance to 'in_way' or 'delivered'
-            // 'waiting_driver' is set by the supply company, not the driver
-            'status' => 'required|in:in_way,delivered'
+            // Drivers can only advance to 'in_way' or 'delivered', 
+            // but we include 'waiting_driver' as it's the initial state receivers get.
+            'status' => 'required|in:waiting_driver,in_way,delivered'
         ]);
 
         // Fetch all items under this Invoice ID assigned to this driver

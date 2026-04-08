@@ -105,8 +105,8 @@
 
                     {{-- Status Update Controls --}}
                     <div class="p-6 bg-white border-t border-gray-50">
-                        <form action="{{ route('driver.supply.update_status', $invoiceId) }}" method="POST" class="flex flex-col gap-4">
-                            @csrf @method('PUT')
+                        <form action="{{ route('supply.driver.update_status', $invoiceId) }}" method="POST" class="flex flex-col gap-4">
+                            @csrf @method('PATCH')
 
                             <div class="relative group">
                                 <select name="status" class="w-full rounded-2xl border-gray-200 bg-gray-50 text-gray-900 text-xs font-black uppercase tracking-widest px-5 py-4 focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 appearance-none transition-all cursor-pointer">
