@@ -160,13 +160,12 @@ class SupplyOrderController extends Controller
         try {
             DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate) {
 
-                // 💡 التوزيع العادل للسائق (Dispatching Logic)
-                $assignedDriverId = null;
-                try {
-                    $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate);
-                    $assignedDriverId = $driver->id;
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::warning('No supply driver found for checkout. ' . $e->getMessage());
+                // [Sprint 4] Round-Robin Geo-Dispatch
+                $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate);
+                $assignedDriverId = $driver->id ?? null;
+
+                if (!$assignedDriverId) {
+                    \Illuminate\Support\Facades\Log::warning("No supply driver found in {$farmGovernorate} region for invoice {$invoiceId}");
                 }
 
                 $adminId = \App\Models\User::where('role', 'admin')->value('id');
@@ -185,12 +184,12 @@ class SupplyOrderController extends Controller
                     // Decrement stock
                     $supply->decrement('stock', $item->quantity);
 
-                    // Move from cart → pending_payment with financials pre-calculated
+                    // Move from cart → pending_payment
                     $item->update([
                         'order_id'                => $invoiceId,
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => 'pending_payment',
+                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment', // New status if no driver
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);
@@ -295,10 +294,7 @@ class SupplyOrderController extends Controller
         $order->supply->increment('stock', $order->quantity);
         $order->update(['status' => 'cancelled']);
 
-        if ($order->driver_id) {
-             DB::table('users')->where('id', $order->driver_id)->decrement('orders_count');
-        }
-
+        // Note: Sprint 4 uses relational real-time counts, no manual decrement needed.
         return redirect()->route('orders.my_orders')->with('success', 'Order cancelled successfully within the 10-minute window.');
     }
 }

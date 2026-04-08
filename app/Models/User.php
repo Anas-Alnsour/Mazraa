@@ -112,4 +112,23 @@ protected $fillable = [
         return $this->receivedReviews()->avg('rating') ?: 0;
     }
 
+    // ==================================================
+    // [Sprint 4] Dispatch Algorithm Relationships
+    // ==================================================
+
+    /**
+     * Transport jobs assigned to this driver.
+     */
+    public function transportDriverJobs()
+    {
+        return $this->hasMany(\App\Models\Transport::class, 'driver_id');
+    }
+
+    /**
+     * Supply orders assigned to this driver.
+     */
+    public function supplyDriverJobs()
+    {
+        return $this->hasMany(\App\Models\SupplyOrder::class, 'driver_id');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Carbon\Carbon;
 
 class DispatchService
 {
@@ -13,28 +14,26 @@ class DispatchService
      * Criteria:
      * - Driver role is 'transport_driver'
      * - Driver belongs to the CUSTOMER'S ORIGIN Governorate.
-     * - Fair Dispatching: Driver with the lowest 'trips_count' in that region.
+     * - Fair Dispatching (Round-Robin): Driver with the lowest assigned jobs THIS MONTH.
      *
      * @param string $originGovernorate
-     * @return User
-     * @throws Exception
+     * @return User|null
      */
-    public function assignTransportDriver(string $originGovernorate): User
+    public function assignTransportDriver(string $originGovernorate): ?User
     {
-        $driver = User::where('role', 'transport_driver')
+        $now = Carbon::now();
+
+        $driver = User::role('transport_driver')
             ->where('governorate', $originGovernorate)
-            ->orderBy('trips_count', 'asc')
+            ->withCount(['transportDriverJobs' => function($query) use ($now) {
+                $query->whereMonth('created_at', $now->month)
+                      ->whereYear('created_at', $now->year);
+            }])
+            ->orderBy('transport_driver_jobs_count', 'asc') // Round-Robin: Least workload first
             ->first();
 
-        if (!$driver) {
-            throw new Exception("No transport drivers available in {$originGovernorate} region.");
-        }
-
-        // Increment the trip count atomically to maintain fair dispatching
-        DB::transaction(function () use ($driver) {
-            $driver->increment('trips_count');
-        });
-
+        // Graceful handling: If no driver in specific gov, return null instead of throwing exception
+        // The controller will then decide whether to flag it for admin review
         return $driver;
     }
 
@@ -43,27 +42,23 @@ class DispatchService
      * Criteria:
      * - Driver role is 'supply_driver'
      * - Driver belongs to the DESTINATION Governorate (Farm's location).
-     * - Fair Dispatching: Driver with the lowest 'orders_count' in that region.
+     * - Fair Dispatching (Round-Robin): Driver with the lowest assigned orders THIS MONTH.
      *
      * @param string $destinationGovernorate
-     * @return User
-     * @throws Exception
+     * @return User|null
      */
-    public function assignSupplyDriver(string $destinationGovernorate): User
+    public function assignSupplyDriver(string $destinationGovernorate): ?User
     {
-        $driver = User::where('role', 'supply_driver')
+        $now = Carbon::now();
+
+        $driver = User::role('supply_driver')
             ->where('governorate', $destinationGovernorate)
-            ->orderBy('orders_count', 'asc')
+            ->withCount(['supplyDriverJobs' => function($query) use ($now) {
+                $query->whereMonth('created_at', $now->month)
+                      ->whereYear('created_at', $now->year);
+            }])
+            ->orderBy('supply_driver_jobs_count', 'asc') // Round-Robin: Least workload first
             ->first();
-
-        if (!$driver) {
-            throw new Exception("No supply drivers available in {$destinationGovernorate} region.");
-        }
-
-        // Increment the order count atomically to maintain fair dispatching
-        DB::transaction(function () use ($driver) {
-            $driver->increment('orders_count');
-        });
 
         return $driver;
     }

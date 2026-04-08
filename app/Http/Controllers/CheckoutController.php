@@ -96,11 +96,12 @@ class CheckoutController extends Controller
 
                 $transport = Transport::create([
                     'user_id' => $user->id,
-                    'driver_id' => $assignedDriver->id,
+                    'driver_id' => $assignedDriver->id ?? null, // Graceful: Null if no driver found
+                    'company_id' => $assignedDriver->company_id ?? null,
                     'farm_booking_id' => $booking->id,
                     'origin_governorate' => $validated['customer_governorate'],
                     'destination_governorate' => $validated['farm_governorate'],
-                    'status' => 'pending', // Initially pending
+                    'status' => $assignedDriver ? 'pending' : 'pending_assignment', // New status for admin attention
                     'total_price' => $transportPrice,
                     'scheduled_at' => $validated['start_date'],
                     'return_scheduled_at' => $validated['end_date'],
