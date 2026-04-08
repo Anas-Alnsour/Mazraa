@@ -220,23 +220,7 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::get('/financials', [OwnerDashboardController::class, 'financials'])->name('financials');
     Route::post('/financials/request-payout', [OwnerDashboardController::class, 'requestPayout'])->name('payout.request');
 
-    Route::get('/financials/export-csv', function () {
-        $filename = "mazraa_financial_report_" . date('Y-m-d') . ".csv";
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$filename",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-        $callback = function() {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Date', 'Description', 'Amount (JOD)', 'Status', 'Reference ID']);
-            fputcsv($file, [date('Y-m-d'), 'Test Booking Revenue', '150.00', 'Cleared', '#TEST-9999']);
-            fclose($file);
-        };
-        return response()->stream($callback, 200, $headers);
-    })->name('financials.export');
+    Route::get('/financials/export-csv', [OwnerDashboardController::class, 'exportCsv'])->name('financials.export');
 
     Route::get('/profile', [ProfileController::class, 'ownerEdit'])->name('profile.edit');
 });

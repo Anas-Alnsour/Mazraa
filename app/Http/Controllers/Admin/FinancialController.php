@@ -15,7 +15,7 @@ class FinancialController extends Controller
 
         $farmProfit = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
-            ->where('reference_type', 'farm_booking')
+            ->whereIn('reference_type', ['farm_booking', 'booking'])
             ->sum('amount');
 
         $transportProfit = FinancialTransaction::where('user_id', $adminId)

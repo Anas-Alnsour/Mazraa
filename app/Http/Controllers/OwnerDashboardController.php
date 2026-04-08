@@ -245,7 +245,7 @@ class OwnerDashboardController extends Controller
     /**
      * Display the financial overview for the owner
      */
-    public function financials()
+    public function financials(Request $request)
     {
         $userId = Auth::id();
 
@@ -270,12 +270,75 @@ class OwnerDashboardController extends Controller
             ->get()
             ->sum('net_owner_amount');
 
-        // Recent Transactions History
-        $transactions = \App\Models\FinancialTransaction::where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        // Recent Transactions History with Filters
+        $query = \App\Models\FinancialTransaction::where('user_id', $userId);
+
+        if ($request->has('filter')) {
+            switch ($request->filter) {
+                case 'day':
+                    $query->whereDate('created_at', now()->toDateString());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+                    break;
+                case 'year':
+                    $query->whereYear('created_at', now()->year);
+                    break;
+            }
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(15);
+        $transactions->appends($request->all());
 
         return view('owner.financials', compact('availableBalance', 'pendingRevenue', 'lifetimeEarnings', 'transactions'));
+    }
+
+    /**
+     * Export owner financials to CSV.
+     */
+    public function exportCsv()
+    {
+        $userId = Auth::id();
+        $transactions = \App\Models\FinancialTransaction::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $filename = "financial_report_" . date('Y-m-d') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use ($transactions) {
+            $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM for Excel compatibility (optional but helpful for Arabic text)
+            // fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); 
+            
+            fputcsv($file, ['Date', 'Description', 'Reference Type', 'Reference ID', 'Amount (JOD)', 'Type']);
+
+            foreach ($transactions as $tx) {
+                fputcsv($file, [
+                    $tx->created_at->format('Y-m-d H:i'),
+                    $tx->description,
+                    ucwords(str_replace('_', ' ', $tx->reference_type)),
+                    $tx->reference_id,
+                    number_format($tx->amount, 2),
+                    strtoupper($tx->transaction_type)
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -311,7 +374,7 @@ class OwnerDashboardController extends Controller
             // 1. Admin Commission
             FinancialTransaction::create([
                 'user_id'          => $adminId,
-                'reference_type'   => 'booking',
+                'reference_type'   => 'farm_booking',
                 'reference_id'     => $booking->id,
                 'amount'           => $booking->commission_amount,
                 'transaction_type' => 'credit',
@@ -321,7 +384,7 @@ class OwnerDashboardController extends Controller
             // 2. Owner Net Profit
             FinancialTransaction::create([
                 'user_id'          => Auth::id(),
-                'reference_type'   => 'booking',
+                'reference_type'   => 'farm_booking',
                 'reference_id'     => $booking->id,
                 'amount'           => $booking->net_owner_amount,
                 'transaction_type' => 'credit',
