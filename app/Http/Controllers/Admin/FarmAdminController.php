@@ -38,7 +38,10 @@ class FarmAdminController extends Controller
             'rating'                    => 'required|numeric|min:0|max:5',
             'description'               => 'required|string',
             'main_image'                => 'nullable|image|max:10240',
-            'status'                    => 'required|string|in:pending,approved,rejected',
+            'status'                    => 'required|string|in:active,maintenance,suspended',
+            'owner_id'                  => 'required|exists:users,id',
+            'commission_rate'           => 'required|numeric|min:0|max:100',
+            'is_approved'               => 'required|boolean',
             'images.*'                  => 'nullable|image|max:10240',
         ]);
 
@@ -51,8 +54,6 @@ class FarmAdminController extends Controller
         // Create Farm
         $farmData = collect($validated)->except(['images', 'main_image'])->toArray();
         $farmData['main_image'] = $mainImagePath;
-        $farmData['owner_id'] = auth()->id(); // Admin defaults to creator if not specified
-        $farmData['is_approved'] = ($validated['status'] === 'approved');
 
         $farm = Farm::create($farmData);
 
@@ -94,12 +95,14 @@ class FarmAdminController extends Controller
             'rating'                    => 'required|numeric|min:0|max:5',
             'description'               => 'required|string',
             'main_image'                => 'nullable|image|max:10240',
-            'status'                    => 'required|string|in:pending,approved,rejected',
+            'status'                    => 'required|string|in:active,maintenance,suspended',
+            'owner_id'                  => 'required|exists:users,id',
+            'commission_rate'           => 'required|numeric|min:0|max:100',
+            'is_approved'               => 'required|boolean',
             'images.*'                  => 'nullable|image|max:10240',
         ]);
 
         $data = collect($validated)->except(['images', 'main_image'])->toArray();
-        $data['is_approved'] = ($validated['status'] === 'approved');
 
         // Handle Main Image replacement
         if ($request->hasFile('main_image')) {
