@@ -27,17 +27,20 @@
             @if(Auth::user()->role === 'supply_driver')
                 <p class="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Supply Operations</p>
 
-                <a href="{{ route('supply.driver.dashboard') }}" class="flex items-center gap-3 px-4 py-4 bg-teal-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-teal-900/20 transition-all transform active:scale-95">
+                <a href="{{ route('supply.driver.dashboard') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 {{ request()->routeIs('supply.driver.dashboard') ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-teal-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                     Active Deliveries
                 </a>
 
-                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
+                <a href="{{ route('supply.driver.history') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 mt-2 {{ request()->routeIs('supply.driver.history') ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-teal-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     Delivery History
                 </a>
 
-                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-teal-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
+                <a href="{{ route('supply.driver.profile') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 mt-2 {{ request()->routeIs('supply.driver.profile') ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-teal-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Driver Profile
                 </a>
@@ -49,17 +52,20 @@
             @if(Auth::user()->role === 'transport_driver')
                 <p class="px-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Fleet Operations</p>
 
-                <a href="{{ route('transport.driver.dashboard') }}" class="flex items-center gap-3 px-4 py-4 bg-amber-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-amber-900/20 transition-all transform active:scale-95">
+                <a href="{{ route('transport.driver.dashboard') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 {{ request()->routeIs('transport.driver.dashboard') ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-amber-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                     My Schedule
                 </a>
 
-                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed mt-4">
+                <a href="{{ route('transport.driver.history') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 mt-2 {{ request()->routeIs('transport.driver.history') ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-amber-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Trip History
                 </a>
 
-                <a href="javascript:void(0);" class="flex items-center gap-3 px-4 py-4 text-slate-400 hover:bg-slate-800 hover:text-amber-400 rounded-2xl font-bold text-sm transition-all opacity-50 cursor-not-allowed">
+                <a href="{{ route('transport.driver.profile') }}" 
+                   class="flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-sm transition-all transform active:scale-95 mt-2 {{ request()->routeIs('transport.driver.profile') ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-amber-400' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Driver Profile
                 </a>

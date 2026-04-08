@@ -6,10 +6,10 @@
     {{-- ==========================================
          HERO SECTION (SUPPLY THEME: TEAL/EMERALD)
          ========================================== --}}
-    <div class="relative bg-gradient-to-r from-teal-600 to-emerald-700 rounded-3xl p-8 sm:p-10 text-white shadow-[0_20px_50px_rgba(20,184,166,0.3)] overflow-hidden">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-        <div class="absolute bottom-0 left-1/4 w-40 h-40 bg-teal-900/20 rounded-full blur-2xl pointer-events-none"></div>
-        <svg class="absolute bottom-0 right-10 w-48 h-48 text-white/5 transform translate-y-10 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M20 8h-3V4H3v13h2v-2h14v2h2V10l-3-2zM5 15V6h10v9H5zm14 0h-2v-3h-4v-2h3.5l2.5 1.67V15z"/></svg>
+    <div class="relative bg-gradient-to-br from-[#134e4a] via-[#065f46] to-[#064e3b] rounded-[3rem] p-10 md:p-14 text-white shadow-[0_30px_60px_-15px_rgba(20,184,166,0.3)] overflow-hidden border border-teal-500/20">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-400/10 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-1/4 w-64 h-64 bg-teal-400/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <svg class="absolute bottom-[-20%] right-[5%] w-[40%] h-[auto] text-white/5 transform rotate-12 pointer-events-none" fill="currentColor" viewBox="0 0 24 24"><path d="M20 8h-3V4H3v13h2v-2h14v2h2V10l-3-2zM5 15V6h10v9H5zm14 0h-2v-3h-4v-2h3.5l2.5 1.67V15z"/></svg>
 
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -53,9 +53,9 @@
                     {{-- Invoice Header --}}
                     <div class="p-8 border-b border-gray-50 bg-gray-50/30">
                         <div class="flex justify-between items-start mb-6">
-                            <div>
-                                <p class="text-[10px] font-black uppercase tracking-widest text-teal-600 mb-1">Invoice ID</p>
-                                <h3 class="text-2xl font-black text-gray-900 tracking-tight">{{ $invoiceId }}</h3>
+                            <div class="bg-teal-500/10 border border-teal-500/20 px-4 py-3 rounded-2xl">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-teal-600 mb-1 leading-none">Invoice ID</p>
+                                <h3 class="text-xl font-black text-gray-900 tracking-tighter">{{ $invoiceId }}</h3>
                             </div>
 
                             @if($firstItem->booking->farm->location_link)

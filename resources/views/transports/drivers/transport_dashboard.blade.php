@@ -3,9 +3,31 @@
 @section('title', 'Driver Dashboard')
 
 @section('content')
-<div class="space-y-8 pb-12">
+<div class="max-w-7xl mx-auto space-y-8 pb-12 animate-fade-in-up">
 
-<div class="animate-fade-in-up">
+    {{-- ==========================================
+         HERO SECTION (TRANSPORT THEME: AMBER/SLATE)
+         ========================================== --}}
+    <div class="relative bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] rounded-[3rem] p-10 md:p-14 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden border border-slate-700/50 mb-10">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-1/4 w-64 h-64 bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none"></div>
+        
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest mb-4 backdrop-blur-md">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                    Fleet Commander
+                </div>
+                <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-2">Trip Management</h1>
+                <p class="text-slate-400 font-medium max-w-md leading-relaxed">Oversee your assigned routes, navigate to pickups, and ensure timely drops at destination farms.</p>
+            </div>
+
+            <div class="bg-slate-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-3xl text-center min-w-[160px] shadow-2xl transform hover:scale-105 transition-transform">
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 font-black mb-1">Upcoming Jobs</p>
+                <p class="text-5xl font-black text-white tracking-tighter">{{ $assignedTrips->count() }}</p>
+            </div>
+        </div>
+    </div>
 
         @if($activeTrip)
             <div class="mb-10">

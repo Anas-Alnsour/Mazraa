@@ -68,4 +68,13 @@ class ProfileController extends Controller
         ]);
     }
 
+    /**
+     * Display the driver's dedicated profile form.
+     */
+    public function driverEdit(Request $request): \Illuminate\View\View
+    {
+        return view('driver.profile.edit', [
+            'user' => $request->user(),
+        ]);
+    }
 }

@@ -266,12 +266,16 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 // --- TRANSPORT DRIVER DASHBOARD ---
 Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('/history', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'history'])->name('history');
+    Route::get('/profile', [ProfileController::class, 'driverEdit'])->name('profile');
     Route::patch('/trips/{id}/status', [\App\Http\Controllers\Driver\TransportDriverDashboardController::class, 'updateStatus'])->name('update_status');
 });
 
 // --- SUPPLY DRIVER ROUTES ---
 Route::middleware(['auth', 'role:supply_driver'])->prefix('driver/supply')->name('supply.driver.')->group(function () {
     Route::get('/dashboard', [DriverDashboardSupplyController::class, 'dashboard'])->name('dashboard');
+    Route::get('/history', [DriverDashboardSupplyController::class, 'history'])->name('history');
+    Route::get('/profile', [ProfileController::class, 'driverEdit'])->name('profile');
     Route::patch('/order/{id}/status', [DriverDashboardSupplyController::class, 'updateStatus'])->name('update_status');
 });
 

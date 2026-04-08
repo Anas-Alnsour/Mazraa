@@ -115,4 +115,23 @@ class SupplyDriverController extends Controller
         }
     }
 
+    /**
+     * Display the Supply Driver Delivery History.
+     */
+    public function history()
+    {
+        if (Auth::user()->role !== 'supply_driver') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $history = SupplyOrder::with(['supply.company', 'user', 'booking.farm'])
+            ->where('driver_id', Auth::id())
+            ->where('status', 'delivered')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        $groupedHistory = $history->groupBy('order_id');
+
+        return view('supplies.drivers.history', compact('groupedHistory'));
+    }
 }

@@ -141,4 +141,19 @@ class TransportDriverDashboardController extends Controller
         }
     }
 
+    /**
+     * Display the transport driver trip history.
+     */
+    public function history()
+    {
+        $driverId = Auth::id();
+
+        $trips = Transport::where('driver_id', $driverId)
+            ->where('status', 'completed')
+            ->with(['user', 'farmBooking.farm', 'farm', 'vehicle'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('transports.drivers.history', compact('trips'));
+    }
 }
