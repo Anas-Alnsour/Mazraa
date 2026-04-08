@@ -95,10 +95,36 @@
          TRANSACTION HISTORY
          ========================================== --}}
     <div class="bg-white rounded-[2.5rem] shadow-[0_15px_40px_-10px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
-        <div class="px-10 py-8 border-b border-slate-50 flex justify-between items-center">
+        <div class="px-10 py-8 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                 <h3 class="text-xl font-black text-slate-900">Live Transaction Stream</h3>
                 <p class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Real-time Financial Logging</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                {{-- Timeframe Filter --}}
+                <form action="{{ route('admin.financials') }}" method="GET" class="flex items-center gap-3">
+                    <div class="relative group">
+                        <select name="filter" onchange="this.form.submit()" 
+                                class="bg-slate-50 border border-slate-200 text-slate-900 text-[10px] font-black uppercase tracking-widest rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-10 py-3 appearance-none cursor-pointer transition-all hover:bg-white">
+                            <option value="all" {{ ($filter ?? 'all') == 'all' ? 'selected' : '' }}>All Time</option>
+                            <option value="daily" {{ ($filter ?? '') == 'daily' ? 'selected' : '' }}>Today</option>
+                            <option value="weekly" {{ ($filter ?? '') == 'weekly' ? 'selected' : '' }}>This Week</option>
+                            <option value="monthly" {{ ($filter ?? '') == 'monthly' ? 'selected' : '' }}>This Month</option>
+                            <option value="yearly" {{ ($filter ?? '') == 'yearly' ? 'selected' : '' }}>This Year</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400 group-hover:text-indigo-500 transition-colors">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </div>
+                    </div>
+                </form>
+
+                {{-- CSV Export --}}
+                <a href="{{ request()->fullUrlWithQuery(['export' => 'csv']) }}" 
+                   class="inline-flex items-center gap-2 px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transform active:scale-95">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Export CSV
+                </a>
             </div>
         </div>
 

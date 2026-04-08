@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supply;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +15,7 @@ class SupplyAdminController extends Controller
      */
     public function index()
     {
-        $supplies = Supply::latest()->paginate(10);
+        $supplies = Supply::with('company')->latest()->paginate(10);
         return view('admin.supplies.index', compact('supplies'));
     }
 
@@ -23,7 +24,8 @@ class SupplyAdminController extends Controller
      */
     public function create()
     {
-        return view('admin.supplies.create');
+        $companies = User::where('role', 'supply_company')->get();
+        return view('admin.supplies.create', compact('companies'));
     }
 
     /**
@@ -31,23 +33,21 @@ class SupplyAdminController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'company_id'  => 'required|exists:users,id',
             'name'        => 'required|string|max:255',
-            'quantity'    => 'required|integer|min:1',
+            'category'    => 'required|string|max:255',
             'price'       => 'required|numeric|min:0',
-            'image'       => 'required|image|max:5120',
-            'description' => 'nullable|string',
+            'stock'       => 'required|integer|min:0',
+            'description' => 'required|string',
+            'image'       => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $imagePath = $request->file('image')->store('supply_gallery', 'public');
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('supplies', 'public');
+        }
 
-        Supply::create([
-            'name'        => $request->name,
-            'stock'       => $request->quantity,
-            'price'       => $request->price,
-            'image'       => $imagePath,
-            'description' => $request->description,
-        ]);
+        Supply::create($validated);
 
         return redirect()
             ->route('admin.supplies.index')
@@ -59,7 +59,8 @@ class SupplyAdminController extends Controller
      */
     public function edit(Supply $supply)
     {
-        return view('admin.supplies.edit', compact('supply'));
+        $companies = User::where('role', 'supply_company')->get();
+        return view('admin.supplies.edit', compact('supply', 'companies'));
     }
 
     /**
@@ -67,30 +68,25 @@ class SupplyAdminController extends Controller
      */
     public function update(Request $request, Supply $supply)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'company_id'  => 'required|exists:users,id',
             'name'        => 'required|string|max:255',
-            'quantity'    => 'required|integer|min:1',
+            'category'    => 'required|string|max:255',
             'price'       => 'required|numeric|min:0',
-            'image'       => 'nullable|image|max:5120',
-            'description' => 'nullable|string',
+            'stock'       => 'required|integer|min:0',
+            'description' => 'required|string',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $data = [
-            'name'        => $request->name,
-            'stock'       => $request->quantity,
-            'price'       => $request->price,
-            'description' => $request->description,
-        ];
-
         if ($request->hasFile('image')) {
-            if ($supply->image && Storage::disk('public')->exists($supply->image)) {
+            // Delete old image
+            if ($supply->image) {
                 Storage::disk('public')->delete($supply->image);
             }
-
-            $data['image'] = $request->file('image')->store('supply_gallery', 'public');
+            $validated['image'] = $request->file('image')->store('supplies', 'public');
         }
 
-        $supply->update($data);
+        $supply->update($validated);
 
         return redirect()
             ->route('admin.supplies.index')
@@ -102,7 +98,7 @@ class SupplyAdminController extends Controller
      */
     public function destroy(Supply $supply)
     {
-        if ($supply->image && Storage::disk('public')->exists($supply->image)) {
+        if ($supply->image) {
             Storage::disk('public')->delete($supply->image);
         }
 
