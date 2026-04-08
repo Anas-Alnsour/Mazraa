@@ -14,7 +14,7 @@ class Farm extends Model
         'name', 'location', 'capacity', 'description', 'main_image',
         'owner_id', 'rating', 'commission_rate', 'latitude', 'longitude',
         'is_approved', 'governorate', 'location_link',
-        'price_per_morning_shift', 'price_per_evening_shift', 'price_per_full_day'
+        'price_per_night', 'price_per_morning_shift', 'price_per_evening_shift', 'price_per_full_day'
     ];
 
     public function images()

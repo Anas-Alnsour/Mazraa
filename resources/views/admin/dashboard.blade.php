@@ -46,13 +46,17 @@
                 <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-200/60">Platform commissions collected.</p>
             </div>
 
-            <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
-                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Registered Users</h3>
-                <div class="text-3xl font-black text-white mb-2 flex items-center">
-                    {{ number_format($totalUsers) }}
-                    <span class="ml-3 text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-slate-700 text-slate-300 rounded-md border border-slate-600">{{ number_format($totalPartners) }} Partners</span>
+            <a href="{{ route('admin.users.index') }}" class="block group">
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl group-hover:bg-slate-700/50 transition-all transform hover:-translate-y-1">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-indigo-400 transition-colors">Registered Users</h3>
+                    <div class="text-3xl font-black text-white mb-2 flex items-center">
+                        {{ number_format($totalUsers) }}
+                        <span class="ml-3 text-[10px] font-black uppercase tracking-widest px-2 py-1 bg-slate-700 text-slate-300 rounded-md border border-slate-600">
+                            {{ number_format($totalPartners) }} Partners
+                        </span>
+                    </div>
                 </div>
-            </div>
+            </a>
 
             <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Live Farms</h3>

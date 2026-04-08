@@ -1,118 +1,88 @@
-@extends('layouts.app')
-
-@section('title', 'Manage Supplies')
+@extends('layouts.admin')
 
 @section('content')
-    <div class="max-w-7xl mx-auto py-10 px-6">
-
-        {{-- الهيدر وزر الإضافة --}}
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4">
-            <div>
-                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Manage Supplies</h1>
-                <p class="mt-1 text-gray-500 text-sm">Overview of your inventory items.</p>
-            </div>
-
-            <a href="{{ route('admin.supplies.create') }}" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-0.5 gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                Add New Supply
+<div class="space-y-8 animate-[fade-in_0.8s_ease-out]">
+    {{-- Header Section --}}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-800/50 p-8 rounded-[2rem] border border-slate-700/50 backdrop-blur-xl">
+        <div>
+            <h1 class="text-4xl font-black text-white tracking-tighter mb-2">Global <span class="text-lime-400">Inventory</span></h1>
+            <p class="text-slate-400 font-medium">Manage marketplace supplies, track stock levels, and audit prices.</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="{{ route('admin.supplies.create') }}" class="px-8 py-4 bg-lime-600 hover:bg-lime-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-lime-900/20 flex items-center gap-2 group transform active:scale-95">
+                <svg class="w-5 h-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                Deploy New Supply
             </a>
         </div>
+    </div>
 
-        {{-- رسالة النجاح --}}
-        @if (session('success'))
-            <div class="mb-8 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl flex items-center gap-3 shadow-sm">
-                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <p class="text-green-800 font-medium">{{ session('success') }}</p>
+    {{-- Supplies Grid (Upgraded to consistent God Mode aesthetic) --}}
+    @if($supplies->isEmpty())
+        <div class="bg-slate-800/30 rounded-[2.5rem] border border-slate-700/50 p-32 flex flex-col items-center justify-center text-center shadow-2xl backdrop-blur-md">
+            <div class="h-24 w-24 rounded-full bg-slate-800 flex items-center justify-center text-slate-700 border border-slate-700 shadow-inner mb-6">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 12 12"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             </div>
-        @endif
-
-        {{-- التحقق مما إذا كانت القائمة فارغة --}}
-        @if ($supplies->isEmpty())
-            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm text-center">
-                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">Inventory Empty</h3>
-                <p class="text-gray-500 mb-6">No supplies available yet.</p>
-            </div>
-        @else
-            {{-- شبكة عرض العناصر --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach ($supplies as $supply)
-                    <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden hover:-translate-y-1">
-
-                        {{-- صورة المنتج --}}
-                        <div class="relative h-56 overflow-hidden bg-gray-100">
-                            <img src="{{ $supply->image ? Storage::url($supply->image) : 'https://via.placeholder.com/800x600' }}"
-                                 alt="{{ $supply->name }}"
-                                 class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
-
-                            {{-- حالة المخزون (Badges) --}}
-                            <div class="absolute top-3 left-3">
-                                @if($supply->stock == 0)
-                                    <span class="px-3 py-1 bg-red-500/90 backdrop-blur text-white text-xs font-bold uppercase rounded-lg shadow-sm">
-                                        Out of Stock
-                                    </span>
-                                @elseif($supply->stock < 10)
-                                    <span class="px-3 py-1 bg-yellow-500/90 backdrop-blur text-white text-xs font-bold uppercase rounded-lg shadow-sm">
-                                        Low: {{ $supply->stock }}
-                                    </span>
-                                @else
-                                    <span class="px-3 py-1 bg-green-600/90 backdrop-blur text-white text-xs font-bold uppercase rounded-lg shadow-sm">
-                                        Stock: {{ $supply->stock }}
-                                    </span>
-                                @endif
-                            </div>
-
-                            {{-- السعر --}}
-                            <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur px-3 py-1 rounded-lg text-sm font-extrabold text-green-700 shadow-sm">
-                                {{ $supply->price }} JD
-                            </div>
+            <h3 class="text-xl font-black text-slate-300">Inventory Depleted</h3>
+            <p class="text-slate-500 max-w-xs font-medium mt-2">No active marketplace supplies found in the system cache.</p>
+        </div>
+    @else
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            @foreach($supplies as $supply)
+                <div class="group bg-slate-800/50 rounded-[2rem] border border-slate-700/50 overflow-hidden backdrop-blur-xl hover:bg-slate-700/50 transition-all duration-500 hover:-translate-y-2 shadow-xl shadow-black/20">
+                    {{-- Product Image --}}
+                    <div class="relative h-56 overflow-hidden">
+                        <img src="{{ $supply->image ? Storage::url($supply->image) : 'https://via.placeholder.com/800x600?text=Premium+Supply' }}" 
+                             class="h-full w-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60"></div>
+                        
+                        {{-- Stock Badge --}}
+                        <div class="absolute top-4 left-4">
+                            @if($supply->stock == 0)
+                                <span class="px-3 py-1 bg-rose-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg">Deficit</span>
+                            @elseif($supply->stock < 10)
+                                <span class="px-3 py-1 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg animate-pulse">Low Stock: {{ $supply->stock }}</span>
+                            @else
+                                <span class="px-3 py-1 bg-lime-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-lg">Available: {{ $supply->stock }}</span>
+                            @endif
                         </div>
 
-                        {{-- تفاصيل المنتج --}}
-                        <div class="p-6 flex flex-col flex-1">
-                            <div class="mb-4">
-                                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-1" title="{{ $supply->name }}">
-                                    {{ $supply->name }}
-                                </h3>
-                                <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">
-                                    {{ \Illuminate\Support\Str::limit($supply->description, 90) }}
-                                </p>
-                            </div>
-
-                            {{-- أزرار التحكم --}}
-                            <div class="mt-auto pt-4 border-t border-gray-100 flex gap-3">
-                                <a href="{{ route('admin.supplies.edit', $supply->id) }}"
-                                   class="flex-1 py-2 bg-yellow-50 text-yellow-600 font-bold text-sm rounded-xl hover:bg-yellow-100 transition text-center border border-yellow-100 flex items-center justify-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                    Edit
-                                </a>
-
-                                <form action="{{ route('admin.supplies.destroy', $supply->id) }}" method="POST" class="flex-1" onsubmit="return confirm('Delete this supply?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="w-full py-2 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition border border-red-100 flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        Delete
-                                    </button>
-                                </form>
-                            </div>
+                        {{-- Price Overly --}}
+                        <div class="absolute bottom-4 right-4 bg-slate-900/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-700 shadow-xl">
+                            <span class="text-lg font-black text-lime-400">{{ number_format($supply->price, 2) }} <span class="text-[10px] text-slate-500 uppercase tracking-widest">JOD</span></span>
                         </div>
                     </div>
-                @endforeach
-            </div>
-        @endif
 
-        {{-- التصفح (Pagination) --}}
-        @if ($supplies->hasPages())
-            <div class="mt-12 flex justify-center pb-8">
-                <div class="bg-white shadow-sm rounded-2xl px-4 py-2 border border-gray-100">
-                    {{-- تأكد من وجود ملف pagination/green.blade.php أو احذفه لاستخدام الافتراضي --}}
-                    {{ $supplies->withQueryString()->links('pagination.green') }}
+                    {{-- Content --}}
+                    <div class="p-6">
+                        <div class="mb-6">
+                            <h3 class="text-lg font-black text-white mb-2 line-clamp-1 group-hover:text-lime-400 transition-colors">{{ $supply->name }}</h3>
+                            <p class="text-xs text-slate-400 font-medium leading-relaxed line-clamp-2 italic">"{{ $supply->description }}"</p>
+                        </div>
+
+                        {{-- Action Suite --}}
+                        <div class="flex items-center gap-3 pt-4 border-t border-slate-700/50">
+                            <a href="{{ route('admin.supplies.edit', $supply->id) }}" class="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-slate-300 font-black text-[10px] uppercase tracking-widest rounded-xl border border-slate-700 transition-all text-center flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                Adjust
+                            </a>
+                            <form action="{{ route('admin.supplies.destroy', $supply->id) }}" method="POST" class="flex-shrink-0" onsubmit="return confirm('Decommission this supply?');">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="p-3 bg-slate-900 hover:bg-rose-600 text-slate-500 hover:text-white rounded-xl border border-slate-700 transition-all shadow-xl">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
+            @endforeach
+        </div>
+
+        {{-- Pagination --}}
+        @if($supplies->hasPages())
+            <div class="mt-12 flex justify-center pb-8 text-white">
+                {{ $supplies->links() }}
             </div>
         @endif
-
-    </div>
+    @endif
+</div>
 @endsection

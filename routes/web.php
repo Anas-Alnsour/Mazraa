@@ -16,6 +16,7 @@ use App\Http\Controllers\SupplyCompanyDashboardController;
 use App\Http\Controllers\TransportCompanyDashboardController;
 use App\Http\Controllers\Admin\ContactController as AdminContactController;
 use App\Http\Controllers\Admin\SupplyAdminController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\SuperAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\OwnerDashboardController;
@@ -191,6 +192,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Old resources mapped to admin logic
     Route::resource('farms', FarmAdminController::class);
     Route::resource('supplies', SupplyAdminController::class);
+    Route::resource('users', AdminUserController::class);
     // Admin Message Management
     Route::get('/contact-messages', [AdminContactController::class, 'index'])->name('contacts.index');
     Route::get('/contact-messages/{id}', [AdminContactController::class, 'show'])->name('contacts.show');
