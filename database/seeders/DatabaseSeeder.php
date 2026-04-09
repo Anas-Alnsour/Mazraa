@@ -6,7 +6,12 @@ use App\Models\User;
 use App\Models\Farm;
 use App\Models\FarmBooking;
 use App\Models\Transport;
+use App\Models\ContactMessage;
+use App\Models\Favorite;
+use App\Models\FarmBlockedDate;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -109,6 +114,61 @@ class DatabaseSeeder extends Seeder
             ]);
         });
 
-        $this->command->info('MASSIVE SCALE Demo Data Ready 🟢 - 6 months of historical data injected!');
+        // 9. System Support (Contact Us messages)
+        ContactMessage::factory(35)->create();
+
+        // 10. User Experience (Favorites)
+        // user@mazraa.com favorites 15-20 farms
+        $favoriteFarms = $allFarms->random(rand(15, 20));
+        foreach ($favoriteFarms as $farm) {
+            Favorite::create([
+                'user_id' => $user->id,
+                'farm_id' => $farm->id,
+            ]);
+        }
+
+        // 11. Realism (Blocked Dates)
+        // Block dates for some premium farms
+        $premiumFarms = $allFarms->random(10);
+        foreach ($premiumFarms as $farm) {
+            FarmBlockedDate::factory(5)->create([
+                'farm_id' => $farm->id,
+            ]);
+        }
+
+        // 12. System Activity (Notifications)
+        $coreAccounts = [$admin, $owner, $user, $supplyCo, $transport];
+        $notificationTypes = [
+            'App\Notifications\BookingConfirmed',
+            'App\Notifications\PaymentReceived',
+            'App\Notifications\OrderDispatched',
+            'App\Notifications\NewReviewPosted',
+            'App\Notifications\DriverAssigned'
+        ];
+        $notificationData = [
+            ['title' => 'تأكيد الحجز', 'message' => 'تم تأكيد حجزك بنجاح للمزرعة المختارة.'],
+            ['title' => 'تم استلام الدفعة', 'message' => 'لقد تم تسجيل مبلغ مالي جديد في محفظتك.'],
+            ['title' => 'طلب قيد التوصيل', 'message' => 'يرجى العلم أن طلب التوريد الخاص بك قيد التوصيل الآن.'],
+            ['title' => 'تقييم جديد', 'message' => 'قام أحد العملاء بإضافة تقييم جديد لمزرعتك.'],
+            ['title' => 'تعيين سائق', 'message' => 'تم تعيين سائق لرحلتك القادمة، يمكنك التواصل معه الآن.']
+        ];
+
+        foreach ($coreAccounts as $account) {
+            for ($i = 0; $i < 15; $i++) {
+                $index = array_rand($notificationTypes);
+                DB::table('notifications')->insert([
+                    'id' => Str::uuid(),
+                    'type' => $notificationTypes[$index],
+                    'notifiable_type' => 'App\Models\User',
+                    'notifiable_id' => $account->id,
+                    'data' => json_encode($notificationData[$index]),
+                    'read_at' => rand(0, 1) ? now() : null,
+                    'created_at' => now()->subDays(rand(1, 30)),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $this->command->info('OMNI-SEEDER COMPLETE 🟢 - 100% database coverage achieved!');
     }
 }
