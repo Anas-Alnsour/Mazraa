@@ -36,9 +36,12 @@ class BookingConfirmedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'New Booking Confirmed',
-            'message' => 'Farm: ' . $this->booking->farm->name,
-            'action_url' => $notifiable->role === 'farm_owner' ? route('owner.bookings.index') : route('bookings.my_bookings')
+            'id' => $this->booking->id,
+            'title' => 'Booking Confirmed',
+            'message' => 'Reservation for ' . ($this->booking->farm->name ?? 'Farm') . ' has been successfully confirmed.',
+            'action_url' => $notifiable->role === 'farm_owner' 
+                ? route('owner.bookings.show', $this->booking->id) 
+                : route('bookings.show', $this->booking->id)
         ];
     }
 }

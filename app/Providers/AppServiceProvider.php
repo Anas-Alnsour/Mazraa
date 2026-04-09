@@ -41,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('pendingApprovalCount', $pendingCount);
             }
         });
+
+        // 🔗 Global Pagination Design Link - Directing Laravel to use our custom SaaS view
+        \Illuminate\Pagination\Paginator::defaultView('vendor.pagination.custom');
     }
 
     protected $policies = [

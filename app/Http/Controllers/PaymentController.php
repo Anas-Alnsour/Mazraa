@@ -117,7 +117,7 @@ class PaymentController extends Controller
                 // --- 📩 SEND NOTIFICATIONS ---
                 $booking->user->notify(new BookingConfirmedNotification($booking));
                 if ($booking->farm && $booking->farm->owner_id) {
-                    \App\Models\User::find($booking->farm->owner_id)->notify(new BookingConfirmedNotification($booking));
+                    \App\Models\User::find($booking->farm->owner_id)->notify(new NewBookingReceivedNotification($booking));
                 }
 
                 return redirect()->route('bookings.show', $booking->id)

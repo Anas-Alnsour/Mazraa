@@ -39,7 +39,7 @@
                     </div>
                 @endif
                 <div class="flex justify-between text-xs pb-3 border-b border-gray-100">
-                    <span class="text-gray-500 font-bold">Platform Tax (16%)</span>
+                    <span class="text-gray-500 font-bold">Platform Tax</span>
                     <span class="font-black text-gray-900">{{ number_format($booking->tax_amount, 2) }} JOD</span>
                 </div>
             </div>

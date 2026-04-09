@@ -37,9 +37,15 @@ class SupplyDriverAssignedNotification extends Notification implements ShouldQue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'New Driver Assignment',
-            'message' => 'You have been assigned to deliver supply order #' . $this->invoiceId,
-            'action_url' => $notifiable->role === 'supply_driver' ? route('supply.driver.dashboard') : ($notifiable->role === 'admin' ? route('admin.dashboard') : route('supplies.dashboard'))
+            'invoice_id' => $this->invoiceId,
+            'title' => 'Driver Assigned',
+            'message' => 'A driver has been assigned to deliver supply order #' . $this->invoiceId . '.',
+            'action_url' => match($notifiable->role) {
+                'supply_driver' => route('supply.driver.dashboard'),
+                'supply_company' => route('supplies.dashboard'),
+                'admin' => route('admin.dashboard'),
+                default => route('dashboard'),
+            }
         ];
     }
 }

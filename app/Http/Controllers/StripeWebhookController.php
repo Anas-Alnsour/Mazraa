@@ -10,6 +10,7 @@ use App\Models\SupplyOrder;
 use App\Models\FinancialTransaction;
 use App\Models\User;
 use App\Notifications\BookingConfirmedNotification;
+use App\Notifications\NewBookingReceivedNotification;
 use Illuminate\Support\Facades\Log;
 
 class StripeWebhookController extends Controller
@@ -78,7 +79,7 @@ class StripeWebhookController extends Controller
         if ($booking->farm && $booking->farm->owner_id) {
             $owner = User::find($booking->farm->owner_id);
             if ($owner) {
-                $owner->notify(new BookingConfirmedNotification($booking));
+                $owner->notify(new \App\Notifications\NewBookingReceivedNotification($booking));
             }
         }
     }

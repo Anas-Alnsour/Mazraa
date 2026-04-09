@@ -213,6 +213,7 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
     Route::delete('/farms/{farm}', [OwnerFarmController::class, 'destroy'])->name('farms.destroy');
 
     Route::get('/bookings', [OwnerDashboardController::class, 'bookings'])->name('bookings.index');
+    Route::get('/bookings/{id}', [OwnerDashboardController::class, 'show'])->name('bookings.show');
     Route::patch('/bookings/{id}/approve', [OwnerDashboardController::class, 'approveBooking'])->name('bookings.approve');
     Route::patch('/bookings/{id}/reject', [OwnerDashboardController::class, 'rejectBooking'])->name('bookings.reject');
     Route::patch('/bookings/{id}/complete', [OwnerDashboardController::class, 'completeBooking'])->name('bookings.complete');

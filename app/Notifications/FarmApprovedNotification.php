@@ -37,9 +37,10 @@ class FarmApprovedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'Farm Approved',
-            'message' => 'Your farm listing "' . ($this->farm->name ?? 'N/A') . '" has been approved.',
-            'action_url' => route('owner.dashboard')
+            'id' => $this->farm->id,
+            'title' => 'Property Approved',
+            'message' => 'Congratulations! Your farm "' . ($this->farm->name ?? 'N/A') . '" has been verified and is now live.',
+            'action_url' => route('owner.farms.index')
         ];
     }
 }

@@ -45,9 +45,15 @@ class DriverAssignedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'title' => 'New Driver Assignment',
-            'message' => 'You have been assigned to a new trip to ' . ($this->transport->farm->name ?? 'Farm'),
-            'action_url' => $notifiable->role === 'transport_driver' ? route('transport.driver.dashboard') : ($notifiable->role === 'transport_company' ? route('transport.dispatch.index') : route('dashboard'))
+            'id' => $this->transport->id,
+            'title' => 'Driver Assigned',
+            'message' => 'A driver has been assigned to your trip to ' . ($this->transport->farm->name ?? 'Farm') . '.',
+            'action_url' => match($notifiable->role) {
+                'transport_driver' => route('transport.driver.dashboard'),
+                'transport_company' => route('transport.dispatch.index'),
+                'user' => route('bookings.my_bookings'),
+                default => route('dashboard'),
+            }
         ];
     }
 }

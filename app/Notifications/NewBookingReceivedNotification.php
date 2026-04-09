@@ -37,9 +37,10 @@ class NewBookingReceivedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'id' => $this->booking->id,
             'title' => 'New Booking Received',
-            'message' => 'You have received a new paid booking for ' . ($this->booking->farm->name ?? 'your farm') . '.',
-            'action_url' => route('owner.bookings.index')
+            'message' => 'You have received a new booking for ' . ($this->booking->farm->name ?? 'your farm') . '.',
+            'action_url' => route('owner.bookings.show', $this->booking->id)
         ];
     }
 }

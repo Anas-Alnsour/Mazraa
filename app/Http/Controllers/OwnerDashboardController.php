@@ -208,6 +208,22 @@ class OwnerDashboardController extends Controller
     }
 
     /**
+     * Display a specific booking detail.
+     */
+    public function show($id)
+    {
+        // Removed undefined 'payments' and 'reviews' relationships
+        // Added 'farm.images' for optimized eager loading
+        $booking = FarmBooking::with(['farm.images', 'user'])->findOrFail($id);
+
+        if ($booking->farm->owner_id !== Auth::id()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        return view('owner.bookings.show', compact('booking'));
+    }
+
+    /**
      * Owner manually approves a booking.
      */
     public function approveBooking($id)
@@ -318,10 +334,10 @@ class OwnerDashboardController extends Controller
 
         $callback = function() use ($transactions) {
             $file = fopen('php://output', 'w');
-            
+
             // Add UTF-8 BOM for Excel compatibility (optional but helpful for Arabic text)
-            // fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); 
-            
+            // fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
             fputcsv($file, ['Date', 'Description', 'Reference Type', 'Reference ID', 'Amount (JOD)', 'Type']);
 
             foreach ($transactions as $tx) {
@@ -428,7 +444,7 @@ class OwnerDashboardController extends Controller
         }
 
         // Notify Admins
-        $admins = \App\Models\User::where('role', 'admin')->get();
+        $admins = \App\Models\User::where('role', 'super_admin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new \App\Notifications\PayoutRequestedNotification($user, $availableBalance));
         }
