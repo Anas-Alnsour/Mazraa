@@ -32,9 +32,7 @@ class SupplyOrderController extends Controller
             'quantity' => 'required|integer|min:1|max:' . $supply->stock,
         ]);
 
-        // [Sprint 4 UX] Booking is no longer required at Add to Cart. 
-        // It will be selected at the final Checkout step in the Cart.
-        $bookingId = null; 
+        $bookingId = null;
         $booking = null;
 
         $quantity = $request->quantity;
@@ -80,7 +78,6 @@ class SupplyOrderController extends Controller
 
         $cartTotal = $cartItems->sum('total_price');
 
-        // [Sprint 4 UX] Global Booking Selection logic moved here from Index
         $eligibleBookings = [];
         if (Auth::user()->role === 'user') {
             $userBookings = FarmBooking::with('farm')
@@ -164,63 +161,61 @@ class SupplyOrderController extends Controller
             return back()->with('error', 'Checkout Policy Violation: Supply checkout is only allowed within your booking duration or exactly 2 hours before it starts.');
         }
 
-        // 1. حماية: فحص المخزون قبل أي عملية خصم
         foreach ($cartOrders as $item) {
             if ($item->quantity > $item->supply->stock) {
                 return back()->with('error', "Sorry, {$item->supply->name} no longer has enough stock. Please adjust your cart.");
             }
         }
 
-        // [Sprint 4] All items in this order will now be linked to the global destination
         $farmGovernorate = $activeBooking->farm->governorate ?? 'Amman';
-
-        // 2. إنشاء رقم فاتورة موحد
         $invoiceId = 'INV-' . strtoupper(Str::random(8));
         $commissionRate = 0.10;
 
         try {
             DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate) {
 
-                // [Sprint 4] Round-Robin Geo-Dispatch
                 $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate);
                 $assignedDriverId = $driver->id ?? null;
 
-                if (!$assignedDriverId) {
-                    \Illuminate\Support\Facades\Log::warning("No supply driver found in {$farmGovernorate} region for invoice {$invoiceId}");
+                $localCompany = \App\Models\User::where('role', 'supply_company')
+                    ->where('governorate', $farmGovernorate)
+                    ->first();
+
+                if (!$localCompany) {
+                    throw new \Exception("Operational Error: No supply branch found for {$farmGovernorate}. Please contact support.");
                 }
 
-                $adminId = \App\Models\User::where('role', '=', 'admin')->first()->id ?? 1;
-
                 foreach ($cartOrders as $item) {
-                    // Lock the supply row for update to prevent race conditions
-                    $supply = Supply::where('id', $item->supply_id)->lockForUpdate()->first();
+                    // [STRICT ROUTING] Swap to local branch inventory
+                    $localSupply = Supply::where('company_id', $localCompany->id)
+                        ->where('name', $item->supply->name)
+                        ->first();
 
-                    if ($supply->stock < $item->quantity) {
-                        throw new \Exception('Stock issue detected during checkout for ' . $supply->name);
+                    $finalSupply = $localSupply ?: $item->supply;
+
+                    if ($finalSupply->stock < $item->quantity) {
+                        throw new \Exception("Stock issue in {$farmGovernorate} branch for " . $finalSupply->name);
                     }
 
                     $commissionAmount = $item->total_price * $commissionRate;
                     $netCompanyAmount = $item->total_price - $commissionAmount;
 
-                    // Decrement stock
-                    $supply->decrement('stock', $item->quantity);
+                    // Decrement stock in the LOCAL branch
+                    $finalSupply->decrement('stock', $item->quantity);
 
-                    // Move from cart → pending_payment, updating with the final destination
                     $item->update([
                         'order_id'                => $invoiceId,
-                        'booking_id'              => $activeBooking->id, // Final assignment
+                        'supply_id'               => $finalSupply->id, // [ROUTING] Swap to local branch item
+                        'booking_id'              => $activeBooking->id,
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment', 
+                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment',
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);
-                    // NOTE: Financial transactions are recorded in PaymentController::successSupply()
-                    // after actual payment is confirmed — not here.
                 }
             });
 
-            // توجيه لصفحة الدفع المجمعة اللي برمجناها بـ Task 6
             return redirect()->route('payment.select_supply', ['order_id' => $invoiceId]);
 
         } catch (\Exception $e) {
@@ -249,7 +244,6 @@ class SupplyOrderController extends Controller
             return $order->order_id ?? $order->id;
         });
 
-        // 💡 تأكد إنك بتعمل واجهة لهذا الراوت أو إنها موجودة أصلاً (Task 11)
         return view('supplies.frontend.my_orders', compact('groupedOrders'));
     }
 
@@ -261,7 +255,6 @@ class SupplyOrderController extends Controller
             return redirect()->route('orders.my_orders')->with('error', 'You cannot edit an order that is already being processed.');
         }
 
-        // 💡 --- 10-MINUTE MODIFICATION POLICY ---
         if (!$order->canBeModifiedOrCancelled()) {
             return redirect()->route('orders.my_orders')->with('error', 'Order Modification Policy Violation: You can only edit your order within 10 minutes of placing it.');
         }
@@ -316,7 +309,6 @@ class SupplyOrderController extends Controller
         $order->supply->increment('stock', $order->quantity);
         $order->update(['status' => 'cancelled']);
 
-        // Note: Sprint 4 uses relational real-time counts, no manual decrement needed.
         return redirect()->route('orders.my_orders')->with('success', 'Order cancelled successfully within the 10-minute window.');
     }
 }

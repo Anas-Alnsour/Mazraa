@@ -29,12 +29,44 @@ class UserSeeder extends Seeder
             'iban' => 'JO00 ARAB 0000 0000 0000 0000 0000 00',
         ]);
 
-        User::updateOrCreate(['email' => 'supply@mazraa.com'], [
-            'name' => 'الزاد للتوريد الغذائي',
-            'phone' => '0799999903',
-            'role' => 'supply_company',
-            'password' => $password,
-        ]);
+        // 3. Exactly 12 Supply Companies (One per Governorate)
+        $governorates = [
+            'Amman'   => ['lat' => 31.9454, 'lng' => 35.9284, 'ar' => 'عمان'],
+            'Zarqa'   => ['lat' => 32.0608, 'lng' => 36.0942, 'ar' => 'الزرقاء'],
+            'Irbid'   => ['lat' => 32.5514, 'lng' => 35.8515, 'ar' => 'إربد'],
+            'Aqaba'   => ['lat' => 29.5319, 'lng' => 35.0061, 'ar' => 'العقبة'],
+            'Mafraq'  => ['lat' => 32.3326, 'lng' => 36.2045, 'ar' => 'المفرق'],
+            'Jerash'  => ['lat' => 32.2723, 'lng' => 35.8914, 'ar' => 'جرش'],
+            'Ajloun'  => ['lat' => 32.3326, 'lng' => 35.7517, 'ar' => 'عجلون'],
+            'Balqa'   => ['lat' => 32.0401, 'lng' => 35.7148, 'ar' => 'البلقاء'],
+            'Madaba'  => ['lat' => 31.7176, 'lng' => 35.7939, 'ar' => 'مأدبا'],
+            'Karak'   => ['lat' => 31.1853, 'lng' => 35.7048, 'ar' => 'الكرك'],
+            'Tafilah' => ['lat' => 30.8358, 'lng' => 35.6122, 'ar' => 'الطفيلة'],
+            'Maan'    => ['lat' => 30.1920, 'lng' => 35.7321, 'ar' => 'معان'],
+        ];
+
+        foreach ($governorates as $gov => $data) {
+            User::updateOrCreate(['email' => strtolower($gov) . '.supply@mazraa.com'], [
+                'name' => "شركة توريد " . $data['ar'],
+                'phone' => '079' . rand(1000000, 9999999),
+                'role' => 'supply_company',
+                'password' => $password,
+                'governorate' => $gov,
+                'latitude' => $data['lat'],
+                'longitude' => $data['lng'],
+            ]);
+
+            // 4. Two Supply Drivers per Governorate
+            for ($i = 1; $i <= 2; $i++) {
+                User::updateOrCreate(['email' => "driver." . strtolower($gov) . "." . $i . "@mazraa.com"], [
+                    'name' => "سائق " . $data['ar'] . " " . $i,
+                    'phone' => '078' . rand(1000000, 9999999),
+                    'role' => 'supply_driver',
+                    'password' => $password,
+                    'governorate' => $gov,
+                ]);
+            }
+        }
 
         User::updateOrCreate(['email' => 'transport@mazraa.com'], [
             'name' => 'النخبة لنقل الركاب',
@@ -50,13 +82,6 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        User::updateOrCreate(['email' => 'driver.s@mazraa.com'], [
-            'name' => 'ياسين الجبالي',
-            'phone' => '0799999906',
-            'role' => 'supply_driver',
-            'password' => $password,
-        ]);
-
         User::updateOrCreate(['email' => 'user@mazraa.com'], [
             'name' => 'عمر النسور',
             'phone' => '0799999907',
@@ -64,7 +89,7 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 8. Generate 50+ additional random users to make the platform look busy
+        // 8. Generate 50 additional random users to make the platform look busy
         User::factory(50)->create([
             'password' => $password,
         ]);

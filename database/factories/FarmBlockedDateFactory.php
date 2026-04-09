@@ -24,7 +24,8 @@ class FarmBlockedDateFactory extends Factory
 
         return [
             'farm_id' => Farm::factory(),
-            'date' => $this->faker->dateTimeBetween('now', '+3 months')->format('Y-m-d'),
+            // التعديل هنا: إضافة unique() لمنع تكرار التواريخ وتجنب خطأ قاعدة البيانات
+            'date' => $this->faker->unique()->dateTimeBetween('now', '+3 months')->format('Y-m-d'),
             'shift' => $this->faker->randomElement(['morning', 'evening', 'full_day']),
             'reason' => $this->faker->randomElement($reasons),
         ];

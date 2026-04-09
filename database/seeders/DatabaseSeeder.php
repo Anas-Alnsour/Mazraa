@@ -26,17 +26,19 @@ class DatabaseSeeder extends Seeder
         $admin     = User::where('email', 'admin@mazraa.com')->first();
         $owner     = User::where('email', 'owner@mazraa.com')->first();
         $user      = User::where('email', 'user@mazraa.com')->first();
-        $supplyCo  = User::where('email', 'supply@mazraa.com')->first();
         $transport = User::where('email', 'transport@mazraa.com')->first();
         $drvT      = User::where('email', 'driver.t@mazraa.com')->first();
-        $drvS      = User::where('email', 'driver.s@mazraa.com')->first();
+
+        // 💡 التعديل الذكي: جلب جميع شركات التوريد (12) وجميع سائقي التوريد (24) دفعة واحدة
+        $supplyCompanies = User::where('role', 'supply_company')->get();
+        $supplyDrivers   = User::where('role', 'supply_driver')->get();
 
         // 3. Massive Farm Generation (Core Owner Focus)
         // owner@mazraa.com gets 25 farms
         $ownerFarms = \App\Models\Farm::factory(25)->create([
             'owner_id' => $owner->id,
         ]);
-        
+
         // Other random owners get 15 farms
         $otherFarms = \App\Models\Farm::factory(15)->create();
         $allFarms = $ownerFarms->concat($otherFarms);
@@ -47,23 +49,22 @@ class DatabaseSeeder extends Seeder
             'user_id' => $user->id,
             'farm_id' => fn() => $allFarms->random()->id,
         ]);
-        
+
         // Other random users get 80 bookings
         $otherBookings = \App\Models\FarmBooking::factory(80)->create([
             'farm_id' => fn() => $allFarms->random()->id,
         ]);
-        
+
         $allBookings = $userBookings->concat($otherBookings);
 
         // 5. Supply Orders (Core Supply Co Focus)
-        // supply@mazraa.com gets 120 orders
         $supplies = \App\Models\Supply::all();
         $userOrder = \App\Models\SupplyOrder::factory(120)->create([
             'user_id' => $user->id,
             'supply_id' => fn() => $supplies->random()->id,
             'booking_id' => fn() => $allBookings->random()->id,
         ]);
-        
+
         // 6. Transport & Logistics (Core Transport Focus)
         // transport@mazraa.com manages 80 trips
         $vehicles = \App\Models\Vehicle::where('company_id', $transport->id)->get();
@@ -80,7 +81,7 @@ class DatabaseSeeder extends Seeder
             if ($booking->payment_status === 'paid') {
                 $commission = $booking->total_price * 0.10;
                 $net = $booking->total_price - $commission;
-                
+
                 // Admin Commission
                 \App\Models\FinancialTransaction::factory()->create([
                     'user_id' => $admin->id,
@@ -137,7 +138,12 @@ class DatabaseSeeder extends Seeder
         }
 
         // 12. System Activity (Notifications)
-        $coreAccounts = [$admin, $owner, $user, $supplyCo, $transport];
+        // 💡 دمجنا الحسابات الأساسية مع كل الشركات والسائقين في كوليكشن واحد
+        $coreAccounts = collect([$admin, $owner, $user, $transport, $drvT])
+            ->filter() // Remove any nulls just in case
+            ->merge($supplyCompanies)
+            ->merge($supplyDrivers);
+
         $notificationTypes = [
             'App\Notifications\BookingConfirmed',
             'App\Notifications\PaymentReceived',
@@ -153,19 +159,22 @@ class DatabaseSeeder extends Seeder
             ['title' => 'تعيين سائق', 'message' => 'تم تعيين سائق لرحلتك القادمة، يمكنك التواصل معه الآن.']
         ];
 
+        // توزيع الإشعارات على الجميع (أكثر من 40 حساب!)
         foreach ($coreAccounts as $account) {
-            for ($i = 0; $i < 15; $i++) {
-                $index = array_rand($notificationTypes);
-                DB::table('notifications')->insert([
-                    'id' => Str::uuid(),
-                    'type' => $notificationTypes[$index],
-                    'notifiable_type' => 'App\Models\User',
-                    'notifiable_id' => $account->id,
-                    'data' => json_encode($notificationData[$index]),
-                    'read_at' => rand(0, 1) ? now() : null,
-                    'created_at' => now()->subDays(rand(1, 30)),
-                    'updated_at' => now(),
-                ]);
+            if ($account) { // حماية إضافية
+                for ($i = 0; $i < 15; $i++) {
+                    $index = array_rand($notificationTypes);
+                    DB::table('notifications')->insert([
+                        'id' => Str::uuid(),
+                        'type' => $notificationTypes[$index],
+                        'notifiable_type' => 'App\Models\User',
+                        'notifiable_id' => $account->id,
+                        'data' => json_encode($notificationData[$index]),
+                        'read_at' => rand(0, 1) ? now() : null,
+                        'created_at' => now()->subDays(rand(1, 30)),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 

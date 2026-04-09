@@ -10,10 +10,10 @@ class SupplySeeder extends Seeder
 {
     public function run()
     {
-        $company = User::where('role', 'supply_company')->first();
+        $companies = User::where('role', 'supply_company')->get();
 
-        if (!$company) {
-            $this->command->error('No supply company found to link products to!');
+        if ($companies->isEmpty()) {
+            $this->command->error('No supply companies found to link products to!');
             return;
         }
 
@@ -51,36 +51,24 @@ class SupplySeeder extends Seeder
                 ['name' => 'عصير برتقال طبيعي 1 لتر', 'price' => 3.00, 'stock' => 50, 'desc' => 'عصير طازج بدون سكر مضاف.', 'image' => 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'مجموعة عصائر مشكلة 6 حبات', 'price' => 5.00, 'stock' => 60, 'desc' => 'تشكيلة من العصائر المنوعة للرحلات.', 'image' => 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80'],
             ],
-            'إضافات فاخرة' => [
-                ['name' => 'شيشة فاخرة للإيجار', 'price' => 15.00, 'stock' => 10, 'desc' => 'شيشة كاملة مع الفحم والمعسل والتوصيل.', 'image' => 'https://images.unsplash.com/photo-1527030280862-64139fba04ca?auto=format&fit=crop&w=800&q=80'],
-                ['name' => 'سماعات بلوتوث ضخمة', 'price' => 20.00, 'stock' => 5, 'desc' => 'سماعات حفلات للاستخدام اليومي.', 'image' => 'https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=800&q=80'],
-            ],
-            'مستلزمات سفرة ونظافة' => [
-                ['name' => 'طقم سفرة كرتون (50 شخص)', 'price' => 6.00, 'stock' => 80, 'desc' => 'صحون، كاسات، وشوك كرتون مقوى.', 'image' => 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80'],
-                ['name' => 'مناديل ورقية ناعمة 10 حبات', 'price' => 4.00, 'stock' => 100, 'desc' => 'بكيج مناديل عائلي.', 'image' => 'https://images.unsplash.com/photo-1583907659441-add9707432c2?auto=format&fit=crop&w=800&q=80'],
-                ['name' => 'سفرة نايلون (رول كبير)', 'price' => 2.00, 'stock' => 120, 'desc' => 'مفرش مائدة بلاستيك عالي الجودة.', 'image' => 'https://images.unsplash.com/photo-1595131838586-58d009ef3879?auto=format&fit=crop&w=800&q=80'],
-            ],
-            'ألعاب وتسلية' => [
-                ['name' => 'مجموعة ألعاب ورقية (شدة)', 'price' => 2.00, 'stock' => 500, 'desc' => 'ورق لعب نخب أول.', 'image' => 'https://images.unsplash.com/photo-1610819013703-2bc67738a167?auto=format&fit=crop&w=800&q=80'],
-                ['name' => 'كرات قدم وطائرة', 'price' => 10.00, 'stock' => 15, 'desc' => 'كرات رياضية للمسابح والملاعب.', 'image' => 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?auto=format&fit=crop&w=800&q=80'],
-                ['name' => 'طاولة زهر خشبية', 'price' => 15.00, 'stock' => 10, 'desc' => 'طاولة زهر يدوية الصنع.', 'image' => 'https://images.unsplash.com/photo-1529148482759-b35b25c5f217?auto=format&fit=crop&w=800&q=80'],
-            ],
         ];
 
-        foreach ($data as $category => $products) {
-            foreach ($products as $p) {
-                Supply::create([
-                    'company_id'  => $company->id,
-                    'name'        => $p['name'],
-                    'category'    => $category,
-                    'price'       => $p['price'],
-                    'stock'       => $p['stock'],
-                    'description' => $p['desc'],
-                    'image'       => $p['image'],
-                ]);
+        foreach ($companies as $company) {
+            foreach ($data as $category => $products) {
+                foreach ($products as $p) {
+                    Supply::create([
+                        'company_id'  => $company->id,
+                        'name'        => $p['name'],
+                        'category'    => $category,
+                        'price'       => $p['price'],
+                        'stock'       => $p['stock'],
+                        'description' => $p['desc'],
+                        'image'       => $p['image'],
+                    ]);
+                }
             }
         }
 
-        $this->command->info('Supply Marketplace populated with Arabic data successfully!');
+        $this->command->info("Supply Marketplace populated with products across {$companies->count()} localized branches!");
     }
 }
