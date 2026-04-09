@@ -165,7 +165,7 @@ class BookingController extends Controller
                     $supply = Supply::find($item['id']);
                     if ($supply) {
                         $itemTotal = $supply->price * $item['quantity'];
-                        SupplyOrder::create([
+                        $order = SupplyOrder::create([
                             'user_id'            => $user->id,
                             'supply_id'          => $supply->id,
                             'booking_id'         => $booking->id,
@@ -176,6 +176,9 @@ class BookingController extends Controller
                             'net_company_amount' => $itemTotal * 0.90,
                             'status'             => 'pending',
                         ]);
+
+                        // Automatically dispatch
+                        \App\Services\SupplyDispatchAction::dispatchDriver($order);
                     }
                 }
             }
@@ -435,42 +438,48 @@ class BookingController extends Controller
 
         if ($difference < 0 && $booking->payment_status === 'paid' && $booking->stripe_payment_intent_id) {
             $refundAmount = abs($difference);
-            Stripe::setApiKey(config('services.stripe.secret'));
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
             try {
-                Refund::create([
+                \Stripe\Refund::create([
                     'payment_intent' => $booking->stripe_payment_intent_id,
-                    'amount' => (int)(round($refundAmount, 2) * 1000),
+                    'amount' => (int)(round($refundAmount, 2) * 1000), // Stripe JOD uses Fils (x1000)
                 ]);
-            } catch (ApiErrorException $e) {
-                return back()->with('error', 'Partial Refund failed: ' . $e->getMessage());
+            } catch (\Exception $e) {
+                \Log::error("Booking Update Refund Failed: " . $e->getMessage());
             }
         }
 
-        $existingTransport = Transport::where('farm_id', $farm->id)->where('user_id', Auth::id())->where('status', '!=', 'cancelled')->latest()->first();
+        $existingTransport = \App\Models\Transport::where('farm_booking_id', $booking->id)
+            ->where('status', '!=', 'cancelled')
+            ->latest()
+            ->first();
 
         if ($booking->requires_transport && !$requiresTransportFlag && $existingTransport) {
             $existingTransport->update(['status' => 'cancelled']);
             $existingTransport->delete();
-        } elseif ($booking->requires_transport && $requiresTransportFlag && $existingTransport) {
-            $existingTransport->update([
-                'Farm_Arrival_Time' => $startTime,
-                'Farm_Departure_Time' => $endTime,
-                'price' => $transportCost,
-                'commission_amount' => $transportCost * 0.10,
-                'net_company_amount' => $transportCost * 0.90,
-                'pickup_location' => $pickupLocation
-            ]);
-        } elseif (!$booking->requires_transport && $requiresTransportFlag && $booking->payment_status !== 'paid') {
-            $transport = Transport::create([
-                'user_id' => Auth::id(), 'farm_id' => $farm->id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
-                'passengers' => $request->passengers ?? 1, 'start_and_return_point' => $pickupLocation,
-                'pickup_location' => $pickupLocation, 'destination_governorate' => $destGovernorate,
-                'pickup_lat' => $request->pickup_lat, 'pickup_lng' => $request->pickup_lng,
-                'price' => $transportCost, 'distance' => 0, 'Farm_Arrival_Time' => $startTime,
-                'Farm_Departure_Time' => $endTime, 'status' => 'pending',
-                'commission_amount' => $transportCost * 0.10, 'net_company_amount' => $transportCost * 0.90
-            ]);
-            if(class_exists('\App\Services\TransportDispatchAction')) {
+        } elseif ($requiresTransportFlag) {
+            if ($existingTransport) {
+                $existingTransport->update([
+                    'Farm_Arrival_Time' => $startTime,
+                    'Farm_Departure_Time' => $endTime,
+                    'price' => $transportCost,
+                    'commission_amount' => $transportCost * 0.10,
+                    'net_company_amount' => $transportCost * 0.90,
+                    'pickup_location' => $pickupLocation,
+                    'pickup_lat' => $request->pickup_lat,
+                    'pickup_lng' => $request->pickup_lng,
+                ]);
+                \App\Services\TransportDispatchAction::dispatchDriver($existingTransport);
+            } elseif ($booking->payment_status !== 'paid') {
+                $transport = \App\Models\Transport::create([
+                    'user_id' => Auth::id(), 'farm_id' => $farm->id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
+                    'passengers' => $request->passengers ?? 1, 'start_and_return_point' => $pickupLocation,
+                    'pickup_location' => $pickupLocation, 'destination_governorate' => $destGovernorate,
+                    'pickup_lat' => $request->pickup_lat, 'pickup_lng' => $request->pickup_lng,
+                    'price' => $transportCost, 'distance' => 0, 'Farm_Arrival_Time' => $startTime,
+                    'Farm_Departure_Time' => $endTime, 'status' => 'pending',
+                    'commission_amount' => $transportCost * 0.10, 'net_company_amount' => $transportCost * 0.90
+                ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($transport);
             }
         }
@@ -498,10 +507,10 @@ class BookingController extends Controller
         $sessionId = $request->query('session_id');
         if (!$sessionId) return redirect()->route('bookings.my_bookings')->with('error', 'Invalid session.');
 
-        Stripe::setApiKey(config('services.stripe.secret'));
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
-            $session = Session::retrieve($sessionId);
+            $session = \Stripe\Checkout\Session::retrieve($sessionId);
             if ($session->payment_status !== 'paid') return redirect()->route('bookings.my_bookings')->with('error', 'Payment not completed.');
 
             $booking = FarmBooking::findOrFail($session->metadata->booking_id);
@@ -516,15 +525,19 @@ class BookingController extends Controller
                 'commission_amount' => $session->metadata->new_commission,
                 'net_owner_amount' => $session->metadata->new_net_owner,
                 'requires_transport' => $requiresTransport,
-                'transport_cost' => $requiresTransport ? $session->metadata->transport_cost : 0,
+                'transport_cost' => $requiresTransport ? (float)$session->metadata->transport_cost : 0,
                 'pickup_lat' => $requiresTransport ? $session->metadata->pickup_lat : null,
                 'pickup_lng' => $requiresTransport ? $session->metadata->pickup_lng : null,
             ]);
 
-            if ($requiresTransport && $session->metadata->pickup_lat && $session->metadata->pickup_lng) {
-                $existingTransport = Transport::where('farm_id', $booking->farm_id)->where('user_id', Auth::id())->where('status', '!=', 'cancelled')->latest()->first();
+            if ($requiresTransport) {
+                $existingTransport = \App\Models\Transport::where('farm_booking_id', $booking->id)
+                    ->where('status', '!=', 'cancelled')
+                    ->latest()
+                    ->first();
+
                 if (!$existingTransport) {
-                    $transport = Transport::create([
+                    $transport = \App\Models\Transport::create([
                         'user_id' => Auth::id(), 'farm_id' => $booking->farm_id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
                         'passengers' => $session->metadata->transport_passengers, 'start_and_return_point' => $session->metadata->pickup_location,
                         'pickup_location' => $session->metadata->pickup_location, 'destination_governorate' => $session->metadata->destination_governorate,
@@ -534,9 +547,17 @@ class BookingController extends Controller
                         'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time), 'status' => 'pending',
                         'commission_amount' => $session->metadata->transport_cost * 0.10, 'net_company_amount' => $session->metadata->transport_cost * 0.90
                     ]);
-                    if(class_exists('\App\Services\TransportDispatchAction')) {
-                        \App\Services\TransportDispatchAction::dispatchDriver($transport);
-                    }
+                    \App\Services\TransportDispatchAction::dispatchDriver($transport);
+                } else {
+                    $existingTransport->update([
+                        'Farm_Arrival_Time' => Carbon::parse($session->metadata->new_start_time),
+                        'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time),
+                        'price' => $session->metadata->transport_cost,
+                        'pickup_location' => $session->metadata->pickup_location,
+                        'pickup_lat' => $session->metadata->pickup_lat,
+                        'pickup_lng' => $session->metadata->pickup_lng,
+                    ]);
+                    \App\Services\TransportDispatchAction::dispatchDriver($existingTransport);
                 }
             }
 

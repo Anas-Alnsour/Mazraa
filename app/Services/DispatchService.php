@@ -30,6 +30,7 @@ class DispatchService
                       ->whereYear('created_at', $now->year);
             }])
             ->orderBy('transport_driver_jobs_count', 'asc') // Round-Robin: Least workload first
+            ->orderBy('id', 'asc') // ID Fallback
             ->first();
 
         // Graceful handling: If no driver in specific gov, return null instead of throwing exception
@@ -58,6 +59,7 @@ class DispatchService
                       ->whereYear('created_at', $now->year);
             }])
             ->orderBy('supply_driver_jobs_count', 'asc') // Round-Robin: Least workload first
+            ->orderBy('id', 'asc') // ID Fallback
             ->first();
 
         return $driver;

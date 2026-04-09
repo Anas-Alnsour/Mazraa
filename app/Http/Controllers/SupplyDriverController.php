@@ -32,12 +32,14 @@ class SupplyDriverController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
+            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'governorate' => $validated['governorate'],
             'password' => Hash::make($validated['password']),
             'role' => 'supply_driver',
             'company_id' => Auth::id(),
@@ -67,11 +69,13 @@ class SupplyDriverController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($driver->id)],
             'phone' => 'required|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
+            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
         ]);
 
         $driver->name = $validated['name'];
         $driver->email = $validated['email'];
         $driver->phone = $validated['phone'];
+        $driver->governorate = $validated['governorate'];
 
         if ($request->filled('password')) {
             $driver->password = Hash::make($validated['password']);

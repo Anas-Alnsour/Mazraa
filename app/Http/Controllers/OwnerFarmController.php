@@ -9,6 +9,7 @@ use App\Http\Requests\StoreFarmRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\Rule;
 
 class OwnerFarmController extends Controller
 {
@@ -118,7 +119,7 @@ class OwnerFarmController extends Controller
         $validated = $request->validate([
             'name'                      => 'required|string|max:255',
             'description'               => 'required|string',
-            'governorate'               => 'required|string|max:255',
+            'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
             'location_link'             => 'nullable|url|max:255',
             'capacity'                  => 'required|integer|min:1',
             'price_per_morning_shift'   => 'required|numeric|min:0',

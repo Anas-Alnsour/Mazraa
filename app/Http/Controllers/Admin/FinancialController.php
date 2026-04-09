@@ -30,27 +30,55 @@ class FinancialController extends Controller
                 break;
         }
 
-        // Base query for aggregates
-        $baseQuery = FinancialTransaction::where('user_id', $adminId)
+        // 1. Mazraa Net Profit (Admin's Credits)
+        $adminCreditsQuery = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit');
-
         if ($startDate) {
-            $baseQuery->where('created_at', '>=', $startDate);
+            $adminCreditsQuery->where('created_at', '>=', $startDate);
         }
+        $netProfit = $adminCreditsQuery->sum('amount');
 
-        $farmProfit = (clone $baseQuery)
+        // 2. Owner Share (Credits to Farm Owners)
+        $ownerShareQuery = FinancialTransaction::whereHas('user', function($q) {
+                $q->where('role', 'farm_owner');
+            })
+            ->where('transaction_type', 'credit');
+        if ($startDate) {
+            $ownerShareQuery->where('created_at', '>=', $startDate);
+        }
+        $ownerShare = $ownerShareQuery->sum('amount');
+
+        // 3. Provider Share (Credits to Supply and Transport Companies)
+        $providerShareQuery = FinancialTransaction::whereHas('user', function($q) {
+                $q->whereIn('role', ['supply_company', 'transport_company']);
+            })
+            ->where('transaction_type', 'credit');
+        if ($startDate) {
+            $providerShareQuery->where('created_at', '>=', $startDate);
+        }
+        $providerShare = $providerShareQuery->sum('amount');
+
+        // 4. Total Revenue (The sum of all payouts and platform fees)
+        $totalRevenue = $netProfit + $ownerShare + $providerShare;
+
+        // Breakdowns for the legacy variables (to avoid breaking the view)
+        $farmProfit = FinancialTransaction::where('user_id', $adminId)
+            ->where('transaction_type', 'credit')
             ->whereIn('reference_type', ['farm_booking', 'booking'])
+            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
             ->sum('amount');
 
-        $transportProfit = (clone $baseQuery)
+        $transportProfit = FinancialTransaction::where('user_id', $adminId)
+            ->where('transaction_type', 'credit')
             ->where('reference_type', 'transport')
+            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
             ->sum('amount');
 
-        $supplyProfit = (clone $baseQuery)
+        $supplyProfit = FinancialTransaction::where('user_id', $adminId)
+            ->where('transaction_type', 'credit')
             ->where('reference_type', 'supply_order')
+            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
             ->sum('amount');
-
-        $totalCombinedProfit = $farmProfit + $transportProfit + $supplyProfit;
 
         // Query for transaction stream
         $txQuery = FinancialTransaction::with('user');
@@ -71,7 +99,10 @@ class FinancialController extends Controller
             'farmProfit', 
             'transportProfit', 
             'supplyProfit', 
-            'totalCombinedProfit', 
+            'totalRevenue',
+            'netProfit',
+            'ownerShare',
+            'providerShare',
             'recentTransactions',
             'filter'
         ));

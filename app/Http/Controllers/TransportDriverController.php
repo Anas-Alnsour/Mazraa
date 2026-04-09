@@ -45,12 +45,14 @@ class TransportDriverController extends Controller
             'phone' => 'required|string|max:20',
             'password' => 'required|string|min:8|confirmed',
             'transport_vehicle_id' => 'nullable|exists:vehicles,id',
+            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
         ]);
 
         User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'governorate' => $validated['governorate'],
             'password' => Hash::make($validated['password']),
             'role' => 'transport_driver',
             'company_id' => Auth::id(),
@@ -96,11 +98,13 @@ class TransportDriverController extends Controller
             'phone' => 'required|string|max:20',
             'password' => 'nullable|string|min:8|confirmed',
             'transport_vehicle_id' => 'nullable|exists:vehicles,id',
+            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
         ]);
 
         $driver->name = $validated['name'];
         $driver->email = $validated['email'];
         $driver->phone = $validated['phone'];
+        $driver->governorate = $validated['governorate'];
         $driver->transport_vehicle_id = $validated['transport_vehicle_id'] ?? null;
 
         if ($request->filled('password')) {

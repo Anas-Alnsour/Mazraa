@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Farm;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class FarmAdminController extends Controller
 {
@@ -25,7 +26,7 @@ class FarmAdminController extends Controller
     {
         $validated = $request->validate([
             'name'                      => 'required|string|max:255',
-            'governorate'               => 'required|string|max:255',
+            'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
             'location'                  => 'required|string|max:255',
             'location_link'             => 'nullable|url|max:255',
             'latitude'                  => 'required|numeric',
@@ -82,7 +83,7 @@ class FarmAdminController extends Controller
     {
         $validated = $request->validate([
             'name'                      => 'required|string|max:255',
-            'governorate'               => 'required|string|max:255',
+            'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
             'location'                  => 'required|string|max:255',
             'location_link'             => 'nullable|url|max:255',
             'latitude'                  => 'required|numeric',

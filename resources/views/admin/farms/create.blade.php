@@ -15,10 +15,6 @@
         </a>
     </div>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        .leaflet-container { z-index: 1 !important; background: #0f172a; font-family: inherit; }
-    </style>
 
     <form action="{{ route('admin.farms.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8 pb-24">
         @csrf
@@ -351,23 +347,57 @@
     </form>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@push('scripts')
+<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAdminMap" async defer></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('admin-farm-map', { zoomControl: true, scrollWheelZoom: false }).setView([31.9522, 35.2332], 9);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-        var icon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    function initAdminMap() {
+        const latInput = document.getElementById('lat');
+        const lngInput = document.getElementById('lng');
+        
+        const initialPos = { 
+            lat: parseFloat(latInput.value) || 31.9522, 
+            lng: parseFloat(lngInput.value) || 35.2332 
+        };
+
+        const map = new google.maps.Map(document.getElementById('admin-farm-map'), {
+            zoom: 9,
+            center: initialPos,
+            styles: [
+                { "elementType": "geometry", "stylers": [{ "color": "#1d2c4d" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#8ec3b9" }] },
+                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1a3646" }] },
+                { "featureType": "administrative.country", "elementType": "geometry.stroke", "stylers": [{ "color": "#4b6878" }] },
+                { "featureType": "landscape.man_made", "elementType": "geometry.stroke", "stylers": [{ "color": "#334e62" }] },
+                { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#283d6a" }] },
+                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#304a7d" }] },
+                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0e1626" }] }
+            ],
+            disableDefaultUI: false
         });
-        var marker = L.marker([31.9522, 35.2332], {draggable: true, icon: icon}).addTo(map);
+
+        const marker = new google.maps.Marker({
+            position: initialPos,
+            map: map,
+            draggable: true,
+            title: "Farm Pin"
+        });
+
         function updateCoords(lat, lng) {
-            document.getElementById('lat').value = lat.toFixed(6);
-            document.getElementById('lng').value = lng.toFixed(6);
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
         }
-        marker.on('dragend', function(e) { updateCoords(marker.getLatLng().lat, marker.getLatLng().lng); });
-        map.on('click', function(e) { marker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
-    });
+
+        marker.addListener('dragend', function() {
+            const pos = marker.getPosition();
+            updateCoords(pos.lat(), pos.lng());
+        });
+
+        map.addListener('click', function(e) {
+            marker.setPosition(e.latLng);
+            updateCoords(e.latLng.lat(), e.latLng.lng());
+        });
+    }
+    window.initAdminMap = initAdminMap;
 </script>
+@endpush
 @endsection

@@ -3,8 +3,6 @@
 @section('title', 'Edit Booking')
 
 @section('content')
-    {{-- Leaflet CSS --}}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     {{-- Flatpickr CSS for Custom Calendar --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
@@ -335,7 +333,7 @@
 
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps" async defer></script>
     <script>
         const farmPrice = <?php echo floatval($farm->price_per_night ?? 0); ?>;
         const originalPrice = <?php echo floatval($booking->total_price ?? 0); ?>;
@@ -525,29 +523,33 @@
             document.getElementById('dynamicInvoice').classList.remove('d-none'); document.getElementById('staticOldInvoice').classList.add('d-none');
         }
 
-        /* --- TRANSPORT LOGIC WITH FULLSCREEN MAP --- */
-        let pickupMap, pickupMarker;
+        /* --- TRANSPORT LOGIC WITH GOOGLE MAPS --- */
+        let fMap, pickupMap, pickupMarker;
         const farmLat = <?php echo $farm->latitude ? '"' . $farm->latitude . '"' : 'null'; ?>;
         const farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
         const bookingLat = document.getElementById('pickup_lat').value;
         const bookingLng = document.getElementById('pickup_lng').value;
 
-        document.addEventListener('DOMContentLoaded', () => {
+        window.initAllMaps = function() {
             initCalendars();
             document.getElementById('confirmBookingBtn').disabled = false;
             updateInvoice();
 
             if(farmLat && farmLat !== 'null' && farmLng && farmLng !== 'null') {
-                var map = L.map('farm-map', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-
-                var customIcon = L.icon({
-                    iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzFkNWM0MiI+PHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDljMCA1LjI1IDcgMTMgNyAxM3M3LTcuNzUgNy0xM2MwLTMuODctMy4xMy03LTctN3ptMCA5LjVjLTEuMzggMC0yLjUtMS4xMi0yLjUtMi41czEuMTItMi41IDIuNS0yLjUgMi41IDEuMTIgMi41IDIuNS0xLjEyIDIuNS0yLjUgMi41eiIvPjwvc3ZnPg==',
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 40],
-                    popupAnchor: [0, -40]
+                const farmPos = { lat: parseFloat(farmLat), lng: parseFloat(farmLng) };
+                fMap = new google.maps.Map(document.getElementById('farm-map'), {
+                    zoom: 13,
+                    center: farmPos,
+                    disableDefaultUI: true,
+                    zoomControl: true,
+                    scrollwheel: false
                 });
-                L.marker([farmLat, farmLng], {icon: customIcon}).addTo(map).bindPopup("<b>{{ $farm->name }}</b>").openPopup();
+
+                new google.maps.Marker({
+                    position: farmPos,
+                    map: fMap,
+                    title: "{{ $farm->name }}"
+                });
 
                 const toggle = document.getElementById('toggleTransport');
                 const section = document.getElementById('transportSection');
@@ -566,7 +568,6 @@
                             if(!pickupMap) {
                                 initPickupMap();
                             }
-                            setTimeout(() => pickupMap.invalidateSize(), 200);
                         } else {
                             section.classList.add('d-none');
                             document.getElementById('requires_transport').value = "0";
@@ -601,39 +602,38 @@
                             expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
                             document.body.style.overflow = 'auto';
                         }
-                        setTimeout(() => pickupMap.invalidateSize(), 300);
                     });
                 }
             }
-        });
+        };
 
         function initPickupMap() {
-            let startLat = bookingLat ? bookingLat : 31.9522;
-            let startLng = bookingLng ? bookingLng : 35.9334;
+            const startLat = bookingLat ? parseFloat(bookingLat) : 31.9522;
+            const startLng = bookingLng ? parseFloat(bookingLng) : 35.9334;
 
-            pickupMap = L.map('pickup-map').setView([startLat, startLng], 12);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(pickupMap);
+            pickupMap = new google.maps.Map(document.getElementById('pickup-map'), {
+                zoom: 12,
+                center: { lat: startLat, lng: startLng }
+            });
 
-            var userIcon = L.icon({
-                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2VmNDQ0NCI+PHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDljMCA1LjI1IDcgMTMgNyAxM3M3LTcuNzUgNy0xM2MwLTMuODctMy4xMy03LTctN3ptMCA5LjVjLTEuMzggMC0yLjUtMS4xMi0yLjUtMi41czEuMTItMi41IDIuNS0yLjUgMi41IDEuMTIgMi41IDIuNS0xLjEyIDIuNS0yLjUgMi41eiIvPjwvc3ZnPg==',
-                iconSize: [40, 40],
-                iconAnchor: [20, 40],
+            pickupMarker = new google.maps.Marker({
+                position: { lat: startLat, lng: startLng },
+                map: pickupMap,
+                draggable: true
+            });
+
+            pickupMap.addListener('click', function(e) {
+                pickupMarker.setPosition(e.latLng);
+                calculateRoute(e.latLng.lat(), e.latLng.lng());
+            });
+
+            pickupMarker.addListener('dragend', function() {
+                const pos = pickupMarker.getPosition();
+                calculateRoute(pos.lat(), pos.lng());
             });
 
             if(bookingLat && bookingLng) {
-                pickupMarker = L.marker([startLat, startLng], {icon: userIcon, draggable: true}).addTo(pickupMap);
-            }
-
-            pickupMap.on('click', function(e) {
-                if (pickupMarker) { pickupMarker.setLatLng(e.latlng); }
-                else { pickupMarker = L.marker(e.latlng, {icon: userIcon, draggable: true}).addTo(pickupMap); }
-                calculateRoute(e.latlng.lat, e.latlng.lng);
-            });
-
-            if (pickupMarker) {
-                pickupMarker.on('dragend', function(e) {
-                    calculateRoute(e.target.getLatLng().lat, e.target.getLatLng().lng);
-                });
+                calculateRoute(startLat, startLng);
             }
         }
 
@@ -644,17 +644,12 @@
                 .then(res => res.json())
                 .then(data => {
                     if(data.length > 0) {
-                        const lat = data[0].lat; const lon = data[0].lon;
-                        pickupMap.setView([lat, lon], 14);
-                        if(pickupMarker) pickupMarker.setLatLng([lat, lon]);
-                        else {
-                            var userIcon = L.icon({
-                                iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2VmNDQ0NCI+PHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDljMCA1LjI1IDcgMTMgNyAxM3M3LTcuNzUgNy0xM2MwLTMuODctMy4xMy03LTctN3ptMCA5LjVjLTEuMzggMC0yLjUtMS4xMi0yLjUtMi41czEuMTItMi41IDIuNS0yLjUgMi41IDEuMTIgMi41IDIuNS0xLjEyIDIuNS0yLjUgMi41eiIvPjwvc3ZnPg==',
-                                iconSize: [40, 40], iconAnchor: [20, 40]
-                            });
-                            pickupMarker = L.marker([lat, lon], {icon: userIcon, draggable: true}).addTo(pickupMap);
-                            pickupMarker.on('dragend', function(e) { calculateRoute(e.target.getLatLng().lat, e.target.getLatLng().lng); });
-                        }
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+                        const pos = { lat, lng: lon };
+                        pickupMap.setCenter(pos);
+                        pickupMap.setZoom(14);
+                        pickupMarker.setPosition(pos);
                         calculateRoute(lat, lon);
                     } else { alert("Location not found. Please try a different search term."); }
                 });

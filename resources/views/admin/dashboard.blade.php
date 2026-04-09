@@ -3,7 +3,6 @@
 @section('title', 'Super Admin Dashboard')
 
 @section('content')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
 <div class="py-10 bg-slate-900 min-h-screen text-slate-200">
     <div class="max-w-[95rem] mx-auto sm:px-6 lg:px-8">
@@ -157,40 +156,60 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+@push('scripts')
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initMap" async defer></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var map = L.map('farmMap').setView([31.9522, 35.9334], 7);
-
-        // Dark Mode Tiles: CartoDB Dark Matter
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-        }).addTo(map);
-
-        // Custom dark-themed marker icon
-        var darkIcon = L.divIcon({
-            className: '',
-            html: '<div style="width:14px;height:14px;background:#10b981;border:2px solid #34d399;border-radius:50%;box-shadow:0 0 10px rgba(16,185,129,0.6);"></div>',
-            iconSize: [14, 14],
-            iconAnchor: [7, 7],
+    function initMap() {
+        const jordanCenter = { lat: 31.2522, lng: 36.5334 };
+        const map = new google.maps.Map(document.getElementById("farmMap"), {
+            zoom: 7,
+            center: jordanCenter,
+            disableDefaultUI: true,
+            zoomControl: true,
+            styles: [
+                { "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
+                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1e293b" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
+                { "featureType": "administrative", "elementType": "geometry.stroke", "stylers": [{ "color": "#334155" }] },
+                { "featureType": "landscape.natural", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
+                { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
+                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#334155" }] },
+                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#020617" }] }
+            ]
         });
 
-        // Fetch verified farms from controller data
-        var farms = @json($verifiedFarms ?? []);
+        const farms = @json($verifiedFarms ?? []);
+        const markers = farms.map((farm) => {
+            if (!farm.latitude || !farm.longitude) return null;
+            
+            const marker = new google.maps.Marker({
+                position: { lat: parseFloat(farm.latitude), lng: parseFloat(farm.longitude) },
+                map: map,
+                title: farm.name
+            });
 
-        farms.forEach(function(farm) {
-            if(farm.latitude && farm.longitude) {
-                var marker = L.marker([parseFloat(farm.latitude), parseFloat(farm.longitude)], { icon: darkIcon }).addTo(map);
-                marker.bindPopup(
-                    '<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;min-width:140px;">'
-                    + '<p style="color:#f1f5f9;font-weight:900;font-size:13px;margin:0 0 4px 0;">' + farm.name + '</p>'
-                    + '<p style="color:#10b981;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0;">Verified Farm</p>'
-                    + '</div>',
-                    { className: 'dark-popup' }
-                );
-            }
-        });
-    });
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="background:#1e293b; color:#f1f5f9; padding:10px; border-radius:8px; font-family:sans-serif;">
+                        <h4 style="margin:0; font-size:14px; color:#1e293b;">${farm.name}</h4>
+                        <p style="margin:5px 0 0; color:#10b981; font-size:10px; font-weight:bold; text-transform:uppercase;">Verified Farm</p>
+                    </div>
+                `
+            });
+
+            marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+            });
+
+            return marker;
+        }).filter(m => m !== null);
+
+        if (markers.length > 0) {
+            new markerClusterer.MarkerClusterer({ markers, map });
+        }
+    }
+    window.initMap = initMap;
 </script>
+@endpush
 @endsection

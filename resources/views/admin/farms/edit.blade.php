@@ -18,10 +18,6 @@
         </a>
     </div>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        .leaflet-container { z-index: 1 !important; background: #0f172a; font-family: inherit; }
-    </style>
 
     <form action="{{ route('admin.farms.update', $farm->id) }}" method="POST" enctype="multipart/form-data" class="space-y-8 pb-24">
         @csrf
@@ -379,25 +375,67 @@
     </form>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@push('scripts')
+<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAdminMap" async defer></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var initialLat = {{ old('latitude', $farm->latitude ?? 31.9522) }};
-        var initialLng = {{ old('longitude', $farm->longitude ?? 35.2332) }};
-        var map = L.map('admin-farm-map', { zoomControl: true, scrollWheelZoom: false }).setView([initialLat, initialLng], 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-        var icon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    function initAdminMap() {
+        const darkStyle = [
+            { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
+            { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
+            { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
+            { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+            { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+            { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#263c3f" }] },
+            { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#6b9a76" }] },
+            { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#38414e" }] },
+            { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#212a37" }] },
+            { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#9ca5b3" }] },
+            { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#746855" }] },
+            { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#1f2835" }] },
+            { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{ "color": "#f3d19c" }] },
+            { "featureType": "transit", "elementType": "geometry", "stylers": [{ "color": "#2f3948" }] },
+            { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [{ "color": "#d59563" }] },
+            { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#17263c" }] },
+            { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#515c6d" }] },
+            { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
+        ];
+
+        const initialPos = {
+            lat: {{ old('latitude', $farm->latitude ?? 31.9522) }},
+            lng: {{ old('longitude', $farm->longitude ?? 35.9334) }}
+        };
+
+        const map = new google.maps.Map(document.getElementById('admin-farm-map'), {
+            zoom: 14,
+            center: initialPos,
+            styles: darkStyle,
+            mapTypeControl: false,
+            streetViewControl: false
         });
-        var marker = L.marker([initialLat, initialLng], {draggable: true, icon: icon}).addTo(map);
+
+        const marker = new google.maps.Marker({
+            position: initialPos,
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP
+        });
+
         function updateCoords(lat, lng) {
             document.getElementById('lat').value = lat.toFixed(6);
             document.getElementById('lng').value = lng.toFixed(6);
         }
-        marker.on('dragend', function(e) { updateCoords(marker.getLatLng().lat, marker.getLatLng().lng); });
-        map.on('click', function(e) { marker.setLatLng(e.latlng); updateCoords(e.latlng.lat, e.latlng.lng); });
-    });
+
+        marker.addListener('dragend', function() {
+            const p = marker.getPosition();
+            updateCoords(p.lat(), p.lng());
+        });
+
+        map.addListener('click', function(e) {
+            marker.setPosition(e.latLng);
+            updateCoords(e.latLng.lat(), e.latLng.lng());
+        });
+    }
+    window.initAdminMap = initAdminMap;
 </script>
+@endpush
 @endsection

@@ -69,8 +69,8 @@ class AuthenticatedSessionController extends Controller
             'farm_owner'        => '/owner/dashboard',
             'supply_company'    => '/supplies/dashboard',
             'transport_company' => '/transport/dashboard',
-            'supply_driver'     => '/driver/supply/dashboard',       // 👈 التعديل الصحيح للسائق
-            'transport_driver'  => '/driver/transport/dashboard',    // 👈 التعديل الصحيح للسائق
+            'transport_driver'  => '/driver/transport/dashboard',
+            'supply_driver'     => '/driver/supply/dashboard',
             'user'              => '/dashboard',
             default             => '/',
         };

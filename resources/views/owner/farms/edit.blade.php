@@ -11,11 +11,6 @@
         </div>
     </x-slot>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <style>
-        /* Fix for map z-index overlapping dropdowns */
-        .leaflet-container { z-index: 10 !important; }
-    </style>
 
     <div class="pb-24 pt-8">
         <form action="{{ route('owner.farms.update', $farm->id) }}" method="POST" enctype="multipart/form-data" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -247,38 +242,50 @@
         </form>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    @push('scripts')
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initMap" async defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function initMap() {
             var latInput = document.getElementById('latitude');
             var lngInput = document.getElementById('longitude');
 
-            // Check for previously saved DB coordinates or validation error fallbacks
-            var initialLat = latInput.value ? parseFloat(latInput.value) : 31.9522; // Default: Amman
-            var initialLng = lngInput.value ? parseFloat(lngInput.value) : 35.2332;
+            // Set initial position from hidden inputs
+            var initialPos = {
+                lat: latInput.value ? parseFloat(latInput.value) : 31.9522,
+                lng: lngInput.value ? parseFloat(lngInput.value) : 35.2332
+            };
 
-            // Initialize Map
-            var map = L.map('farm-map').setView([initialLat, initialLng], 14);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+            const map = new google.maps.Map(document.getElementById('farm-map'), {
+                zoom: 14,
+                center: initialPos,
+                disableDefaultUI: false,
+            });
 
-            // Add Draggable Marker
-            var marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+            const marker = new google.maps.Marker({
+                position: initialPos,
+                map: map,
+                draggable: true,
+                title: "Farm Location"
+            });
 
-            // Update hidden inputs when marker moves
             function updateInputs(lat, lng) {
                 latInput.value = lat.toFixed(8);
                 lngInput.value = lng.toFixed(8);
             }
 
-            marker.on('dragend', function(e) {
-                var position = marker.getLatLng();
-                updateInputs(position.lat, position.lng);
+            // Sync inputs on drag end
+            marker.addListener('dragend', function() {
+                const pos = marker.getPosition();
+                updateInputs(pos.lat(), pos.lng());
             });
 
-            map.on('click', function(e) {
-                marker.setLatLng(e.latlng);
-                updateInputs(e.latlng.lat, e.latlng.lng);
+            // Sync inputs on map click
+            map.addListener('click', function(e) {
+                marker.setPosition(e.latLng);
+                updateInputs(e.latLng.lat(), e.latLng.lng());
             });
-        });
+        }
+        window.initMap = initMap;
     </script>
+    @endpush
 </x-owner-layout>

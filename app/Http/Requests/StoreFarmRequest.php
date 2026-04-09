@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StoreFarmRequest extends FormRequest
 {
@@ -26,7 +27,7 @@ class StoreFarmRequest extends FormRequest
         return [
             'name'                      => ['required', 'string', 'max:255'],
             'description'               => ['required', 'string'],
-            'governorate'               => ['required', 'string', 'max:255'],
+            'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
             'location_link'             => ['nullable', 'url', 'max:255'],
             'capacity'                  => ['required', 'integer', 'min:1'],
             'price_per_morning_shift'   => ['required', 'numeric', 'min:0'],

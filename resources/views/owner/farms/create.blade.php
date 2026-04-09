@@ -11,11 +11,6 @@
         </div>
     </x-slot>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <style>
-        /* Fix for map z-index overlapping dropdowns */
-        .leaflet-container { z-index: 10 !important; }
-    </style>
 
     <div class="pb-24 pt-8">
         <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -245,57 +240,57 @@
         </form>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    @push('scripts')
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initMap" async defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Initialize Map centered on Amman, Jordan
-            var map = L.map('farm-map').setView([31.9522, 35.2332], 9);
+        function initMap() {
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+            
+            // Default: Amman coordinate if empty
+            let initialLat = parseFloat(latInput.value) || 31.9522;
+            let initialLng = parseFloat(lngInput.value) || 35.2332;
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
-            }).addTo(map);
+            const map = new google.maps.Map(document.getElementById('farm-map'), {
+                zoom: 10,
+                center: { lat: initialLat, lng: initialLng },
+                mapId: '6cba18d9f4e488b3', // Optional: Use a custom Map ID if needed for styling
+                disableDefaultUI: false,
+            });
 
-            var marker;
-            var latInput = document.getElementById('latitude');
-            var lngInput = document.getElementById('longitude');
+            const marker = new google.maps.Marker({
+                position: { lat: initialLat, lng: initialLng },
+                map: map,
+                draggable: true,
+                title: "Farm Location"
+            });
 
-            // 2. Check if old coordinates exist (from validation error)
-            var oldLat = latInput.value;
-            var oldLng = lngInput.value;
-
-            if (oldLat && oldLng) {
-                marker = L.marker([oldLat, oldLng], {draggable: true}).addTo(map);
-                map.setView([oldLat, oldLng], 14);
-            } else {
-                // Default marker
-                marker = L.marker([31.9522, 35.2332], {draggable: true}).addTo(map);
-            }
-
-            // Function to update input fields
             function updateInputs(lat, lng) {
                 latInput.value = lat.toFixed(8);
                 lngInput.value = lng.toFixed(8);
             }
 
-            // If it's a new form, set inputs to default marker position
-            if (!oldLat || !oldLng) {
-                updateInputs(31.9522, 35.2332);
+            // Sync inputs on drag end
+            marker.addListener('dragend', function() {
+                const pos = marker.getPosition();
+                updateInputs(pos.lat(), pos.lng());
+            });
+
+            // Sync inputs on map click
+            map.addListener('click', function(e) {
+                marker.setPosition(e.latLng);
+                updateInputs(e.latLng.lat(), e.latLng.lng());
+            });
+
+            // If empty, initialize inputs
+            if (!latInput.value || !lngInput.value) {
+                updateInputs(initialLat, initialLng);
             }
+        }
+        window.initMap = initMap;
 
-            // 3. Listen to marker drag event
-            marker.on('dragend', function(e) {
-                var position = marker.getLatLng();
-                updateInputs(position.lat, position.lng);
-            });
-
-            // 4. Listen to map click event
-            map.on('click', function(e) {
-                marker.setLatLng(e.latlng);
-                updateInputs(e.latlng.lat, e.latlng.lng);
-            });
-
-            // 5. File upload text preview scripts
+        // File upload text preview scripts
+        document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('main_image').addEventListener('change', function(e) {
                 if(e.target.files.length > 0) {
                     var fileName = e.target.files[0].name;
@@ -311,4 +306,5 @@
             });
         });
     </script>
+    @endpush
 </x-owner-layout>

@@ -3,8 +3,6 @@
 @section('title', $farm->name)
 
 @section('content')
-    {{-- Leaflet CSS --}}
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     {{-- Flatpickr CSS for Custom Calendar --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
@@ -497,8 +495,7 @@
     <div id="mapBackdrop"></div>
 
     @push('scripts')
-    {{-- Leaflet JS & Flatpickr JS --}}
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
@@ -812,33 +809,45 @@
             document.getElementById('bookingSummary').style.display = 'block';
         }
 
-        /* --- STATIC FARM MAP --- */
+        /* --- STATIC FARM MAP (GOOGLE MAPS) --- */
+        let fMap;
         const farmMapEl = document.getElementById('farm-map-display');
-        if(farmMapEl) {
-            var fMap = L.map('farm-map-display', {scrollWheelZoom: false}).setView([farmLat, farmLng], 13);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(fMap);
-
-            const farmName = <?php echo json_encode($farm->name); ?>;
-
-            var customIcon = L.divIcon({
-                className: 'custom-div-icon',
-                html: "<div style='background-color:#1d5c42; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'></div>",
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
+        function initFarmMap() {
+            if(!farmMapEl) return;
+            const farmPos = { lat: parseFloat(farmLat), lng: parseFloat(farmLng) };
+            fMap = new google.maps.Map(farmMapEl, {
+                zoom: 13,
+                center: farmPos,
+                disableDefaultUI: true,
+                zoomControl: true,
+                scrollwheel: false
             });
 
-            L.marker([farmLat, farmLng], {icon: customIcon}).addTo(fMap).bindPopup("<b style='color:#1d5c42'>" + farmName + "</b>").openPopup();
+            const farmName = <?php echo json_encode($farm->name); ?>;
+            const marker = new google.maps.Marker({
+                position: farmPos,
+                map: fMap,
+                title: farmName
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `<b style='color:#1d5c42'>${farmName}</b>`
+            });
+
+            marker.addListener("click", () => {
+                infoWindow.open(fMap, marker);
+            });
         }
 
-        /* --- TRANSPORT MAP LOGIC --- */
+        /* --- TRANSPORT MAP LOGIC (GOOGLE MAPS) --- */
         let pickupMap, pickupMarker;
         const toggle = document.getElementById('toggleTransport');
         const section = document.getElementById('transportSection');
         const invRow = document.getElementById('invoiceTransport');
 
-        if(toggle && section) {
+        function initPickupMap() {
+            if(!toggle || !section) return;
+            
             toggle.addEventListener('change', function() {
                 if(this.checked) {
                     section.style.display = 'block';
@@ -846,15 +855,16 @@
                     if(invRow) invRow.style.display = 'flex';
 
                     if(!pickupMap) {
-                        // Default to Amman if user location not specified
-                        pickupMap = L.map('pickup-map').setView([31.9522, 35.9334], 12);
-                        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(pickupMap);
+                        const defaultPos = { lat: 31.9522, lng: 35.9334 };
+                        pickupMap = new google.maps.Map(document.getElementById('pickup-map'), {
+                            zoom: 12,
+                            center: defaultPos
+                        });
 
-                        pickupMap.on('click', function(e) {
-                            setPickupMarker(e.latlng.lat, e.latlng.lng);
+                        pickupMap.addListener('click', function(e) {
+                            setPickupMarker(e.latLng.lat(), e.latLng.lng());
                         });
                     }
-                    setTimeout(() => pickupMap.invalidateSize(), 200);
                 } else {
                     section.style.display = 'none';
                     if(invRow) invRow.style.display = 'none';
@@ -890,7 +900,6 @@
                     expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
                     document.body.style.overflow = 'auto';
                 }
-                setTimeout(() => pickupMap.invalidateSize(), 300);
             });
         }
 
@@ -904,7 +913,8 @@
                 if(data && data.length > 0) {
                     const lat = parseFloat(data[0].lat);
                     const lon = parseFloat(data[0].lon);
-                    pickupMap.setView([lat, lon], 14);
+                    pickupMap.setCenter({ lat, lng: lon });
+                    pickupMap.setZoom(14);
                     setPickupMarker(lat, lon);
                 } else {
                     alert("Location not found in Jordan. Try a more specific address.");
@@ -913,8 +923,11 @@
         };
 
         function setPickupMarker(lat, lng) {
-            if(pickupMarker) pickupMap.removeLayer(pickupMarker);
-            pickupMarker = L.marker([lat, lng]).addTo(pickupMap);
+            if(pickupMarker) pickupMarker.setMap(null);
+            pickupMarker = new google.maps.Marker({
+                position: { lat, lng },
+                map: pickupMap
+            });
 
             document.getElementById('pickup_lat').value = lat;
             document.getElementById('pickup_lng').value = lng;
@@ -934,6 +947,11 @@
                     }
                 });
         }
+
+        window.initAllMaps = function() {
+            initFarmMap();
+            initPickupMap();
+        };
     </script>
     @endpush
 @endsection
