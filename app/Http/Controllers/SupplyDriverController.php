@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Http\Requests\StoreDriverRequest;
+use App\Http\Requests\UpdateDriverRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,28 +27,27 @@ class SupplyDriverController extends Controller
         return view('supplies.drivers.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreDriverRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
-        ]);
+        $validated = $request->validated();
+        $company = Auth::user();
 
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'governorate' => $validated['governorate'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'supply_driver',
-            'company_id' => Auth::id(),
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'phone'      => $validated['phone'],
+            'password'   => Hash::make($validated['password']),
+            'shift'      => $validated['shift'],
+            'role'       => 'supply_driver',
+            'company_id' => $company->id,
+            // 💡 STRICT BUSINESS LOGIC: Inherent from Company Branch
+            'governorate' => $company->governorate,
+            'latitude'    => $company->latitude,
+            'longitude'   => $company->longitude,
         ]);
 
         return redirect()->route('supplies.drivers.index')
-            ->with('success', 'Delivery driver added successfully.');
+            ->with('success', 'Local delivery driver added to your fleet successfully.');
     }
 
     public function edit(User $driver)
@@ -58,30 +59,30 @@ class SupplyDriverController extends Controller
         return view('supplies.drivers.edit', compact('driver'));
     }
 
-    public function update(Request $request, User $driver)
+    public function update(UpdateDriverRequest $request, User $driver)
     {
         if ($driver->company_id !== Auth::id() || $driver->role !== 'supply_driver') {
             abort(403, 'Unauthorized action.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($driver->id)],
-            'phone' => 'required|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
-            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
-        ]);
+        $validated = $request->validated();
+        $company = Auth::user();
 
-        $driver->name = $validated['name'];
-        $driver->email = $validated['email'];
-        $driver->phone = $validated['phone'];
-        $driver->governorate = $validated['governorate'];
+        $driver->update([
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'phone'      => $validated['phone'],
+            'shift'      => $validated['shift'],
+            // 💡 Re-enforce inheritance just in case company branch moved
+            'governorate' => $company->governorate,
+            'latitude'    => $company->latitude,
+            'longitude'   => $company->longitude,
+        ]);
 
         if ($request->filled('password')) {
             $driver->password = Hash::make($validated['password']);
+            $driver->save();
         }
-
-        $driver->save();
 
         return redirect()->route('supplies.drivers.index')
             ->with('success', 'Driver profile updated successfully.');

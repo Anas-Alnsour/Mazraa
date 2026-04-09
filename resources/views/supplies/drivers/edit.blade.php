@@ -46,6 +46,20 @@
                     <input type="text" name="phone" id="phone" value="{{ old('phone', $driver->phone) }}" required
                         class="w-full bg-gray-50 border border-gray-200 text-gray-900 font-bold rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 focus:bg-white transition-all py-4 px-6">
                 </div>
+
+                <div class="md:col-span-2 pt-6 border-t border-gray-100">
+                    <label for="shift" class="block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Delivery Shift <span class="text-gray-400 font-medium normal-case tracking-normal">(Used for Dispatching)</span></label>
+                    <div class="relative">
+                        <select name="shift" id="shift" required class="block w-full rounded-2xl border-gray-200 bg-gray-50 shadow-inner focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 sm:text-sm font-bold text-gray-900 px-6 py-4 appearance-none cursor-pointer transition-all">
+                            <option value="morning" {{ old('shift', $driver->shift) == 'morning' ? 'selected' : '' }}>☀️ Morning Shift (08:00 AM - 05:00 PM)</option>
+                            <option value="evening" {{ old('shift', $driver->shift) == 'evening' ? 'selected' : '' }}>🌙 Evening Shift (07:00 PM - 06:00 AM)</option>
+                            <option value="full_day" {{ old('shift', $driver->shift) == 'full_day' ? 'selected' : '' }}>🕒 Full Day Availability</option>
+                        </select>
+                        <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="pt-6 border-t border-gray-100">

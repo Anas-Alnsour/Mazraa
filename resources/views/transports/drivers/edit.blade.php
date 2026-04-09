@@ -51,11 +51,26 @@
                 </div>
 
                 <div class="md:col-span-2 pt-4 border-t border-slate-100">
+                    <label for="shift" class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Working Shift <span class="text-slate-400 font-medium normal-case tracking-normal">(Used for Dispatching)</span></label>
+                    <div class="relative">
+                        <select name="shift" id="shift" required class="block w-full rounded-2xl border-slate-200 bg-slate-50 shadow-inner focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 sm:text-sm font-bold text-slate-900 px-5 py-4 appearance-none cursor-pointer transition-all">
+                            <option value="morning" {{ old('shift', $driver->shift) == 'morning' ? 'selected' : '' }}>☀️ Morning Shift (08:00 AM - 05:00 PM)</option>
+                            <option value="evening" {{ old('shift', $driver->shift) == 'evening' ? 'selected' : '' }}>🌙 Evening Shift (07:00 PM - 06:00 AM)</option>
+                            <option value="full_day" {{ old('shift', $driver->shift) == 'full_day' ? 'selected' : '' }}>🕒 Full Day Availability</option>
+                        </select>
+                        <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 pt-4 border-t border-slate-100">
                     <label for="governorate" class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Primary Operating Region (Governorate)</label>
                     <div class="relative">
                         <select name="governorate" id="governorate" required class="block w-full rounded-2xl border-slate-200 bg-slate-50 shadow-inner focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 sm:text-sm font-bold text-slate-900 px-5 py-4 appearance-none cursor-pointer transition-all">
                             <option value="">Select a region...</option>
-                            @foreach($governorates as $gov)
+                            {{-- 💡 التعديل هنا: قراءة المحافظات من ملف الإعدادات --}}
+                            @foreach(config('mazraa.governorates') as $gov)
                                 <option value="{{ $gov }}" {{ old('governorate', $driver->governorate) == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                             @endforeach
                         </select>

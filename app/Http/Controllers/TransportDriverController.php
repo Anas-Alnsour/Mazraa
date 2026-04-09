@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Http\Requests\StoreDriverRequest;
+use App\Http\Requests\UpdateDriverRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -23,7 +25,7 @@ class TransportDriverController extends Controller
 
     public function create()
     {
-        // Only show UNASSIGNED vehicles (where no other active driver is using it)
+        // Only show UNASSIGNED vehicles
         $availableVehicles = Vehicle::where('company_id', Auth::id())
             ->whereNotIn('id', User::where('role', 'transport_driver')
                 ->where('company_id', Auth::id())
@@ -32,30 +34,24 @@ class TransportDriverController extends Controller
             )
             ->get();
 
-        $governorates = ['Amman', 'Zarqa', 'Irbid', 'Balqa', 'Madaba', 'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Maan', 'Aqaba'];
+        $governorates = config('mazraa.governorates');
 
         return view('transports.drivers.create', compact('availableVehicles', 'governorates'));
     }
 
-    public function store(Request $request)
+    public function store(StoreDriverRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'required|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
-            'transport_vehicle_id' => 'nullable|exists:vehicles,id',
-            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
-        ]);
+        $validated = $request->validated();
 
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'governorate' => $validated['governorate'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'transport_driver',
-            'company_id' => Auth::id(),
+            'name'                 => $validated['name'],
+            'email'                => $validated['email'],
+            'phone'                => $validated['phone'],
+            'governorate'          => $validated['governorate'],
+            'shift'                => $validated['shift'],
+            'password'             => Hash::make($validated['password']),
+            'role'                 => 'transport_driver',
+            'company_id'           => Auth::id(),
             'transport_vehicle_id' => $validated['transport_vehicle_id'] ?? null,
         ]);
 
@@ -69,7 +65,6 @@ class TransportDriverController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // Show unassigned vehicles PLUS the one this driver already has
         $availableVehicles = Vehicle::where('company_id', Auth::id())
             ->where(function ($q) use ($driver) {
                 $q->whereNotIn('id', User::where('role', 'transport_driver')
@@ -81,37 +76,32 @@ class TransportDriverController extends Controller
             })
             ->get();
 
-        $governorates = ['Amman', 'Zarqa', 'Irbid', 'Balqa', 'Madaba', 'Jerash', 'Ajloun', 'Mafraq', 'Karak', 'Tafilah', 'Maan', 'Aqaba'];
+        $governorates = config('mazraa.governorates');
 
         return view('transports.drivers.edit', compact('driver', 'availableVehicles', 'governorates'));
     }
 
-    public function update(Request $request, User $driver)
+    public function update(UpdateDriverRequest $request, User $driver)
     {
         if ($driver->company_id !== Auth::id() || $driver->role !== 'transport_driver') {
             abort(403, 'Unauthorized action.');
         }
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($driver->id)],
-            'phone' => 'required|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
-            'transport_vehicle_id' => 'nullable|exists:vehicles,id',
-            'governorate' => ['required', 'string', Rule::in(config('mazraa.governorates'))],
-        ]);
+        $validated = $request->validated();
 
-        $driver->name = $validated['name'];
-        $driver->email = $validated['email'];
-        $driver->phone = $validated['phone'];
-        $driver->governorate = $validated['governorate'];
-        $driver->transport_vehicle_id = $validated['transport_vehicle_id'] ?? null;
+        $driver->update([
+            'name'                 => $validated['name'],
+            'email'                => $validated['email'],
+            'phone'                => $validated['phone'],
+            'governorate'          => $validated['governorate'],
+            'shift'                => $validated['shift'],
+            'transport_vehicle_id' => $validated['transport_vehicle_id'] ?? null,
+        ]);
 
         if ($request->filled('password')) {
             $driver->password = Hash::make($validated['password']);
+            $driver->save();
         }
-
-        $driver->save();
 
         return redirect()->route('transport.drivers.index')
             ->with('success', 'Driver information updated successfully.');

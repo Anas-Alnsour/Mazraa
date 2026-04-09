@@ -12,8 +12,8 @@ class FarmAdminController extends Controller
 {
     public function index()
     {
-        // التعديل الأساسي: استخدام paginate بدلاً من get
-        $farms = Farm::latest()->paginate(10);
+        // 🚀 Optimizing with Eager Loading (Pillar 4)
+        $farms = Farm::with('owner')->latest()->paginate(10);
         return view('admin.farms.index', compact('farms'));
     }
 
