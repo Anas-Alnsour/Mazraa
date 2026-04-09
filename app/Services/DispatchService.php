@@ -3,65 +3,51 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Exception;
 use Carbon\Carbon;
 
 class DispatchService
 {
-    /**
-     * Assign a Transport Driver for a Round-Trip.
-     * Criteria:
-     * - Driver role is 'transport_driver'
-     * - Driver belongs to the CUSTOMER'S ORIGIN Governorate.
-     * - Fair Dispatching (Round-Robin): Driver with the lowest assigned jobs THIS MONTH.
-     *
-     * @param string $originGovernorate
-     * @return User|null
-     */
-    public function assignTransportDriver(string $originGovernorate): ?User
+    public function assignTransportDriver(string $gov, ?string $shift = null): ?User
     {
-        $now = Carbon::now();
-
-        $driver = User::role('transport_driver')
-            ->where('governorate', $originGovernorate)
-            ->withCount(['transportDriverJobs' => function($query) use ($now) {
-                $query->whereMonth('created_at', $now->month)
-                      ->whereYear('created_at', $now->year);
-            }])
-            ->orderBy('transport_driver_jobs_count', 'asc') // Round-Robin: Least workload first
-            ->orderBy('id', 'asc') // ID Fallback
-            ->first();
-
-        // Graceful handling: If no driver in specific gov, return null instead of throwing exception
-        // The controller will then decide whether to flag it for admin review
-        return $driver;
+        return $this->findHungriestDriver('transport_driver', $gov, $shift);
     }
 
-    /**
-     * Assign a Supply Driver for Delivery.
-     * Criteria:
-     * - Driver role is 'supply_driver'
-     * - Driver belongs to the DESTINATION Governorate (Farm's location).
-     * - Fair Dispatching (Round-Robin): Driver with the lowest assigned orders THIS MONTH.
-     *
-     * @param string $destinationGovernorate
-     * @return User|null
-     */
-    public function assignSupplyDriver(string $destinationGovernorate): ?User
+    public function assignSupplyDriver(string $gov, ?string $shift = null): ?User
+    {
+        return $this->findHungriestDriver('supply_driver', $gov, $shift);
+    }
+
+    private function findHungriestDriver(string $role, string $gov, ?string $shift): ?User
     {
         $now = Carbon::now();
+        $relation = $role === 'transport_driver' ? 'transportDriverJobs' : 'supplyDriverJobs';
 
-        $driver = User::role('supply_driver')
-            ->where('governorate', $destinationGovernorate)
-            ->withCount(['supplyDriverJobs' => function($query) use ($now) {
-                $query->whereMonth('created_at', $now->month)
-                      ->whereYear('created_at', $now->year);
+        // Tier 1: Exact Match (Role + Gov + Shift) - Sorted by least jobs this month
+        $driver = User::role($role)
+            ->where('governorate', $gov)
+            ->when($shift, function ($q) use ($shift) {
+                return $q->where('shift', $shift);
+            })
+            ->withCount([$relation => function($query) use ($now) {
+                $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
             }])
-            ->orderBy('supply_driver_jobs_count', 'asc') // Round-Robin: Least workload first
-            ->orderBy('id', 'asc') // ID Fallback
+            ->orderBy($relation . '_count', 'asc')
+            ->orderBy('id', 'asc')
             ->first();
 
+        // Tier 2: Regional Fallback (Role + Gov + ANY Shift)
+        if (!$driver && $shift) {
+            $driver = User::role($role)
+                ->where('governorate', $gov)
+                ->withCount([$relation => function($query) use ($now) {
+                    $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+                }])
+                ->orderBy($relation . '_count', 'asc')
+                ->orderBy('id', 'asc')
+                ->first();
+        }
+
+        // Tier 3: Return Null (Graceful fallback for manual assignment)
         return $driver;
     }
 }

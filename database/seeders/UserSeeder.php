@@ -46,6 +46,7 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($governorates as $gov => $data) {
+            // A. The Supply Company Branch
             User::updateOrCreate(['email' => strtolower($gov) . '.supply@mazraa.com'], [
                 'name' => "شركة توريد " . $data['ar'],
                 'phone' => '079' . rand(1000000, 9999999),
@@ -56,14 +57,32 @@ class UserSeeder extends Seeder
                 'longitude' => $data['lng'],
             ]);
 
-            // 4. Two Supply Drivers per Governorate
-            for ($i = 1; $i <= 2; $i++) {
-                User::updateOrCreate(['email' => "driver." . strtolower($gov) . "." . $i . "@mazraa.com"], [
-                    'name' => "سائق " . $data['ar'] . " " . $i,
+            // B. Supply Drivers (Localized & Shift-Based)
+            $shifts = ['morning', 'evening'];
+            foreach ($shifts as $shift) {
+                User::updateOrCreate(['email' => "driver.s." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
+                    'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . ")",
                     'phone' => '078' . rand(1000000, 9999999),
                     'role' => 'supply_driver',
                     'password' => $password,
                     'governorate' => $gov,
+                    'shift' => $shift,
+                    'latitude' => $data['lat'], // Matches branch coordinates (Standby Point)
+                    'longitude' => $data['lng'],
+                ]);
+            }
+
+            // C. Transport Drivers (Localized & Shift-Based)
+            foreach ($shifts as $shift) {
+                User::updateOrCreate(['email' => "driver.t." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
+                    'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . ")",
+                    'phone' => '077' . rand(1000000, 9999999),
+                    'role' => 'transport_driver',
+                    'password' => $password,
+                    'governorate' => $gov,
+                    'shift' => $shift,
+                    'latitude' => $data['lat'], // Matches regional base
+                    'longitude' => $data['lng'],
                 ]);
             }
         }
@@ -72,13 +91,6 @@ class UserSeeder extends Seeder
             'name' => 'النخبة لنقل الركاب',
             'phone' => '0799999904',
             'role' => 'transport_company',
-            'password' => $password,
-        ]);
-
-        User::updateOrCreate(['email' => 'driver.t@mazraa.com'], [
-            'name' => 'محمد العبادي',
-            'phone' => '0799999905',
-            'role' => 'transport_driver',
             'password' => $password,
         ]);
 

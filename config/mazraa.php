@@ -2,17 +2,7 @@
 
 return [
     'governorates' => [
-        'Amman',
-        'Irbid',
-        'Zarqa',
-        'Mafraq',
-        'Balqa',
-        'Karak',
-        'Jerash',
-        'Madaba',
-        'Maan',
-        'Ajloun',
-        'Aqaba',
-        'Tafilah',
+        'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash',
+        'Ajloun', 'Balqa', 'Madaba', 'Karak', 'Tafilah', 'Maan'
     ],
 ];

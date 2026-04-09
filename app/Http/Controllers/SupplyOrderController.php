@@ -168,33 +168,45 @@ class SupplyOrderController extends Controller
         }
 
         $farmGovernorate = $activeBooking->farm->governorate ?? 'Amman';
+        $bookingShift = $activeBooking->event_type; // morning, evening, or full_day
+
+        // Map 'full_day' to 'morning' for supply delivery timing, or keep null to use all-shift fallback
+        $dispatchShift = ($bookingShift === 'full_day') ? 'morning' : $bookingShift;
+
         $invoiceId = 'INV-' . strtoupper(Str::random(8));
         $commissionRate = 0.10;
 
         try {
-            DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate) {
+            DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate, $dispatchShift) {
 
-                $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate);
+                // [FAIR DISPATCH] Invoke Algorithm with Fallbacks
+                $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate, $dispatchShift);
                 $assignedDriverId = $driver->id ?? null;
 
+                // [STRICT ROUTING] Find the Supply Company Branch in the Farm's Governorate
                 $localCompany = \App\Models\User::where('role', 'supply_company')
                     ->where('governorate', $farmGovernorate)
                     ->first();
 
                 if (!$localCompany) {
-                    throw new \Exception("Operational Error: No supply branch found for {$farmGovernorate}. Please contact support.");
+                    throw new \Exception("Operational Error: No supply branch found for the governorate [{$farmGovernorate}]. Please contact support.");
                 }
 
                 foreach ($cartOrders as $item) {
-                    // [STRICT ROUTING] Swap to local branch inventory
+                    // [INVENTORY ROUTING] Swap to local branch inventory
                     $localSupply = Supply::where('company_id', $localCompany->id)
                         ->where('name', $item->supply->name)
                         ->first();
 
-                    $finalSupply = $localSupply ?: $item->supply;
+                    if (!$localSupply) {
+                        // Fallback to original supply if local doesn't exist (or throw error if strictly required)
+                        $finalSupply = $item->supply;
+                    } else {
+                        $finalSupply = $localSupply;
+                    }
 
                     if ($finalSupply->stock < $item->quantity) {
-                        throw new \Exception("Stock issue in {$farmGovernorate} branch for " . $finalSupply->name);
+                        throw new \Exception("Insufficient stock in {$farmGovernorate} branch for [" . $finalSupply->name . "]. Available: " . $finalSupply->stock);
                     }
 
                     $commissionAmount = $item->total_price * $commissionRate;
@@ -205,11 +217,11 @@ class SupplyOrderController extends Controller
 
                     $item->update([
                         'order_id'                => $invoiceId,
-                        'supply_id'               => $finalSupply->id, // [ROUTING] Swap to local branch item
+                        'supply_id'               => $finalSupply->id, // [ROUTING] Linked to local branch item
                         'booking_id'              => $activeBooking->id,
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment',
+                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment', // Graceful fallback
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);

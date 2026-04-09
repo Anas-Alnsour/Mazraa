@@ -27,30 +27,29 @@ class DatabaseSeeder extends Seeder
         $owner     = User::where('email', 'owner@mazraa.com')->first();
         $user      = User::where('email', 'user@mazraa.com')->first();
         $transport = User::where('email', 'transport@mazraa.com')->first();
-        $drvT      = User::where('email', 'driver.t@mazraa.com')->first();
 
-        // 💡 التعديل الذكي: جلب جميع شركات التوريد (12) وجميع سائقي التوريد (24) دفعة واحدة
-        $supplyCompanies = User::where('role', 'supply_company')->get();
-        $supplyDrivers   = User::where('role', 'supply_driver')->get();
+        // 💡 استخدام إيميل السائق الذكي اللي إنت عملته
+        $drvT      = User::where('email', 'driver.t.amman.morning@mazraa.com')->first();
+
+        // 💡 جلب جميع شركات وسائقي التوريد وسائقي النقل دفعة واحدة
+        $supplyCompanies  = User::where('role', 'supply_company')->get();
+        $supplyDrivers    = User::where('role', 'supply_driver')->get();
+        $transportDrivers = User::where('role', 'transport_driver')->get();
 
         // 3. Massive Farm Generation (Core Owner Focus)
-        // owner@mazraa.com gets 25 farms
         $ownerFarms = \App\Models\Farm::factory(25)->create([
             'owner_id' => $owner->id,
         ]);
 
-        // Other random owners get 15 farms
         $otherFarms = \App\Models\Farm::factory(15)->create();
         $allFarms = $ownerFarms->concat($otherFarms);
 
         // 4. Massive Booking Generation (Core User Focus)
-        // user@mazraa.com gets 120 bookings (history + future)
         $userBookings = \App\Models\FarmBooking::factory(120)->create([
             'user_id' => $user->id,
             'farm_id' => fn() => $allFarms->random()->id,
         ]);
 
-        // Other random users get 80 bookings
         $otherBookings = \App\Models\FarmBooking::factory(80)->create([
             'farm_id' => fn() => $allFarms->random()->id,
         ]);
@@ -59,25 +58,27 @@ class DatabaseSeeder extends Seeder
 
         // 5. Supply Orders (Core Supply Co Focus)
         $supplies = \App\Models\Supply::all();
-        $userOrder = \App\Models\SupplyOrder::factory(120)->create([
+        \App\Models\SupplyOrder::factory(120)->create([
             'user_id' => $user->id,
             'supply_id' => fn() => $supplies->random()->id,
             'booking_id' => fn() => $allBookings->random()->id,
         ]);
 
         // 6. Transport & Logistics (Core Transport Focus)
-        // transport@mazraa.com manages 80 trips
         $vehicles = \App\Models\Vehicle::where('company_id', $transport->id)->get();
-        $transportTrips = \App\Models\Transport::factory(80)->create([
-            'company_id' => $transport->id,
-            'vehicle_id' => fn() => $vehicles->random()->id,
-            'driver_id'  => fn() => $drvT->id, // Binding trips to core driver
-            'farm_booking_id' => fn() => $allBookings->random()->id,
-        ]);
+
+        // حماية إضافية عشان ما يضرب إيرور إذا ما لقى سيارات أو سواق
+        if ($vehicles->isNotEmpty() && $drvT) {
+            \App\Models\Transport::factory(80)->create([
+                'company_id' => $transport->id,
+                'vehicle_id' => fn() => $vehicles->random()->id,
+                'driver_id'  => fn() => $drvT->id,
+                'farm_booking_id' => fn() => $allBookings->random()->id,
+            ]);
+        }
 
         // 7. Financial Transactions (Admin & Ledger Focus)
-        // Generate 300+ transactions correlated with bookings and orders
-        $allBookings->each(function ($booking) use ($admin, $owner) {
+        $allBookings->each(function ($booking) use ($admin) {
             if ($booking->payment_status === 'paid') {
                 $commission = $booking->total_price * 0.10;
                 $net = $booking->total_price - $commission;
@@ -106,20 +107,18 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        // 8. Arabic Reviews (Massive Social Proof)
-        // Generate 200 reviews spread across farms
-        $allFarms->each(function ($farm) use ($user) {
+        // 8. Arabic Reviews
+        $allFarms->each(function ($farm) {
             \App\Models\Review::factory(5)->create([
                 'reviewable_id' => $farm->id,
                 'reviewable_type' => 'farm',
             ]);
         });
 
-        // 9. System Support (Contact Us messages)
+        // 9. System Support
         ContactMessage::factory(35)->create();
 
-        // 10. User Experience (Favorites)
-        // user@mazraa.com favorites 15-20 farms
+        // 10. Favorites
         $favoriteFarms = $allFarms->random(rand(15, 20));
         foreach ($favoriteFarms as $farm) {
             Favorite::create([
@@ -129,7 +128,6 @@ class DatabaseSeeder extends Seeder
         }
 
         // 11. Realism (Blocked Dates)
-        // Block dates for some premium farms
         $premiumFarms = $allFarms->random(10);
         foreach ($premiumFarms as $farm) {
             FarmBlockedDate::factory(5)->create([
@@ -138,11 +136,11 @@ class DatabaseSeeder extends Seeder
         }
 
         // 12. System Activity (Notifications)
-        // 💡 دمجنا الحسابات الأساسية مع كل الشركات والسائقين في كوليكشن واحد
         $coreAccounts = collect([$admin, $owner, $user, $transport, $drvT])
-            ->filter() // Remove any nulls just in case
+            ->filter()
             ->merge($supplyCompanies)
-            ->merge($supplyDrivers);
+            ->merge($supplyDrivers)
+            ->merge($transportDrivers);
 
         $notificationTypes = [
             'App\Notifications\BookingConfirmed',
@@ -151,6 +149,7 @@ class DatabaseSeeder extends Seeder
             'App\Notifications\NewReviewPosted',
             'App\Notifications\DriverAssigned'
         ];
+
         $notificationData = [
             ['title' => 'تأكيد الحجز', 'message' => 'تم تأكيد حجزك بنجاح للمزرعة المختارة.'],
             ['title' => 'تم استلام الدفعة', 'message' => 'لقد تم تسجيل مبلغ مالي جديد في محفظتك.'],
@@ -159,10 +158,9 @@ class DatabaseSeeder extends Seeder
             ['title' => 'تعيين سائق', 'message' => 'تم تعيين سائق لرحلتك القادمة، يمكنك التواصل معه الآن.']
         ];
 
-        // توزيع الإشعارات على الجميع (أكثر من 40 حساب!)
         foreach ($coreAccounts as $account) {
-            if ($account) { // حماية إضافية
-                for ($i = 0; $i < 15; $i++) {
+            if ($account) {
+                for ($i = 0; $i < 5; $i++) {
                     $index = array_rand($notificationTypes);
                     DB::table('notifications')->insert([
                         'id' => Str::uuid(),

@@ -28,8 +28,11 @@ protected $fillable = [
         'bank_name',
         'account_holder_name',
         'iban',
-        'company_id',
+        'company_id',           // 👈 مهم جداً لربط السواقين بالشركات
         'transport_vehicle_id', // 👈 1-to-1 permanent vehicle link for transport drivers
+        'shift',                // [Geo-Dispatch] morning or evening
+        'latitude',             // [Geo-Dispatch] standby location
+        'longitude',            // [Geo-Dispatch] standby location
     ];
 
     /**
