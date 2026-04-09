@@ -83,7 +83,6 @@ class DatabaseSeeder extends Seeder
                     'reference_id' => $booking->id,
                     'transaction_type' => 'credit',
                     'amount' => $commission,
-                    'farm_id' => $booking->farm_id,
                     'description' => "Booking Commission #{$booking->id}",
                     'created_at' => $booking->created_at,
                 ]);
@@ -95,7 +94,6 @@ class DatabaseSeeder extends Seeder
                     'reference_id' => $booking->id,
                     'transaction_type' => 'credit',
                     'amount' => $net,
-                    'farm_id' => $booking->farm_id,
                     'description' => "Net Booking Revenue #{$booking->id}",
                     'created_at' => $booking->created_at,
                 ]);

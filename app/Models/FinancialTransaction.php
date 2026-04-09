@@ -16,17 +16,10 @@ class FinancialTransaction extends Model
         'transaction_type',
         'amount',
         'description',
-        'farm_id', // 👈 ضفناها عشان الكنترولر يقدر يمررها
-        'status',  // 👈 وضفنا حالة الدفعة
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function farm()
-    {
-        return $this->belongsTo(Farm::class, 'farm_id');
     }
 }

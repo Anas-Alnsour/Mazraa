@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\FinancialTransaction;
 use App\Models\User;
-use App\Models\Farm;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class FinancialTransactionFactory extends Factory
@@ -20,8 +19,6 @@ class FinancialTransactionFactory extends Factory
             'transaction_type' => $this->faker->randomElement(['credit', 'debit']),
             'amount' => $this->faker->randomFloat(2, 5, 500),
             'description' => $this->faker->sentence(),
-            'farm_id' => Farm::factory(),
-            'status' => 'completed',
             'created_at' => $this->faker->dateTimeBetween('-6 months', 'now'),
         ];
     }
