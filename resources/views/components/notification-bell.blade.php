@@ -85,7 +85,7 @@
 
             @php
                 $inboxRoute = match(auth()->user()->role) {
-                    'super_admin', 'admin' => route('admin.dashboard'),
+                    'admin' => route('admin.dashboard'),
                     'farm_owner' => route('owner.dashboard'),
                     'supply_company' => route('supplies.dashboard'),
                     'transport_company' => route('transport.dashboard'),

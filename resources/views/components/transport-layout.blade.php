@@ -1,4 +1,4 @@
-@extends('layouts.owner')
+@extends('layouts.transport')
 
 @if(isset($header))
     @section('header')

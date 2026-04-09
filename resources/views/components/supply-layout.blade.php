@@ -1,4 +1,4 @@
-@extends('layouts.owner')
+@extends('layouts.supply')
 
 @if(isset($header))
     @section('header')

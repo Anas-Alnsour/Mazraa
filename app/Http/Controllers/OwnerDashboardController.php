@@ -374,7 +374,7 @@ class OwnerDashboardController extends Controller
         }
 
         // Idempotency: skip if already credited
-        $alreadyTransacted = FinancialTransaction::where('reference_type', 'booking')
+        $alreadyTransacted = \App\Models\FinancialTransaction::where('reference_type', 'farm_booking')
             ->where('reference_id', $booking->id)
             ->exists();
 
@@ -444,7 +444,7 @@ class OwnerDashboardController extends Controller
         }
 
         // Notify Admins
-        $admins = \App\Models\User::where('role', 'super_admin')->get();
+        $admins = \App\Models\User::where('role', 'admin')->get();
         foreach ($admins as $admin) {
             $admin->notify(new \App\Notifications\PayoutRequestedNotification($user, $availableBalance));
         }

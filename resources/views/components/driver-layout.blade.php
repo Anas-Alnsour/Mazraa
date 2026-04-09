@@ -1,4 +1,4 @@
-@extends('layouts.owner')
+@extends('layouts.driver')
 
 @if(isset($header))
     @section('header')
