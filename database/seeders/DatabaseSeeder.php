@@ -47,12 +47,20 @@ class DatabaseSeeder extends Seeder
 
         // 7. إضافة التقييمات الوهمية للمزارع (Phase 7)
         $farms->each(function ($farm) use ($user) {
+            $arabicComments = [
+                'المزرعة بتجنن والمسبح نظيف جداً، أنصح بها للعائلات.',
+                'تجربة رائعة وتجاوب سريع من المالك، المكان هادئ ومريح.',
+                'كل شيء كان ممتاز، المرافق متكاملة والنظافة عالية جداً.',
+                'إطلالة خلابة وجلسات خارجية مريحة، قضينا وقت ممتع جداً.',
+                'من أجمل المزارع اللي زرتها بالأردن، خصوصية تامة وفخامة.'
+            ];
+
             \App\Models\Review::create([
                 'user_id' => $user->id,
                 'reviewable_id' => $farm->id,
                 'reviewable_type' => 'farm',
-                'rating' => rand(3, 5),
-                'comment' => 'Great experience, highly recommend this place for family gatherings and weekend getaways!',
+                'rating' => rand(4, 5),
+                'comment' => $arabicComments[array_rand($arabicComments)],
                 'created_at' => now()->subDays(rand(1, 30))
             ]);
             
@@ -60,9 +68,9 @@ class DatabaseSeeder extends Seeder
                 'user_id' => User::factory()->create(['role' => 'user'])->id,
                 'reviewable_id' => $farm->id,
                 'reviewable_type' => 'farm',
-                'rating' => rand(4, 5),
-                'comment' => 'Beautiful views and clean amenities. Everything was exactly as described.',
-                'created_at' => now()->subDays(rand(1, 30))
+                'rating' => rand(3, 5),
+                'comment' => $arabicComments[array_rand($arabicComments)],
+                'created_at' => now()->subDays(rand(31, 60))
             ]);
         });
 

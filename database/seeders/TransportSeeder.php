@@ -22,9 +22,9 @@ class TransportSeeder extends Seeder
 
         // 2. Create 3 vehicles for the transport company
         $vehiclesData = [
-            ['type' => 'Toyota Hiace', 'license_plate' => 'A-1234', 'capacity' => 12],
-            ['type' => 'Mercedes Sprinter', 'license_plate' => 'B-5678', 'capacity' => 18],
-            ['type' => 'Coaster Bus', 'license_plate' => 'C-9012', 'capacity' => 30],
+            ['type' => 'Hyundai Coaster 2023', 'license_plate' => '70-1234', 'capacity' => 22],
+            ['type' => 'Mercedes Sprinter VIP', 'license_plate' => '50-5678', 'capacity' => 14],
+            ['type' => 'GMC Savana Executive', 'license_plate' => '10-9012', 'capacity' => 7],
         ];
 
         $vehicles = [];
@@ -41,9 +41,9 @@ class TransportSeeder extends Seeder
 
         // 3. Create 3 drivers permanently paired to the 3 vehicles
         $driversData = [
-            ['name' => 'Ahmad Khalil',   'email' => 'driver1.t@mazraa.com', 'phone' => '0791100001'],
-            ['name' => 'Omar Nasser',    'email' => 'driver2.t@mazraa.com', 'phone' => '0791100002'],
-            ['name' => 'Yousef Hamdan',  'email' => 'driver3.t@mazraa.com', 'phone' => '0791100003'],
+            ['name' => 'سامي الفايز',   'email' => 'driver1.t@mazraa.com', 'phone' => '0791100001', 'gov' => 'Amman'],
+            ['name' => 'خالد العبادي',    'email' => 'driver2.t@mazraa.com', 'phone' => '0791100002', 'gov' => 'Zarqa'],
+            ['name' => 'إبراهيم الضمور',  'email' => 'driver3.t@mazraa.com', 'phone' => '0791100003', 'gov' => 'Irbid'],
         ];
 
         foreach ($driversData as $index => $dData) {
@@ -58,7 +58,7 @@ class TransportSeeder extends Seeder
                 'role'                 => 'transport_driver',
                 'company_id'           => $company->id,
                 'transport_vehicle_id' => $vehicle->id,  // 1-to-1 permanent link
-                'governorate'          => 'Amman',
+                'governorate'          => $dData['gov'],
             ]);
 
             // Also set the vehicle's driver_id back-reference for legacy support

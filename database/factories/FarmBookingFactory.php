@@ -16,15 +16,26 @@ class FarmBookingFactory extends Factory
 
     public function definition(): array
     {
-        $start = Carbon::now()->addDays($this->faker->numberBetween(1, 30))->setHour($this->faker->numberBetween(8, 18))->setMinute(0);
+        // 50% chance for past bookings, 50% for future
+        $isPast = $this->faker->boolean();
+        
+        if ($isPast) {
+            $start = Carbon::now()->subDays($this->faker->numberBetween(1, 60))->setHour($this->faker->numberBetween(8, 18))->setMinute(0);
+        } else {
+            $start = Carbon::now()->addDays($this->faker->numberBetween(1, 60))->setHour($this->faker->numberBetween(8, 18))->setMinute(0);
+        }
+
         $end = (clone $start)->addHours(12);
 
         return [
-            'user_id' => User::factory(),   // إذا لم يكن موجود سيتم إنشاء مستخدم جديد
-            'farm_id' => Farm::factory(),   // إذا لم يكن موجود سيتم إنشاء مزرعة جديدة
+            'user_id' => User::where('role', 'user')->first()->id ?? User::factory(),
+            'farm_id' => Farm::first()->id ?? Farm::factory(),
             'start_time' => $start,
             'end_time' => $end,
-            'event_type' => $this->faker->randomElement(['Birthday', 'Wedding', 'Other', null]),
+            'event_type' => $this->faker->randomElement(['Birthday', 'Family Gathering', 'Wedding', 'Weekend Stay']),
+            'status' => $isPast ? 'completed' : 'confirmed',
+            'payment_status' => 'paid',
+            'total_price' => $this->faker->numberBetween(100, 300),
         ];
     }
 }
