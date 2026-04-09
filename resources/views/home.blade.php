@@ -36,25 +36,23 @@
     }
 </style>
 
-<div x-data="{ mounted: false }" x-init="setTimeout(() => mounted = true, 100)" class="bg-[#020617] overflow-hidden selection:bg-[#c2a265] selection:text-[#020617]">
+<div x-data="{ mounted: false }" x-init="setTimeout(() => mounted = true, 100)" class="bg-[#020617] overflow-x-hidden selection:bg-[#c2a265] selection:text-[#020617]">
 
     {{-- ==========================================
-         1. HERO SECTION (ULTRA MODERN & CLICKABLE)
+         1. HERO SECTION
          ========================================== --}}
-    <section class="relative w-full min-h-screen flex flex-col items-center justify-center pt-20 pb-12">
-        {{-- Background Elements (pointer-events-none is CRITICAL here so buttons work) --}}
+    <section class="relative w-full min-h-screen flex flex-col items-center justify-center pt-20 pb-12 z-[100]">
+
         <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
             <img src="{{ asset('backgrounds/home.JPG') }}" alt="Mazraa Home"
                  class="w-full h-full object-cover opacity-50 scale-110 transition-transform duration-[40s] ease-out"
                  :class="mounted ? 'scale-100' : 'scale-110'">
             <div class="absolute inset-0 bg-gradient-to-b from-[#020617]/95 via-[#020617]/70 to-[#020617]"></div>
 
-            {{-- Glowing Orbs --}}
             <div class="absolute top-1/4 left-1/4 w-[30rem] h-[30rem] bg-[#1d5c42]/20 rounded-full blur-[120px] animate-float"></div>
             <div class="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-[#c2a265]/15 rounded-full blur-[120px] animate-float-delayed"></div>
         </div>
 
-        {{-- Hero Content (Staggered Animation) --}}
         <div class="relative z-20 container mx-auto px-4 flex flex-col items-center text-center">
 
             <div class="transition-all duration-1000 ease-out transform"
@@ -84,13 +82,12 @@
                 Jordan's first integrated ecosystem for luxury farm bookings, seamless on-demand supplies, and premium transport services.
             </p>
 
-            {{-- Action Buttons (Z-INDEX 50 is critical here) --}}
-            <div class="w-full max-w-4xl mx-auto transition-all duration-1000 delay-500 ease-out transform relative z-50"
+            {{-- Action Buttons --}}
+            <div class="w-full max-w-4xl mx-auto transition-all duration-1000 delay-500 ease-out transform relative z-[200]"
                  :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'">
 
                 <div class="flex flex-col md:flex-row items-center justify-center gap-5">
                     @guest
-                        {{-- Explore Button --}}
                         <a href="{{ route('explore') }}"
                            class="group relative w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-[#1d5c42] to-[#113827] text-white font-black text-sm uppercase tracking-widest rounded-full shadow-[0_0_40px_rgba(29,92,66,0.3)] transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_0_60px_rgba(29,92,66,0.6)] flex items-center justify-center gap-3 overflow-hidden border border-[#1d5c42]/50">
                             <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out"></div>
@@ -99,15 +96,19 @@
                         </a>
 
                         {{-- Register Dropdown --}}
-                        <div class="relative w-full sm:w-auto z-50" x-data="{ open: false }" @click.away="open = false">
-                            <button @click="open = !open"
+                        <div class="relative w-full sm:w-auto z-[250]" x-data="{ openReg: false }" @click.away="openReg = false">
+                            <button @click="openReg = !openReg"
                                     class="w-full px-10 py-4 glass-card text-white font-black text-sm uppercase tracking-widest rounded-full transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden group">
                                 <div class="absolute inset-0 bg-white/5 group-hover:bg-white/10 transition-colors"></div>
                                 <span class="relative z-10">Register</span>
-                                <svg class="relative z-10 w-4 h-4 transition-transform duration-300" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="relative z-10 w-4 h-4 transition-transform duration-300" :class="{'rotate-180': openReg}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
-                            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-2" x-cloak class="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20 overflow-hidden py-2 text-left z-50">
-                                <p class="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 mb-1">Create an Account</p>
+                            <div x-show="openReg"
+                                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                                 x-cloak
+                                 class="absolute left-0 sm:left-1/2 sm:-translate-x-1/2 mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/20 overflow-hidden py-3 text-left z-[300]">
+                                <p class="px-5 pb-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 mb-1">Create an Account</p>
                                 <a href="{{ route('register') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-green-50 transition-colors group">
                                     <div class="p-2 bg-gray-100 rounded-lg mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></div>
                                     <div><span class="block text-gray-900 font-black">Consumer Account</span><span class="block text-[10px] text-gray-500 font-bold uppercase mt-0.5">Standard User</span></div>
@@ -119,20 +120,28 @@
                             </div>
                         </div>
 
-                        {{-- Login Dropdown --}}
-                        <div class="relative w-full sm:w-auto z-50" x-data="{ open: false }" @click.away="open = false">
-                            <button @click="open = !open"
+                        {{-- Login Dropdown (NO SCROLL RESTRICTION) --}}
+                        <div class="relative w-full sm:w-auto z-[250]" x-data="{ openLog: false }" @click.away="openLog = false">
+                            <button @click="openLog = !openLog"
                                     class="w-full px-10 py-4 bg-white text-[#0f172a] font-black text-sm uppercase tracking-widest rounded-full hover:bg-gray-100 transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] hover:-translate-y-1">
                                 <span>Log In</span>
-                                <svg class="w-4 h-4 text-[#c2a265] transition-transform duration-300" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 text-[#c2a265] transition-transform duration-300" :class="{'rotate-180': openLog}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
-                            <div x-show="open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-2" x-cloak class="absolute right-0 sm:left-1/2 sm:-translate-x-1/2 mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/20 overflow-hidden py-2 text-left z-50">
-                                <p class="px-5 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 mb-1">Select Portal</p>
+                            <div x-show="openLog"
+                                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+                                 x-cloak
+                                 class="absolute right-0 sm:left-1/2 sm:-translate-x-1/2 mt-4 w-72 bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/20 py-3 text-left z-[300]">
+
+                                <p class="px-5 pb-2 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 mb-1">Select Portal</p>
+
                                 <a href="{{ route('login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors group">
                                     <div class="p-2 bg-gray-100 rounded-lg mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg></div>
                                     <span class="text-gray-900 font-black">Customer Login</span>
                                 </a>
-                                <div class="border-t border-gray-100 my-1"></div>
+
+                                <div class="border-t border-gray-100 my-1 mx-4"></div>
+
                                 <a href="{{ route('portal.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-blue-50 transition-colors group">
                                     <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg></div>
                                     Admin / Farm Owner
@@ -141,25 +150,28 @@
                                     <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
                                     Supply Company
                                 </a>
-                                <a href="{{ route('supply-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-emerald-50 transition-colors group">
-                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 00-1 1h1m6-1a1 1 0 01-1 1h1m-6-1h4"></path></svg></div>
-                                    Supply Driver
-                                </a>
-                                <div class="border-t border-gray-100 my-1"></div>
                                 <a href="{{ route('transport-company.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 transition-colors group">
                                     <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#c2a265] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg></div>
                                     Transport Company
                                 </a>
+
+                                <div class="border-t border-gray-100 my-1 mx-4"></div>
+                                <p class="px-5 pt-1 pb-1 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fleet & Logistics</p>
+
                                 <a href="{{ route('transport-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 transition-colors group">
                                     <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#c2a265] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
                                     Transport Driver
+                                </a>
+                                <a href="{{ route('supply-driver.login') }}" class="flex items-center px-5 py-3 text-sm font-bold text-gray-700 hover:bg-emerald-50 transition-colors group">
+                                    <div class="p-1.5 bg-gray-50 rounded-md mr-3 group-hover:bg-[#1d5c42] group-hover:text-white transition-colors shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 00-1 1h1m6-1a1 1 0 01-1 1h1m-6-1h4"></path></svg></div>
+                                    Supply Driver
                                 </a>
                             </div>
                         </div>
                     @endguest
 
                     @auth
-                        <div class="flex flex-col md:flex-row items-center gap-4 glass-card p-2 rounded-full shadow-2xl border border-white/20 relative z-50">
+                        <div class="flex flex-col md:flex-row items-center gap-4 glass-card p-2 rounded-full shadow-2xl border border-white/20 relative z-[200]">
                             <div class="flex items-center gap-3 px-4 py-1">
                                 <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1d5c42] to-[#c2a265] flex items-center justify-center text-white font-black text-xl shadow-inner border-2 border-white/20">
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
@@ -184,8 +196,7 @@
             </div>
         </div>
 
-        {{-- Scroll Indicator --}}
-        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-all duration-1000 delay-1000 opacity-0" :class="mounted ? 'opacity-100' : 'opacity-0'">
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-all duration-1000 delay-1000 opacity-0 pointer-events-none" :class="mounted ? 'opacity-100' : 'opacity-0'">
             <span class="text-[9px] text-gray-500 uppercase tracking-[0.4em] font-black">Scroll Down</span>
             <div class="w-px h-16 bg-gradient-to-b from-gray-500 to-transparent"></div>
         </div>
@@ -194,9 +205,9 @@
     {{-- ==========================================
          2. STATS BANNER
          ========================================== --}}
-    <section class="border-y border-white/5 bg-[#020617] relative z-20 overflow-hidden">
+    <section class="border-y border-white/5 bg-[#020617] relative z-10 overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-r from-[#1d5c42]/5 via-transparent to-[#c2a265]/5 pointer-events-none"></div>
-        <div class="max-w-7xl mx-auto px-4 py-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 py-12 relative z-20">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-white/5 text-center">
                 <div class="space-y-3 group">
                     <h3 class="text-4xl md:text-5xl font-black text-white group-hover:text-[#c2a265] transition-colors duration-300">500+</h3>
@@ -221,7 +232,7 @@
     {{-- ==========================================
          3. THE ECOSYSTEM (SERVICES CARDS)
          ========================================== --}}
-    <section class="py-32 relative z-20">
+    <section class="py-32 relative z-10 bg-[#020617]">
         <div class="max-w-7xl mx-auto px-4">
             <div class="text-center mb-24 space-y-4">
                 <h2 class="text-4xl md:text-6xl font-black text-white tracking-tight">The Mazraa <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#c2a265] to-[#f4e4c1]">Ecosystem</span></h2>
@@ -282,7 +293,7 @@
     {{-- ==========================================
          4. BENTO GRID (WHY US) - FULLY CLICKABLE
          ========================================== --}}
-    <section class="py-24 relative z-20 border-t border-white/5 bg-gradient-to-b from-[#020617] to-[#0a0f1c]">
+    <section class="py-24 relative z-10 border-t border-white/5 bg-gradient-to-b from-[#020617] to-[#0a0f1c]">
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 md:auto-rows-[320px]">
 
@@ -302,26 +313,19 @@
                     </div>
                 </a>
 
-                {{-- Box 2 (Security) - UPGRADED --}}
+                {{-- Box 2 (Security) --}}
                 <div class="md:col-span-2 rounded-[2.5rem] p-12 flex flex-col justify-center relative overflow-hidden group transition-all duration-500 shadow-xl border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#0a0f1c] hover:from-[#1e293b] hover:to-[#0f172a] h-full">
-                    {{-- Animated Background Glow --}}
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-[#c2a265]/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
-
-                    {{-- Big Background Icon --}}
                     <div class="absolute -right-5 -top-5 text-white/5 group-hover:text-[#c2a265]/10 group-hover:scale-110 transition-all duration-700 ease-out">
                         <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                     </div>
-
-                    {{-- Content --}}
                     <div class="relative z-10 flex items-center gap-3 mb-4 mt-auto shrink-0">
                         <div class="w-2 h-2 rounded-full bg-[#c2a265] animate-pulse"></div>
                         <span class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Enterprise Protection</span>
                     </div>
-
                     <h3 class="text-4xl font-black text-white mb-3 relative z-10 flex items-center gap-3 shrink-0">
                         <span class="text-[#c2a265]">100%</span> Secure
                     </h3>
-
                     <p class="text-gray-400 relative z-10 max-w-sm text-sm leading-relaxed font-medium group-hover:text-gray-300 transition-colors mb-auto">
                         Your transactions and personal data are encrypted and protected by bank-level security protocols.
                     </p>
@@ -345,7 +349,6 @@
                     <h3 class="text-5xl font-black text-white mb-3 group-hover:text-[#c2a265] transition-colors relative z-10 shrink-0 mt-auto">24/7</h3>
                     <p class="text-gray-400 text-xs uppercase tracking-widest font-black relative z-10 group-hover:text-white transition-colors mb-auto">Customer Support</p>
                 </a>
-
             </div>
         </div>
     </section>
@@ -353,7 +356,7 @@
     {{-- ==========================================
          5. FINAL CTA
          ========================================== --}}
-    <section class="py-32 relative z-20">
+    <section class="py-32 relative z-10 bg-[#020617]">
         <div class="max-w-6xl mx-auto px-4">
             <div class="rounded-[3rem] bg-gradient-to-r from-[#1d5c42] to-[#0a1c14] p-16 md:p-24 text-center relative overflow-hidden shadow-[0_20px_50px_rgba(29,92,66,0.3)] border border-[#1d5c42]/50">
                 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
