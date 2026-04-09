@@ -26,6 +26,7 @@ class TransportFactory extends Factory
             'Farm_Departure_Time' => $this->faker->dateTimeBetween('+3 days', '+4 days'),
             'status' => $this->faker->randomElement(['Pending', 'In Transit', 'Completed']),
             'notes' => $this->faker->sentence(),
+            'farm_booking_id' => \App\Models\FarmBooking::inRandomOrder()->first()->id ?? \App\Models\FarmBooking::factory(),
         ];
     }
 }

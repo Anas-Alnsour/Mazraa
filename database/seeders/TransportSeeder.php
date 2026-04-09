@@ -20,48 +20,44 @@ class TransportSeeder extends Seeder
             return;
         }
 
-        // 2. Create 3 vehicles for the transport company
-        $vehiclesData = [
-            ['type' => 'Hyundai Coaster 2023', 'license_plate' => '70-1234', 'capacity' => 22],
-            ['type' => 'Mercedes Sprinter VIP', 'license_plate' => '50-5678', 'capacity' => 14],
-            ['type' => 'GMC Savana Executive', 'license_plate' => '10-9012', 'capacity' => 7],
+        // 2. Create 20+ vehicles for the transport company
+        $vehicleTypes = [
+            'Hyundai Coaster 2023', 'Mercedes Sprinter VIP', 'GMC Savana Executive',
+            'Toyota Hiace High Roof', 'Ford Transit Custom', 'Volkswagen Crafter'
         ];
 
         $vehicles = [];
-        foreach ($vehiclesData as $vData) {
+        for ($i = 1; $i <= 25; $i++) {
             $vehicles[] = Vehicle::create([
                 'company_id'    => $company->id,
-                'type'          => $vData['type'],
-                'license_plate' => $vData['license_plate'],
-                'capacity'      => $vData['capacity'],
+                'type'          => $vehicleTypes[array_rand($vehicleTypes)],
+                'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
+                'capacity'      => rand(7, 30),
                 'status'        => 'available',
-                'driver_id'     => null, // Will be linked below
+                'driver_id'     => null,
             ]);
         }
 
-        // 3. Create 3 drivers permanently paired to the 3 vehicles
-        $driversData = [
-            ['name' => 'سامي الفايز',   'email' => 'driver1.t@mazraa.com', 'phone' => '0791100001', 'gov' => 'Amman'],
-            ['name' => 'خالد العبادي',    'email' => 'driver2.t@mazraa.com', 'phone' => '0791100002', 'gov' => 'Zarqa'],
-            ['name' => 'إبراهيم الضمور',  'email' => 'driver3.t@mazraa.com', 'phone' => '0791100003', 'gov' => 'Irbid'],
-        ];
+        // 3. Create unique drivers for these vehicles
+        $firstNames = ['سامي', 'خالد', 'إبراهيم', 'محمد', 'يوسف', 'عمر', 'أحمد', 'زيد', 'ليث', 'حمزة'];
+        $lastNames = ['الفايز', 'العبادي', 'الضمور', 'القيسي', 'المجالي', 'العدوان', 'النسور', 'القرالة'];
 
-        foreach ($driversData as $index => $dData) {
-            $vehicle = $vehicles[$index];
-
+        foreach ($vehicles as $index => $vehicle) {
+            $name = $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)];
+            
             // Create driver user with permanent vehicle link
             $driver = User::create([
-                'name'                 => $dData['name'],
-                'email'                => $dData['email'],
-                'phone'                => $dData['phone'],
+                'name'                 => $name,
+                'email'                => "driver{$index}.t@mazraa.com",
+                'phone'                => '079' . rand(1000000, 9999999),
                 'password'             => Hash::make('password123'),
                 'role'                 => 'transport_driver',
                 'company_id'           => $company->id,
-                'transport_vehicle_id' => $vehicle->id,  // 1-to-1 permanent link
-                'governorate'          => $dData['gov'],
+                'transport_vehicle_id' => $vehicle->id,
+                'governorate'          => ['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Balqa'][array_rand(['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Balqa'])],
             ]);
 
-            // Also set the vehicle's driver_id back-reference for legacy support
+            // Also set the vehicle's driver_id back-reference
             $vehicle->update(['driver_id' => $driver->id]);
         }
 

@@ -63,5 +63,10 @@ class UserSeeder extends Seeder
             'role' => 'user',
             'password' => $password,
         ]);
+
+        // 8. Generate 50+ additional random users to make the platform look busy
+        User::factory(50)->create([
+            'password' => $password,
+        ]);
     }
 }

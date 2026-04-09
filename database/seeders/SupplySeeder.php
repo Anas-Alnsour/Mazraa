@@ -37,16 +37,23 @@ class SupplySeeder extends Seeder
                 ['name' => 'فحم نخب أول 5كغ', 'price' => 7.00, 'stock' => 200, 'desc' => 'فحم سنديان سريع الاشتعال ويدوم طويلاً.', 'image' => 'https://images.unsplash.com/photo-1524338198850-8a2ff63aaceb?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'مجموعة أسياخ ستانلس', 'price' => 5.00, 'stock' => 15, 'desc' => 'طقم 10 أسياخ عريضة للشواء.', 'image' => 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'شبكة شواء مزدوجة', 'price' => 6.50, 'stock' => 20, 'desc' => 'شبكة ستانلس للجريل واللحوم.', 'image' => 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80'],
+                ['name' => 'منفاخ هواء يدوي', 'price' => 3.00, 'stock' => 50, 'desc' => 'منفاخ قوي لتسريع اشتعال الفحم.', 'image' => 'https://images.unsplash.com/photo-1618414349193-4a008c58f000?auto=format&fit=crop&w=800&q=80'],
             ],
             'تسالي وحلويات' => [
                 ['name' => 'علبة بقلاوة مشكلة 500غ', 'price' => 9.00, 'stock' => 40, 'desc' => 'بقلاوة بالسمن البلدي والفستق الحلبي.', 'image' => 'https://images.unsplash.com/photo-1519676867240-f031ea49d06b?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'مكسرات مشكلة نخب أول', 'price' => 10.00, 'stock' => 100, 'desc' => 'تشكيلة محمصة طازجة (لوز، فستق، كاجو).', 'image' => 'https://images.unsplash.com/photo-1536591375315-1a8f94254443?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'شيبس وتسالي عائلية', 'price' => 3.50, 'stock' => 150, 'desc' => 'مجموعة سناك متنوعة للجلسات.', 'image' => 'https://images.unsplash.com/photo-1566478431379-79870be8610d?auto=format&fit=crop&w=800&q=80'],
+                ['name' => 'كنافة نابلسية (طبق صغير)', 'price' => 12.00, 'stock' => 20, 'desc' => 'كنافة ساخنة بالجبنة والقطر.', 'image' => 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?auto=format&fit=crop&w=800&q=80'],
             ],
             'مشروبات وثلج' => [
                 ['name' => 'باكيت ثلج نقي 2كغ', 'price' => 1.50, 'stock' => 300, 'desc' => 'مكعبات ثلج نقية مبردة.', 'image' => 'https://images.unsplash.com/photo-1582298538104-fe2e74c27f59?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'بيبسي/كولا 2.25 لتر', 'price' => 1.75, 'stock' => 200, 'desc' => 'عبوة عائلية غازية.', 'image' => 'https://images.unsplash.com/photo-1581006852262-e4307cf6283a?auto=format&fit=crop&w=800&q=80'],
                 ['name' => 'عصير برتقال طبيعي 1 لتر', 'price' => 3.00, 'stock' => 50, 'desc' => 'عصير طازج بدون سكر مضاف.', 'image' => 'https://images.unsplash.com/photo-1544145945-f904253db0ad?auto=format&fit=crop&w=800&q=80'],
+                ['name' => 'مجموعة عصائر مشكلة 6 حبات', 'price' => 5.00, 'stock' => 60, 'desc' => 'تشكيلة من العصائر المنوعة للرحلات.', 'image' => 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&w=800&q=80'],
+            ],
+            'إضافات فاخرة' => [
+                ['name' => 'شيشة فاخرة للإيجار', 'price' => 15.00, 'stock' => 10, 'desc' => 'شيشة كاملة مع الفحم والمعسل والتوصيل.', 'image' => 'https://images.unsplash.com/photo-1527030280862-64139fba04ca?auto=format&fit=crop&w=800&q=80'],
+                ['name' => 'سماعات بلوتوث ضخمة', 'price' => 20.00, 'stock' => 5, 'desc' => 'سماعات حفلات للاستخدام اليومي.', 'image' => 'https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=800&q=80'],
             ],
             'مستلزمات سفرة ونظافة' => [
                 ['name' => 'طقم سفرة كرتون (50 شخص)', 'price' => 6.00, 'stock' => 80, 'desc' => 'صحون، كاسات، وشوك كرتون مقوى.', 'image' => 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80'],

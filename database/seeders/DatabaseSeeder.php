@@ -12,69 +12,105 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. زرع الحسابات الـ 7 الأساسية
+        // 1. Fundamental Seeders
         $this->call(UserSeeder::class);
-
-        // 2. سحب حساب المالك والزبون اللي تم إنشاؤهم للتو
-        $owner = User::where('email', 'owner@mazraa.com')->first();
-        $user = User::where('email', 'user@mazraa.com')->first();
-
-        // 3. إنشاء 10 مزارع وهمية وربطها بصاحب المزرعة
-        $farms = Farm::factory(10)->create([
-            'owner_id' => $owner->id,
-        ]);
-
-        // 4. إنشاء 20 حجز مرتبط بالزبون ومزارع عشوائية
-        FarmBooking::factory(20)->create([
-            'user_id' => $user->id,
-            'farm_id' => function () use ($farms) {
-                return $farms->random()->id;
-            },
-        ]);
-
-        // 5. شغلك الأصلي تبع التوريد والنقل
         $this->call(SupplySeeder::class);
-
-        // إضافة 10 سائقين وهميين
-        User::factory(10)->create(['role' => 'transport_driver']);
-
-        // إضافة 10 طلبات نقل وهمية
-        Transport::factory(10)->create();
         $this->call(TransportSeeder::class);
 
-        // 6. إضافة المعاملات المالية الوهمية (Phase 5)
-        $this->call(FinancialTransactionSeeder::class);
+        // 2. Core Accounts
+        $admin     = User::where('email', 'admin@mazraa.com')->first();
+        $owner     = User::where('email', 'owner@mazraa.com')->first();
+        $user      = User::where('email', 'user@mazraa.com')->first();
+        $supplyCo  = User::where('email', 'supply@mazraa.com')->first();
+        $transport = User::where('email', 'transport@mazraa.com')->first();
+        $drvT      = User::where('email', 'driver.t@mazraa.com')->first();
+        $drvS      = User::where('email', 'driver.s@mazraa.com')->first();
 
-        // 7. إضافة التقييمات الوهمية للمزارع (Phase 7)
-        $farms->each(function ($farm) use ($user) {
-            $arabicComments = [
-                'المزرعة بتجنن والمسبح نظيف جداً، أنصح بها للعائلات.',
-                'تجربة رائعة وتجاوب سريع من المالك، المكان هادئ ومريح.',
-                'كل شيء كان ممتاز، المرافق متكاملة والنظافة عالية جداً.',
-                'إطلالة خلابة وجلسات خارجية مريحة، قضينا وقت ممتع جداً.',
-                'من أجمل المزارع اللي زرتها بالأردن، خصوصية تامة وفخامة.'
-            ];
+        // 3. Massive Farm Generation (Core Owner Focus)
+        // owner@mazraa.com gets 25 farms
+        $ownerFarms = \App\Models\Farm::factory(25)->create([
+            'owner_id' => $owner->id,
+        ]);
+        
+        // Other random owners get 15 farms
+        $otherFarms = \App\Models\Farm::factory(15)->create();
+        $allFarms = $ownerFarms->concat($otherFarms);
 
-            \App\Models\Review::create([
-                'user_id' => $user->id,
+        // 4. Massive Booking Generation (Core User Focus)
+        // user@mazraa.com gets 120 bookings (history + future)
+        $userBookings = \App\Models\FarmBooking::factory(120)->create([
+            'user_id' => $user->id,
+            'farm_id' => fn() => $allFarms->random()->id,
+        ]);
+        
+        // Other random users get 80 bookings
+        $otherBookings = \App\Models\FarmBooking::factory(80)->create([
+            'farm_id' => fn() => $allFarms->random()->id,
+        ]);
+        
+        $allBookings = $userBookings->concat($otherBookings);
+
+        // 5. Supply Orders (Core Supply Co Focus)
+        // supply@mazraa.com gets 120 orders
+        $supplies = \App\Models\Supply::all();
+        $userOrder = \App\Models\SupplyOrder::factory(120)->create([
+            'user_id' => $user->id,
+            'supply_id' => fn() => $supplies->random()->id,
+            'booking_id' => fn() => $allBookings->random()->id,
+        ]);
+        
+        // 6. Transport & Logistics (Core Transport Focus)
+        // transport@mazraa.com manages 80 trips
+        $vehicles = \App\Models\Vehicle::where('company_id', $transport->id)->get();
+        $transportTrips = \App\Models\Transport::factory(80)->create([
+            'company_id' => $transport->id,
+            'vehicle_id' => fn() => $vehicles->random()->id,
+            'driver_id'  => fn() => $drvT->id, // Binding trips to core driver
+            'farm_booking_id' => fn() => $allBookings->random()->id,
+        ]);
+
+        // 7. Financial Transactions (Admin & Ledger Focus)
+        // Generate 300+ transactions correlated with bookings and orders
+        $allBookings->each(function ($booking) use ($admin, $owner) {
+            if ($booking->payment_status === 'paid') {
+                $commission = $booking->total_price * 0.10;
+                $net = $booking->total_price - $commission;
+                
+                // Admin Commission
+                \App\Models\FinancialTransaction::factory()->create([
+                    'user_id' => $admin->id,
+                    'reference_type' => 'farm_booking',
+                    'reference_id' => $booking->id,
+                    'transaction_type' => 'credit',
+                    'amount' => $commission,
+                    'farm_id' => $booking->farm_id,
+                    'description' => "Booking Commission #{$booking->id}",
+                    'created_at' => $booking->created_at,
+                ]);
+
+                // Owner Credit
+                \App\Models\FinancialTransaction::factory()->create([
+                    'user_id' => $booking->farm->owner_id,
+                    'reference_type' => 'farm_booking',
+                    'reference_id' => $booking->id,
+                    'transaction_type' => 'credit',
+                    'amount' => $net,
+                    'farm_id' => $booking->farm_id,
+                    'description' => "Net Booking Revenue #{$booking->id}",
+                    'created_at' => $booking->created_at,
+                ]);
+            }
+        });
+
+        // 8. Arabic Reviews (Massive Social Proof)
+        // Generate 200 reviews spread across farms
+        $allFarms->each(function ($farm) use ($user) {
+            \App\Models\Review::factory(5)->create([
                 'reviewable_id' => $farm->id,
                 'reviewable_type' => 'farm',
-                'rating' => rand(4, 5),
-                'comment' => $arabicComments[array_rand($arabicComments)],
-                'created_at' => now()->subDays(rand(1, 30))
-            ]);
-            
-            \App\Models\Review::create([
-                'user_id' => User::factory()->create(['role' => 'user'])->id,
-                'reviewable_id' => $farm->id,
-                'reviewable_type' => 'farm',
-                'rating' => rand(3, 5),
-                'comment' => $arabicComments[array_rand($arabicComments)],
-                'created_at' => now()->subDays(rand(31, 60))
             ]);
         });
 
-        // رسالة تأكيد في التيرمينال
-        $this->command->info('Database seeded successfully with all roles, dummy farms, bookings, supplies, and transports!');
+        $this->command->info('MASSIVE SCALE Demo Data Ready 🟢 - 6 months of historical data injected!');
     }
 }
