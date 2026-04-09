@@ -266,16 +266,20 @@
 
                 {{-- Right Column: Sticky Booking Card --}}
                 <div class="lg:w-[40%] xl:w-[35%] relative">
-                    <div class="booking-card rounded-[2.5rem] p-8 md:p-10 sticky top-28 z-20">
+                    <div class="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 sticky top-28 z-20 shadow-2xl shadow-slate-200/50">
 
-                        <div class="flex items-baseline gap-2 border-b border-gray-200/60 pb-6 mb-8">
-                            {{-- 💡 Changed to price_per_morning_shift --}}
-                            <span class="text-4xl font-black text-gray-900 tracking-tighter">{{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
-                            <span class="text-lg font-bold text-gray-900">JOD</span>
-                            <span class="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Starting Price</span>
+                        <div class="flex items-baseline justify-between mb-8 pb-6 border-b border-gray-100">
+                            <div>
+                                <span class="text-3xl font-black text-slate-900 tracking-tighter">{{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
+                                <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">JOD / shift</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 font-bold text-sm text-slate-900">
+                                <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                {{ number_format($farm->average_rating, 1) }}
+                            </div>
                         </div>
 
-                        {{-- 💡 AlpineJS Form Data for Toggling Modes --}}
+                        {{-- Finalized Form Structure with preserved logic --}}
                         <form action="{{ route('bookings.store') }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
                             <input type="hidden" name="farm_id" value="{{ $farm->id }}">
@@ -289,201 +293,173 @@
                             <input type="hidden" name="pickup_lat" id="pickup_lat">
                             <input type="hidden" name="pickup_lng" id="pickup_lng">
 
-                            {{-- 🌟 iOS Style Segmented Control --}}
-                            <div class="flex p-1.5 bg-gray-100/80 rounded-2xl mb-6 border border-gray-200/50">
+                            {{-- iOS Style Mode Switcher --}}
+                            <div class="grid grid-cols-2 p-1.5 bg-slate-50 border border-slate-100 rounded-2xl mb-8">
                                 <button type="button" @click="bookingMode = 'single'; window.resetBookingForm();"
-                                    :class="bookingMode === 'single' ? 'bg-white shadow-md text-[#1d5c42]' : 'text-gray-500 hover:text-gray-800'"
-                                    class="flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none">
+                                    :class="bookingMode === 'single' ? 'bg-white shadow-md text-emerald-700' : 'text-slate-400 hover:text-slate-600'"
+                                    class="py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all outline-none">
                                     Single Day
                                 </button>
                                 <button type="button" @click="bookingMode = 'multi'; window.resetBookingForm();"
-                                    :class="bookingMode === 'multi' ? 'bg-white shadow-md text-blue-600' : 'text-gray-500 hover:text-gray-800'"
-                                    class="flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none">
+                                    :class="bookingMode === 'multi' ? 'bg-white shadow-md text-emerald-700' : 'text-slate-400 hover:text-slate-600'"
+                                    class="py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all outline-none">
                                     Multiple Days
                                 </button>
                             </div>
 
-                            <div>
-                                <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Event Type</label>
+                            {{-- Single Day Selection --}}
+                            <div x-show="bookingMode === 'single'" class="space-y-6 animate-fade-in">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Check-in Date</label>
+                                    <div class="relative">
+                                        <input type="text" id="booking_date_flatpickr" placeholder="Select your check-in date..."
+                                            class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none cursor-pointer">
+                                        <svg class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </div>
+                                </div>
+
+                                <div id="shiftsContainer" style="display: none;" class="space-y-4">
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Available Shifts</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <button type="button" id="btnMorning" onclick="selectShift('morning')" 
+                                            class="shift-btn group p-4 border-2 border-slate-100 rounded-2xl bg-white hover:border-emerald-600 flex flex-col items-center justify-center transition-all disabled:opacity-50">
+                                            <span class="text-xs font-black uppercase tracking-widest transition-colors mb-1">☀️ Morning</span>
+                                            <span class="text-[9px] font-bold text-slate-400">8 AM - 5 PM</span>
+                                        </button>
+                                        <button type="button" id="btnEvening" onclick="selectShift('evening')"
+                                            class="shift-btn group p-4 border-2 border-slate-100 rounded-2xl bg-white hover:border-emerald-600 flex flex-col items-center justify-center transition-all disabled:opacity-50">
+                                            <span class="text-xs font-black uppercase tracking-widest transition-colors mb-1">🌙 Evening</span>
+                                            <span class="text-[9px] font-bold text-slate-400">7 PM - 6 AM</span>
+                                        </button>
+                                        <button type="button" id="btnFullDay" onclick="selectShift('full_day')"
+                                            class="shift-btn group col-span-2 p-4 border-2 border-slate-100 rounded-2xl bg-white hover:border-emerald-600 flex flex-col items-center justify-center transition-all disabled:opacity-50">
+                                            <span class="text-xs font-black uppercase tracking-widest transition-colors mb-1">👑 Full Experience</span>
+                                            <span class="text-[9px] font-bold text-slate-400">24 Hours Immersion</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Multi Day Selection --}}
+                            <div x-show="bookingMode === 'multi'" x-cloak class="space-y-6 animate-fade-in">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Check-in</label>
+                                        <input type="text" id="multi_start_date" placeholder="Date" 
+                                            class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Check-out</label>
+                                        <input type="text" id="multi_end_date" placeholder="Date" 
+                                            class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Event Type --}}
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Event Type</label>
                                 <div class="relative">
-                                    <select name="event_type" id="eventType" class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-all outline-none appearance-none shadow-sm" required>
+                                    <select name="event_type" id="eventType" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none appearance-none shadow-sm cursor-pointer" required>
                                         <option value="">Select an occasion...</option>
                                         <option value="Birthday">🎉 Birthday Celebration</option>
                                         <option value="Wedding">💍 Wedding / Engagement</option>
                                         <option value="Other">✨ Family Gathering / Other</option>
                                     </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-gray-500">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
                                         <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- 🌟 MODE 1: SINGLE DAY UI (Using Custom Flatpickr Calendar) --}}
-                            <div x-show="bookingMode === 'single'" x-transition.opacity.duration.300ms>
-                                <div class="mb-4 relative">
-                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Select Date</label>
-                                    <input type="text" id="booking_date_flatpickr" placeholder="Select your check-in date"
-                                        class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] transition-all outline-none shadow-sm cursor-pointer bg-[url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBzdHJva2U9IiM5Y2EzYWYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTggN1YzbTggNHYzTTEgMTFoMThNNSAyMWgxNGExIDEgMCAwMDItMlY3YTEgMSAwIDAwLTItMkg1YTEgMSAwIDAwLTIgMnYxMmExIDEgMCAwMDIgMnoiPjwvcGF0aD48L3N2Zz4=')] bg-no-repeat bg-[right_1.25rem_center] bg-[length:1.25rem_1.25rem]">
-                                </div>
-
-                                {{-- 🌟 UX: Color Legend for the Calendar --}}
-                                <div class="flex flex-wrap items-center justify-center gap-3 mb-6 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                    <div class="flex items-center gap-1.5 text-[9px] font-black text-gray-600 uppercase tracking-widest" title="Morning is booked, Evening is available">
-                                        <div class="w-4 h-4 rounded-md border border-orange-300" style="background: linear-gradient(135deg, #ffedd5 50%, #ffffff 50%);"></div> Morning Booked
-                                    </div>
-                                    <div class="flex items-center gap-1.5 text-[9px] font-black text-gray-600 uppercase tracking-widest" title="Evening is booked, Morning is available">
-                                        <div class="w-4 h-4 rounded-md border border-indigo-300" style="background: linear-gradient(135deg, #ffffff 50%, #e0e7ff 50%);"></div> Evening Booked
-                                    </div>
-                                    <div class="flex items-center gap-1.5 text-[9px] font-black text-gray-600 uppercase tracking-widest" title="Fully Booked">
-                                        <div class="w-4 h-4 rounded-md bg-[#f1f5f9] border border-gray-200 flex items-center justify-center">
-                                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </div> Full
-                                    </div>
-                                </div>
-
-                                <div id="shiftsContainer" style="display: none;" class="animate-fade-in">
-                                    <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Available Shifts</label>
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <button type="button" id="btnMorning" onclick="selectShift('morning')"
-                                            class="shift-btn border-2 border-gray-200 bg-white p-4 rounded-2xl flex flex-col items-center justify-center hover:border-[#1d5c42] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
-                                            <span class="text-sm font-black text-gray-800 transition-colors">☀️ Morning</span>
-                                            <span class="text-[10px] font-bold text-gray-500 mt-1">8 AM - 5 PM</span>
-                                        </button>
-
-                                        <button type="button" id="btnEvening" onclick="selectShift('evening')"
-                                            class="shift-btn border-2 border-gray-200 bg-white p-4 rounded-2xl flex flex-col items-center justify-center hover:border-indigo-500 hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
-                                            <span class="text-sm font-black text-gray-800 transition-colors">🌙 Evening</span>
-                                            <span class="text-[10px] font-bold text-gray-500 mt-1">7 PM - 6 AM</span>
-                                        </button>
-
-                                        <button type="button" id="btnFullDay" onclick="selectShift('full_day')"
-                                            class="shift-btn col-span-2 border-2 border-gray-200 bg-white p-4 rounded-2xl flex flex-col items-center justify-center hover:border-[#c2a265] hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group">
-                                            <span class="text-sm font-black text-gray-800 transition-colors">👑 Full Day Experience</span>
-                                            <span class="text-[10px] font-bold text-gray-500 mt-1">10:00 AM - 08:00 AM (Next Day)</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- 🌟 MODE 2: MULTIPLE DAYS UI --}}
-                            <div x-show="bookingMode === 'multi'" x-transition.opacity.duration.300ms x-cloak>
-                                <div class="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl mb-5">
-                                    <p class="text-xs text-blue-800 font-black flex items-center gap-2 mb-2 uppercase tracking-widest">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        Multi-Day Stay
-                                    </p>
-                                    <p class="text-[11px] font-medium text-blue-700 leading-relaxed">
-                                        Selecting multiple days reserves the <strong class="font-black">Full Day</strong>. Please select your <strong class="font-black">Check-in</strong> and <strong class="font-black">Check-out</strong> dates below.
-                                    </p>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Check-in</label>
-                                        <input type="text" id="multi_start_date" placeholder="Select Date"
-                                            class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-4 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none shadow-sm cursor-pointer bg-[url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBzdHJva2U9IiM5Y2EzYWYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTggN1YzbTggNHYzTTEgMTFoMThNNSAyMWgxNGExIDEgMCAwMDItMlY3YTEgMSAwIDAwLTItMkg1YTEgMSAwIDAwLTIgMnYxMmExIDEgMCAwMDIgMnoiPjwvcGF0aD48L3N2Zz4=')] bg-no-repeat bg-[right_1.25rem_center] bg-[length:1.25rem_1.25rem]">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Check-out</label>
-                                        <input type="text" id="multi_end_date" placeholder="Select Date"
-                                            class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-4 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none shadow-sm cursor-pointer bg-[url('data:image/svg+xml;base64,PHN2ZyBmaWxsPSJub25lIiBzdHJva2U9IiM5Y2EzYWYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTggN1YzbTggNHYzTTEgMTFoMThNNSAyMWgxNGExIDEgMCAwMDItMlY3YTEgMSAwIDAwLTItMkg1YTEgMSAwIDAwLTIgMnYxMmExIDEgMCAwMDIgMnoiPjwvcGF0aD48L3N2Zz4=')] bg-no-repeat bg-[right_1.25rem_center] bg-[length:1.25rem_1.25rem]">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Transport Integration Toggle --}}
+                            {{-- Transport Integration --}}
                             @if($farm->latitude && $farm->longitude)
-                            <div class="border-t border-gray-200/60 pt-6 mt-4">
-                                <label class="flex items-center cursor-pointer group bg-gray-50 p-4 rounded-2xl border border-gray-200 transition-colors hover:bg-green-50 hover:border-green-200">
+                            <div class="pt-6 border-t border-slate-100">
+                                <label class="flex items-center cursor-pointer group bg-slate-50 p-4 rounded-2xl border border-slate-100 transition-all hover:bg-emerald-50 hover:border-emerald-200">
                                     <div class="relative flex items-center">
-                                        <input type="checkbox" id="toggleTransport" class="w-5 h-5 rounded-md border-gray-300 text-[#1d5c42] focus:ring-[#1d5c42] transition-all cursor-pointer">
+                                        <input type="checkbox" id="toggleTransport" class="w-5 h-5 rounded-lg border-slate-300 text-emerald-600 focus:ring-emerald-500 transition-all cursor-pointer">
                                     </div>
                                     <div class="ml-4 flex-1">
-                                        <span class="block text-sm font-black text-gray-900 group-hover:text-[#1d5c42] transition-colors">Add Shuttle Transport</span>
-                                        <span class="block text-[10px] font-bold text-gray-500 mt-0.5">Let us drive you to the farm</span>
+                                        <span class="block text-sm font-black text-slate-900 group-hover:text-emerald-700 transition-colors">Add Shuttle Transport</span>
+                                        <span class="block text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">Premium pickup & drop-off</span>
                                     </div>
                                 </label>
 
-                                <div id="transportSection" style="display: none;" class="mt-4 space-y-4 animate-fade-in">
-                                    <div class="mb-4">
-                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Number of Passengers</label>
+                                <div id="transportSection" style="display: none;" class="mt-6 space-y-6 animate-fade-in">
+                                    <div>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Number of Passengers</label>
                                         <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                            </div>
                                             <input type="number" name="passengers" id="transport_passengers" min="1" max="{{ $farm->capacity }}" value="1"
-                                                class="w-full bg-white border border-gray-200 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] outline-none shadow-sm transition-all"
+                                                class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none shadow-sm transition-all"
                                                 placeholder="e.g. 4">
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Search Your Location</label>
+                                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Search Your Location</label>
                                         <div class="flex gap-2">
-                                            <input type="text" id="pickup_search" placeholder="e.g. Amman, 7th Circle" class="flex-1 bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-bold text-gray-800 focus:ring-2 focus:ring-[#1d5c42] outline-none">
-                                            <button type="button" onclick="searchPickupLocation()" class="bg-[#1d5c42] text-white px-4 rounded-xl font-bold hover:bg-[#154230] transition-colors">Search</button>
+                                            <input type="text" id="pickup_search" placeholder="e.g. Amman, 7th Circle" class="flex-1 bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none">
+                                            <button type="button" onclick="searchPickupLocation()" class="bg-slate-900 text-white px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-colors">Search</button>
                                         </div>
                                     </div>
 
-                                    <div class="relative p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm" id="originalMapContainer">
-                                        <div id="pickup-map-wrapper" class="w-full h-[200px] rounded-xl z-0 relative overflow-hidden transition-all duration-300">
+                                    <div class="relative p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm" id="originalMapContainer">
+                                        <div id="pickup-map-wrapper" class="w-full h-[200px] rounded-2xl z-0 relative overflow-hidden transition-all duration-300">
                                             <div id="pickup-map" class="w-full h-full"></div>
-                                            <button type="button" id="expandMapBtn" class="absolute bottom-3 right-3 bg-white/90 backdrop-blur px-3 py-1.5 rounded-lg shadow-md text-xs font-black text-gray-800 hover:text-[#1d5c42] border border-gray-200 z-[1000] flex items-center gap-1">
+                                            <button type="button" id="expandMapBtn" class="absolute bottom-3 right-3 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-md text-[10px] font-black text-slate-800 hover:text-emerald-600 border border-slate-100 z-[1000] flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                                                Expand
+                                                EXPAND
                                             </button>
                                         </div>
                                     </div>
-                                    <p class="text-[10px] text-gray-500 font-bold text-center mt-2">Click or drag on the map to set exact pickup point</p>
 
-                                    <div id="transportCalc" style="display: none;" class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex justify-between items-center animate-fade-in mt-4">
-                                        <div class="text-blue-800">
-                                            <span class="block text-[10px] font-black uppercase tracking-widest opacity-70">Distance</span>
-                                            <span class="text-sm font-bold"><span id="distVal"></span> km</span>
+                                    <div id="transportCalc" style="display: none;" class="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 flex justify-between items-center animate-fade-in mt-4">
+                                        <div class="text-emerald-900">
+                                            <span class="block text-[9px] font-black uppercase tracking-widest opacity-60 mb-0.5">Route Distance</span>
+                                            <span class="text-sm font-black tracking-tighter"><span id="distVal"></span> km</span>
                                         </div>
-                                        <div class="text-blue-800 text-right">
-                                            <span class="block text-[10px] font-black uppercase tracking-widest opacity-70">Est. Cost</span>
-                                            <span class="text-sm font-black"><span id="costVal"></span> JOD</span>
+                                        <div class="text-emerald-900 text-right">
+                                            <span class="block text-[9px] font-black uppercase tracking-widest opacity-60 mb-0.5">Shuttle Service</span>
+                                            <span class="text-sm font-black tracking-tighter"><span id="costVal"></span> JOD</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             @endif
 
-                            {{-- Comprehensive Invoice --}}
-                            <div id="bookingSummary" style="display: none;" class="bg-gray-900 text-white p-6 rounded-2xl shadow-xl mt-6 animate-fade-in relative overflow-hidden">
-                                <div class="absolute top-0 right-0 w-32 h-32 bg-[#1d5c42]/20 rounded-bl-[100px] blur-2xl"></div>
-
-                                <h3 class="font-black text-gray-300 text-[10px] uppercase mb-5 tracking-[0.2em] border-b border-gray-700/50 pb-3">Invoice Summary</h3>
-                                <div class="space-y-3 text-sm relative z-10">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium text-gray-400" id="farmRentalLabel">Farm Rental</span>
-                                        <span class="font-bold text-white" id="farmRentalDisplay">0.00 JOD</span>
+                            {{-- Invoice Layout --}}
+                            <div id="bookingSummary" style="display: none;" class="bg-slate-900 text-white p-7 rounded-3xl shadow-xl mt-8 animate-fade-in">
+                                <h3 class="font-black text-slate-400 text-[9px] uppercase mb-4 tracking-[0.2em] border-b border-white/10 pb-3">ESTIMATED INVOICE</h3>
+                                <div class="space-y-4 text-[11px] font-bold">
+                                    <div class="flex justify-between items-center text-slate-300">
+                                        <span id="farmRentalLabel">Farm Rental</span>
+                                        <span id="farmRentalDisplay" class="text-white">0.00 JOD</span>
                                     </div>
-                                    <div id="invoiceTransport" style="display: none;" class="flex justify-between items-center">
-                                        <span class="font-medium text-gray-400">Transport Fee</span>
-                                        <span class="font-bold text-white" id="invoiceTransportCost">0.00 JOD</span>
+                                    <div id="invoiceTransport" style="display: none;" class="flex justify-between items-center text-slate-300">
+                                        <span>Transport Shuttle</span>
+                                        <span id="invoiceTransportCost" class="text-white">0.00 JOD</span>
                                     </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-medium text-gray-400">Platform Tax (16%)</span>
-                                        <span class="font-bold text-white" id="invoiceTax">0.00 JOD</span>
+                                    <div class="flex justify-between items-center text-slate-300">
+                                        <span>Platform Service (16%)</span>
+                                        <span id="invoiceTax" class="text-white">0.00 JOD</span>
                                     </div>
-                                    <div class="flex justify-between items-end pt-4 border-t border-gray-700/50 mt-3">
-                                        <span class="font-black text-gray-300 uppercase tracking-widest text-xs">Total Due</span>
-                                        <span class="font-black text-[#c2a265] text-2xl" id="invoiceTotal">0.00 JOD</span>
+                                    <div class="flex justify-between items-end pt-5 border-t border-white/10 mt-2">
+                                        <span class="font-black text-slate-400 uppercase tracking-widest text-[10px]">Total Due</span>
+                                        <span id="invoiceTotal" class="font-black text-emerald-400 text-2xl tracking-tighter">0.00 JOD</span>
                                     </div>
                                 </div>
                             </div>
 
                             <button type="submit" id="confirmBookingBtn" disabled
-                                class="relative w-full flex justify-center items-center py-5 px-4 mt-6 rounded-2xl text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-[#1d5c42] to-[#154230] hover:shadow-[0_10px_25px_rgba(29,92,66,0.4)] focus:outline-none transition-all duration-300 ease-out overflow-hidden group hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] disabled:bg-none disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none">
-                                <span class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></span>
-                                <span class="relative z-10 flex items-center gap-2">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                    Proceed to Payment
-                                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                                </span>
+                                class="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-600/30 hover:bg-emerald-700 hover:-translate-y-1 transition-all active:translate-y-0 active:scale-95 flex items-center justify-center gap-2 group disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:transform-none">
+                                Reserve My Spot
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                             </button>
-                            <p class="text-center text-[10px] text-gray-400 font-bold mt-2">You will be redirected to Visa / CliQ secure checkout.</p>
+                            
+                            <div class="flex items-center justify-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">
+                                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> Secure Pay</span>
+                                <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Instant</span>
+                            </div>
                         </form>
                     </div>
                 </div>

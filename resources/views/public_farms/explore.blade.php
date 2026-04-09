@@ -164,9 +164,9 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse ($farms as $index => $farm)
-                <div class="farm-card bg-white rounded-[2rem] overflow-hidden flex flex-col group relative border border-gray-100"
+                <div class="group cursor-pointer transform transition-all duration-500 hover:-translate-y-2 relative"
                      style="animation: fade-in-up 0.8s ease-out {{ $index * 0.1 }}s both;">
-
+                    
                     {{-- 💖 Modern Favorite Button --}}
                     <div class="absolute top-4 right-4 z-20">
                         @auth
@@ -187,71 +187,50 @@
                         @endauth
                     </div>
 
-                    {{-- Guest Favorite Badge --}}
-                    @if(isset($farm->average_rating) && $farm->average_rating >= 4.5)
-                        <div class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-gray-100">
-                            <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-900">Top Rated</span>
+                    {{-- Rating Badge --}}
+                    @if(isset($farm->average_rating) && $farm->average_rating > 0)
+                        <div class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-slate-100">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-900">{{ number_format($farm->average_rating, 1) }}</span>
                         </div>
                     @endif
 
-                    {{-- Image Container --}}
-                    <a href="{{ route('farms.show', $farm->id) }}" class="block relative w-full h-72 bg-gray-100 overflow-hidden">
-                        @if($farm->main_image)
-                            <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="image-zoom w-full h-full object-cover">
-                        @else
-                            <div class="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative group-hover:bg-slate-100 transition-colors duration-500">
-                                <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-500">
-                                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    {{-- Card Image Container --}}
+                    <div class="relative aspect-[4/3] rounded-[2rem] overflow-hidden mb-4 shadow-sm group-hover:shadow-xl transition-all duration-500 border border-slate-100 bg-gray-100">
+                        <a href="{{ route('farms.show', $farm->id) }}" class="block w-full h-full">
+                            @if($farm->main_image)
+                                <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" 
+                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out">
+                            @else
+                                <div class="w-full h-full flex flex-col items-center justify-center bg-slate-50">
+                                    <svg class="w-12 h-12 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
-                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Listing Preview</span>
-                            </div>
-                        @endif
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </a>
+                            @endif
+                        </a>
+                    </div>
 
-                    {{-- Card Body --}}
-                    <a href="{{ route('farms.show', $farm->id) }}" class="p-6 flex-1 flex flex-col block bg-white">
-
-                        {{-- Header Row: Title & Rating --}}
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold text-gray-900 truncate pr-4 group-hover:text-[#1d5c42] transition-colors">{{ $farm->name }}</h3>
-                            <div class="flex items-center gap-1 shrink-0 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                                <svg class="w-3.5 h-3.5 text-[#1d5c42]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                <span class="text-sm font-bold text-gray-800">{{ $farm->average_rating > 0 ? $farm->average_rating : 'New' }}</span>
-                                @if($farm->reviews_count > 0)
-                                    <span class="text-[10px] text-gray-400 font-medium">({{ $farm->reviews_count }})</span>
-                                @endif
-                            </div>
+                    {{-- Card Info --}}
+                    <div class="px-2">
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-base font-black text-slate-900 truncate pr-4 group-hover:text-emerald-700 transition-colors tracking-tight">{{ $farm->name }}</h3>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 shrink-0">{{ $farm->governorate }}</span>
                         </div>
-
-                        {{-- Location --}}
-                        <p class="text-sm text-gray-500 mb-4 truncate font-medium flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            {{ Str::limit($farm->location, 40) }}
+                        
+                        <p class="text-sm font-medium text-slate-500 mt-1 flex items-center gap-1 opacity-80">
+                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                            {{ Str::limit($farm->location, 35) }}
                         </p>
-
-                        {{-- Quick Info Labels --}}
-                        <div class="flex flex-wrap gap-2 mb-6 mt-auto">
-                            <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-bold uppercase tracking-wider">
-                                Up to {{ $farm->capacity }} Guests
-                            </span>
-                        </div>
-
-                        {{-- Price Footer --}}
-                        <div class="border-t border-gray-100 pt-4 flex justify-between items-center mt-2">
-                            <div>
-                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">Starts from</span>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-xl font-black text-[#1d5c42]">{{ number_format(min(array_filter([$farm->price_per_morning_shift, $farm->price_per_evening_shift, $farm->price_per_full_day]) ?: [0]), 0) }}</span>
-                                    <span class="text-xs font-bold text-gray-500">JOD / Shift</span>
-                                </div>
+                        
+                        <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-lg font-black text-slate-900 tracking-tighter">JOD {{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ shift</span>
                             </div>
-                            <span class="text-xs font-bold text-white bg-gray-900 group-hover:bg-[#1d5c42] px-5 py-2.5 rounded-xl transition-colors duration-300">
-                                View Details
-                            </span>
+                            <a href="{{ route('farms.show', $farm->id) }}" class="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 group/btn">
+                                Details <svg class="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
                         </div>
-                    </a>
+                    </div>
                 </div>
             @empty
                 <div class="col-span-full py-24 text-center">

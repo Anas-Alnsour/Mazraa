@@ -29,10 +29,10 @@
             @scroll.window="scrolled = (window.pageYOffset > 10)"
             :class="scrolled ? 'pt-2 pb-2 bg-white/40 backdrop-blur-xl border-b border-gray-200/50 shadow-sm' : 'pt-4 pb-1 bg-transparent border-b border-transparent'">
 
-        <nav class="pointer-events-auto w-[98%] max-w-[1500px] 2xl:max-w-[1600px] transition-all duration-500 ease-out rounded-full flex items-center justify-between gap-4 xl:gap-6 border"
+        <nav x-data="{ mobileMenuOpen: false }" class="pointer-events-auto w-[98%] max-w-[1500px] 2xl:max-w-[1600px] transition-all duration-500 ease-out rounded-full flex items-center justify-between gap-4 xl:gap-6 border"
              :class="scrolled ? 'bg-white/95 border-gray-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-2 px-4 xl:px-6' : 'bg-white/80 backdrop-blur-2xl border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.04)] py-3 px-5 lg:px-8'">
 
-            <div x-data="{ mobileMenuOpen: false }" class="flex items-center justify-between w-full">
+            <div class="flex items-center justify-between w-full">
 
                 {{-- 1. Logo (Left Section) --}}
                 <div class="flex items-center justify-start shrink-0">
