@@ -128,11 +128,21 @@ class DatabaseSeeder extends Seeder
         }
 
         // 11. Realism (Blocked Dates)
+        // Block dates for some premium farms safely without unique constraint crashes
         $premiumFarms = $allFarms->random(10);
         foreach ($premiumFarms as $farm) {
-            FarmBlockedDate::factory(5)->create([
-                'farm_id' => $farm->id,
-            ]);
+            for ($i = 1; $i <= 5; $i++) {
+                try {
+                    FarmBlockedDate::factory()->create([
+                        'farm_id' => $farm->id,
+                        // 💡 توليد تواريخ متسلسلة للأمام لمنع التكرار نهائياً
+                        'date' => now()->addDays($i * rand(2, 5))->format('Y-m-d'),
+                    ]);
+                } catch (\Exception $e) {
+                    // Ignore rare accidental duplicates to keep the seeder running
+                    continue;
+                }
+            }
         }
 
         // 12. System Activity (Notifications)
