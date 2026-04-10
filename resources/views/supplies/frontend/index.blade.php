@@ -190,9 +190,6 @@
                                         <span class="text-2xl font-black text-emerald-600 tracking-tighter">{{ number_format($supply->price, 2) }}</span>
                                         <span class="text-[10px] font-bold text-slate-400 uppercase">JOD</span>
                                     </div>
-                                    <div class="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                                        Stock: {{ $supply->stock }}
-                                    </div>
                                 </div>
 
                                 {{-- 🛒 Action Bar (The Fix) --}}
