@@ -1,131 +1,159 @@
 <x-owner-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-[#1d5c42] rounded-xl flex items-center justify-center text-white shadow-lg shadow-[#1d5c42]/20">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+    <x-slot name="header">Asset Directory</x-slot>
+
+    <div class="space-y-10 pb-24 animate-god-in">
+
+        {{-- 🌟 Premium Header Section --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/80 p-8 md:p-12 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-2xl transition-all hover:border-emerald-500/30">
+            <div class="absolute -left-20 -top-20 w-80 h-80 bg-[#1d5c42]/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+                <div class="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)] shrink-0">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-extrabold text-[#020617] tracking-tight">My Properties</h1>
-                    <p class="text-sm text-gray-500 font-medium mt-0.5">Manage your farms, update details, and check approval status.</p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 shadow-inner mx-auto md:mx-0">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Network Assets
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">My <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Properties</span></h1>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Manage, update, and deploy luxury estates.</p>
                 </div>
             </div>
 
-            <a href="{{ route('owner.farms.create') }}" class="inline-flex items-center justify-center gap-2 py-3 px-6 text-sm font-black tracking-widest uppercase rounded-xl text-white bg-[#1d5c42] hover:bg-[#154230] shadow-lg shadow-[#1d5c42]/20 transform hover:-translate-y-0.5 transition-all duration-200">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                List New Farm
-            </a>
+            <div class="relative z-10 w-full md:w-auto mt-6 md:mt-0 flex justify-center md:justify-end">
+                <a href="{{ route('owner.farms.create') }}" class="w-full md:w-auto px-8 py-5 bg-gradient-to-tr from-emerald-600 to-emerald-400 hover:to-emerald-300 text-slate-950 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] transform hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                    Deploy New Asset
+                </a>
+            </div>
         </div>
-    </x-slot>
 
-    <div class="pb-24 pt-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- 🌟 Assets Grid --}}
+        @if($farms->count() > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                @foreach($farms as $farm)
+                    <div class="group bg-slate-900/60 rounded-[3rem] overflow-hidden border border-slate-800 hover:border-emerald-500/40 shadow-2xl hover:shadow-[0_20px_50px_rgba(16,185,129,0.15)] transition-all duration-500 flex flex-col h-full relative backdrop-blur-xl">
 
-            {{-- Flash Messages --}}
-            @if(session('success'))
-                <div class="mb-8 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 shadow-sm animate-fade-in-up flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                    <p class="text-sm font-bold text-emerald-800">{{ session('success') }}</p>
-                </div>
-            @endif
-
-            @if($farms->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    @foreach($farms as $farm)
-                        <div class="group bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col">
-
-                            <div class="relative h-56 w-full bg-gray-100 overflow-hidden">
-                                {{-- 💡 FIX: Read `main_image` directly from the farm model --}}
+                        {{-- Image Section (Framed & Refined) --}}
+                        <div class="relative h-64 w-full bg-slate-950 p-2 shrink-0">
+                            <div class="relative w-full h-full rounded-[2.5rem] overflow-hidden border border-slate-800/80 shadow-inner">
                                 @if($farm->main_image)
-                                    <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                    <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center bg-gray-50">
-                                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <div class="w-full h-full flex items-center justify-center bg-slate-900">
+                                        <svg class="w-12 h-12 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     </div>
                                 @endif
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/20 to-transparent opacity-90"></div>
 
-                                <div class="absolute top-4 right-4">
+                                {{-- Smart Status Badge --}}
+                                <div class="absolute top-4 right-4 z-10">
                                     @if($farm->is_approved === 1)
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/90 text-white backdrop-blur-md shadow-sm border border-green-400/50 uppercase tracking-widest">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                            Approved
+                                        <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[9px] font-black bg-emerald-500/20 text-emerald-400 backdrop-blur-md border border-emerald-500/30 uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_5px_#34d399]"></span> Approved
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold bg-amber-500/90 text-white backdrop-blur-md shadow-sm border border-amber-400/50 uppercase tracking-widest">
-                                            <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            Pending
+                                        <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black bg-amber-500/20 text-amber-500 backdrop-blur-md border border-amber-500/30 uppercase tracking-widest shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                                            <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Pending Review
                                         </span>
                                     @endif
                                 </div>
-                            </div>
 
-                            <div class="p-6 flex-1 flex flex-col">
-                                <div class="flex justify-between items-start mb-2">
-                                    <h2 class="text-xl font-black text-gray-900 tracking-tight line-clamp-1">{{ $farm->name }}</h2>
-                                </div>
-
-                                <div class="flex items-center gap-1.5 text-sm font-bold text-gray-500 mb-4">
-                                    <svg class="w-4 h-4 text-rose-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path></svg>
-                                    <span class="truncate">{{ $farm->location ?? $farm->governorate }}</span>
-                                </div>
-
-                                {{-- 💡 FIX: Using Shift Prices instead of price_per_night --}}
-                                <div class="flex items-center gap-4 py-4 border-y border-gray-100 mt-auto mb-6">
-                                    <div>
-                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Day Shift</p>
-                                        <p class="text-sm font-black text-[#1d5c42]">{{ $farm->price_per_morning_shift }} <span class="text-[9px] text-gray-400">JOD</span></p>
-                                    </div>
-                                    <div class="w-px h-8 bg-gray-200"></div>
-                                    <div>
-                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Full Day</p>
-                                        <p class="text-sm font-black text-[#c2a265]">{{ $farm->price_per_full_day }} <span class="text-[9px] text-gray-400">JOD</span></p>
-                                    </div>
-                                    <div class="ml-auto text-right">
-                                        <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Capacity</p>
-                                        <p class="text-sm font-black text-gray-900">{{ $farm->capacity }} <span class="text-[9px] text-gray-400">PAX</span></p>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-3">
-                                    <a href="{{ route('owner.farms.edit', $farm->id) }}" class="flex-1 inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-900 text-xs font-black uppercase tracking-widest rounded-xl transition-colors border border-gray-200">
-                                        Edit Details
-                                    </a>
-
-                                    <form action="{{ route('owner.farms.destroy', $farm->id) }}" method="POST" class="inline-flex" onsubmit="return confirm('Are you sure you want to delete this farm? This action cannot be undone.');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="inline-flex justify-center items-center px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 hover:text-red-700 text-xs font-black uppercase tracking-widest rounded-xl transition-colors border border-red-200 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                            Delete
-                                        </button>
-                                    </form>
+                                {{-- Meta Badge --}}
+                                <div class="absolute bottom-4 left-4 z-10 flex gap-2">
+                                    <span class="px-3 py-1.5 bg-slate-950/80 backdrop-blur-md text-slate-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-slate-700/50 shadow-lg">ID #{{ str_pad($farm->id, 4, '0', STR_PAD_LEFT) }}</span>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
 
-                @if($farms->hasPages())
-                    <div class="mt-12 flex justify-center">
-                        {{ $farms->links('pagination.green') }}
-                    </div>
-                @endif
+                        {{-- Content Body --}}
+                        <div class="p-6 md:p-8 flex-1 flex flex-col">
+                            <h2 class="text-2xl font-black text-white tracking-tight line-clamp-1 mb-2 group-hover:text-emerald-400 transition-colors">{{ $farm->name }}</h2>
 
-            @else
-                <div class="bg-white rounded-3xl border-2 border-dashed border-gray-200 p-12 text-center flex flex-col items-center justify-center max-w-2xl mx-auto shadow-sm">
-                    <div class="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 border border-emerald-100">
-                        <svg class="w-10 h-10 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            <div class="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 border-l-2 border-[#c2a265] pl-3">
+                                <svg class="w-4 h-4 text-[#c2a265] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path></svg>
+                                {{ $farm->location ?? $farm->governorate }}
+                            </div>
+
+                            {{-- 🌟 3-Column Rates Grid 🌟 --}}
+                            <div class="grid grid-cols-3 gap-2 py-5 border-y border-slate-800/80 mt-auto mb-8 bg-slate-950/40 rounded-2xl px-4 shadow-inner">
+
+                                {{-- Morning Shift --}}
+                                <div class="flex flex-col justify-center text-center sm:text-left pr-2">
+                                    <p class="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1">
+                                        <svg class="w-3 h-3 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                        <span class="hidden sm:inline">Morning</span>
+                                        <span class="sm:hidden">AM</span>
+                                    </p>
+                                    <p class="text-base sm:text-lg font-black text-emerald-400 tracking-tighter">{{ number_format($farm->price_per_morning_shift, 0) }}<span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest ml-0.5 hidden sm:inline">JOD</span></p>
+                                </div>
+
+                                {{-- Evening Shift --}}
+                                <div class="flex flex-col justify-center text-center sm:text-left border-l border-slate-800 pl-2 sm:pl-4 pr-2">
+                                    <p class="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1">
+                                        <svg class="w-3 h-3 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                        <span class="hidden sm:inline">Evening</span>
+                                        <span class="sm:hidden">PM</span>
+                                    </p>
+                                    <p class="text-base sm:text-lg font-black text-indigo-400 tracking-tighter">{{ number_format($farm->price_per_evening_shift, 0) }}<span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest ml-0.5 hidden sm:inline">JOD</span></p>
+                                </div>
+
+                                {{-- Full Day --}}
+                                <div class="flex flex-col justify-center text-center sm:text-left border-l border-slate-800 pl-2 sm:pl-4">
+                                    <p class="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1">
+                                        <svg class="w-3 h-3 text-[#c2a265] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="hidden sm:inline">Full Day</span>
+                                        <span class="sm:hidden">24H</span>
+                                    </p>
+                                    <p class="text-base sm:text-lg font-black text-[#c2a265] tracking-tighter">{{ number_format($farm->price_per_full_day, 0) }}<span class="text-[8px] text-slate-500 font-bold uppercase tracking-widest ml-0.5 hidden sm:inline">JOD</span></p>
+                                </div>
+                            </div>
+
+                            {{-- Actions --}}
+                            <div class="flex items-center gap-3">
+                                <a href="{{ route('owner.farms.edit', $farm->id) }}" class="flex-1 py-4 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl text-center border border-slate-800 shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    Configure
+                                </a>
+                                <form action="{{ route('owner.farms.destroy', $farm->id) }}" method="POST" class="w-auto flex-shrink-0" onsubmit="return confirm('WARNING: This will purge the asset from the ecosystem. Proceed?');">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="px-5 py-4 bg-slate-950 hover:bg-rose-600 text-rose-500 hover:text-white border border-slate-800 hover:border-rose-500 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center" title="Purge Asset">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-black text-gray-900 mb-2">No Properties Listed Yet</h3>
-                    <p class="text-sm font-medium text-gray-500 max-w-md mx-auto mb-8">You haven't added any farms to your portfolio. Start by listing your first property to accept bookings and earn revenue.</p>
-                    <a href="{{ route('owner.farms.create') }}" class="inline-flex items-center justify-center gap-2 py-4 px-8 text-sm font-black tracking-widest uppercase rounded-2xl text-white bg-[#1d5c42] hover:bg-[#154230] shadow-lg shadow-[#1d5c42]/20 transform hover:-translate-y-1 transition-all duration-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                        List Your First Farm
-                    </a>
+                @endforeach
+            </div>
+
+            {{-- 🌟 Pagination --}}
+            @if(method_exists($farms, 'hasPages') && $farms->hasPages())
+                <div class="mt-14 flex justify-center custom-pagination pb-8">
+                    {{ $farms->links() }}
                 </div>
             @endif
 
-        </div>
+        @else
+            {{-- 🌟 Empty State --}}
+            <div class="py-32 text-center bg-slate-900/40 rounded-[3rem] border border-slate-800 border-dashed flex flex-col items-center shadow-inner relative overflow-hidden">
+                <div class="w-28 h-28 bg-slate-950 rounded-[2rem] flex items-center justify-center mb-8 shadow-inner border border-slate-800 relative z-10">
+                    <svg class="w-14 h-14 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1m-6 0h6"></path></svg>
+                </div>
+                <h3 class="text-3xl font-black text-white mb-3 tracking-tight relative z-10">No Assets Deployed</h3>
+                <p class="text-[11px] font-bold text-slate-500 max-w-sm uppercase tracking-widest leading-relaxed relative z-10">You haven't initialized any farms in your portfolio. Deploy a new asset to accept reservations.</p>
+                <a href="{{ route('owner.farms.create') }}" class="mt-8 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.2)] transition-all active:scale-95 relative z-10">
+                    Initialize Setup
+                </a>
+            </div>
+        @endif
     </div>
+
+    <style>
+        .custom-pagination nav { @apply flex items-center justify-center gap-2; }
+        .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-500 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-emerald-600 hover:text-white shadow-lg; }
+        .custom-pagination .active .page-link { @apply bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]; }
+        .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
+    </style>
 </x-owner-layout>

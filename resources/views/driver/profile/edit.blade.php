@@ -8,7 +8,7 @@
          ========================================== --}}
     <div class="relative bg-gradient-to-r from-slate-800 to-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl border border-slate-700 overflow-hidden">
         <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-        
+
         <div class="relative z-10">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest mb-6 backdrop-blur-md">
                 <span class="w-2 h-2 rounded-full {{ Auth::user()->role === 'supply_driver' ? 'bg-teal-400' : 'bg-amber-500' }} animate-pulse"></span>
@@ -23,7 +23,7 @@
          SETTINGS CONTENT
          ========================================== --}}
     <div class="space-y-8">
-        
+
         {{-- Profile Information Card --}}
         <div class="bg-slate-800/50 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-12 border border-slate-700 shadow-xl">
             <div class="flex items-center gap-6 mb-12">

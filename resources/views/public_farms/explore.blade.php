@@ -5,18 +5,18 @@
 @section('content')
 
 <style>
-    /* Advanced Animations */
+    /* Premium Animations & Utilities */
     @keyframes float {
         0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-12px); }
+        50% { transform: translateY(-15px); }
     }
-    .animate-float-slow { animation: float 6s ease-in-out infinite; }
+    .animate-float-slow { animation: float 8s ease-in-out infinite; }
 
-    /* Elegant Search Dock with Smooth Shadow */
-    .search-dock {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.02);
+    .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
 
     /* Input Reset & Enhancements */
@@ -26,120 +26,116 @@
         margin: 0;
     }
 
-    /* Card Hover Effects */
-    .farm-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    .farm-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px -5px rgba(29, 92, 66, 0.1);
-        border-color: rgba(29, 92, 66, 0.15);
-    }
+    /* Image Zoom Transition */
     .image-zoom { transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
-    .farm-card:hover .image-zoom { transform: scale(1.05); }
+    .group:hover .image-zoom { transform: scale(1.08); }
 </style>
 
-<div class="bg-[#f8fafc] min-h-screen pb-24 font-sans selection:bg-[#1d5c42] selection:text-white">
+{{-- Main Wrapper --}}
+<div class="bg-[#f4f7f6] min-h-screen pb-24 font-sans selection:bg-[#1d5c42] selection:text-white">
 
     {{-- ==========================================
-         1. PREMIUM HERO SECTION
+         1. PREMIUM HERO SECTION (DARK MODE)
          ========================================== --}}
-    <div class="relative w-full h-[70vh] min-h-[600px] flex items-center justify-center bg-[#020617] overflow-hidden">
-        {{-- High Quality Background Image (Opacity increased to 75 for better visibility) --}}
-        <img src="{{ asset('backgrounds/home.JPG') }}" alt="Explore Escapes"
-             class="absolute inset-0 w-full h-full object-cover opacity-75 scale-105 animate-[pulse_20s_ease-in-out_infinite]">
+    <div class="relative w-full h-[65vh] min-h-[550px] flex flex-col justify-center items-center bg-[#0a0a0a] overflow-hidden pt-20">
 
-        {{-- Smooth Gradient Overlay for perfect text contrast (Lightened to show image more) --}}
-        <div class="absolute inset-0 bg-gradient-to-b from-[#020617]/80 via-[#020617]/40 to-[#f8fafc]"></div>
+        {{-- High Quality Background Image --}}
+        <div class="absolute inset-0 w-full h-full overflow-hidden">
+            <img src="{{ asset('backgrounds/home.JPG') }}" alt="Explore Escapes"
+                 class="w-full h-full object-cover opacity-40 scale-105 animate-[pulse_25s_ease-in-out_infinite]">
+        </div>
 
-        {{-- Glowing Orbs for Depth (Brand Colors) --}}
-        <div class="absolute top-1/4 left-1/4 w-[40rem] h-[40rem] bg-[#1d5c42]/30 rounded-full blur-[120px] animate-float-slow pointer-events-none"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-[#c2a265]/20 rounded-full blur-[100px] animate-float-slow pointer-events-none" style="animation-delay: 2s;"></div>
+        {{-- Vignette & Smooth Gradient Overlays --}}
+        <div class="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.9)]"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#f4f7f6] via-transparent to-[#0a0a0a]/50"></div>
+
+        {{-- Glowing Orbs for Depth (More subtle for dark mode) --}}
+        <div class="absolute top-1/4 left-1/4 w-[35rem] h-[35rem] bg-[#1d5c42]/20 rounded-full blur-[120px] animate-float-slow pointer-events-none mix-blend-screen"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-[30rem] h-[30rem] bg-[#c2a265]/15 rounded-full blur-[120px] animate-float-slow pointer-events-none mix-blend-screen" style="animation-delay: 2s;"></div>
 
         {{-- Main Hero Text Container --}}
-        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto pb-20">
-            <div class="animate-[fade-in-up_0.8s_ease-out]">
-                <div class="inline-flex items-center gap-2 py-2 px-5 rounded-full bg-black/30 border border-white/20 text-[#c2a265] text-xs font-bold tracking-[0.2em] uppercase backdrop-blur-md mb-8 shadow-xl">
-                    <span class="w-2 h-2 rounded-full bg-[#c2a265] animate-ping absolute"></span>
-                    <span class="w-2 h-2 rounded-full bg-[#c2a265] relative"></span>
-                    Curated Experiences
-                </div>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto pb-20 fade-in-up">
+            <div class="inline-flex items-center gap-2 py-1.5 px-5 rounded-full bg-white/5 border border-white/10 text-[#f4e4c1] text-[10px] font-black tracking-[0.25em] uppercase backdrop-blur-xl mb-6 shadow-2xl">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#c2a265] animate-ping absolute"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-[#c2a265] relative"></span>
+                Premium Collection
             </div>
 
-            {{-- Title with crisp contrast --}}
-            <h1 class="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 leading-tight animate-[fade-in-up_1s_ease-out_0.2s_both] drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter mb-6 leading-[1.1] drop-shadow-2xl">
                 Find Your Perfect <br class="hidden md:block">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f4e4c1] to-[#c2a265] relative inline-block">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f4e4c1] to-[#c2a265] italic font-serif font-medium pr-2">
                     Getaway
-                    <span class="absolute -bottom-2 left-0 w-full h-2 bg-gradient-to-r from-transparent via-[#c2a265] to-transparent opacity-50 blur-sm"></span>
                 </span>
             </h1>
 
-            <p class="text-lg md:text-xl text-gray-100 font-medium max-w-2xl mx-auto leading-relaxed animate-[fade-in-up_1s_ease-out_0.4s_both] drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+            <p class="text-base md:text-lg text-gray-300 font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-lg opacity-80">
                 Explore our exclusive collection of luxury farms, private chalets, and breathtaking estates tailored for unforgettable moments.
             </p>
         </div>
     </div>
 
     {{-- ==========================================
-         2. CLEAR & PROMINENT SEARCH DOCK
+         2. CLEAR & PROMINENT SEARCH DOCK (DARK GLASS)
          ========================================== --}}
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-30 -mt-24 mb-24 animate-[fade-in-up_1s_ease-out_0.6s_both]">
-        <div class="search-dock rounded-3xl md:rounded-full p-2 transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.2)]">
-            <form method="GET" action="{{ route('explore') }}" class="flex flex-col md:flex-row items-center w-full md:divide-x divide-gray-100">
+    <div class="max-w-[96%] xl:max-w-6xl mx-auto relative z-30 -mt-28 mb-20 fade-in-up" style="animation-delay: 0.2s;">
+        <div class="bg-[#13131a]/80 backdrop-blur-2xl rounded-[2rem] lg:rounded-full p-2 md:p-3 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-white/10">
+            <form method="GET" action="{{ route('explore') }}" class="flex flex-col lg:flex-row items-center w-full lg:divide-x divide-white/10 gap-2 lg:gap-0">
 
-                {{-- Name --}}
-                <div class="w-full md:w-[30%] px-8 py-4 hover:bg-gray-50/80 rounded-t-3xl md:rounded-l-full transition-all duration-300 group">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Farm Name</label>
+                {{-- Name Input --}}
+                <div class="w-full lg:w-[32%] px-6 py-3 md:py-4 rounded-2xl lg:rounded-l-full focus-within:bg-white/5 hover:bg-white/5 transition-all duration-300 group cursor-text" onclick="document.getElementById('search_name').focus()">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#c2a265] transition-colors">Where to?</label>
                     <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 group-hover:text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        <input type="text" name="name" value="{{ request('name') }}" placeholder="Search estates..."
-                               class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
+                        <svg class="w-4 h-4 text-gray-500 group-focus-within:text-[#c2a265]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="search_name" name="name" value="{{ request('name') }}" placeholder="Search estates..."
+                               class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 p-0 font-bold text-sm md:text-base outline-none truncate">
                     </div>
                 </div>
 
-                {{-- Governorate --}}
-                <div class="w-full md:w-[25%] px-8 py-4 hover:bg-gray-50/80 transition-all duration-300 group">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Governorate</label>
+                {{-- Governorate Select --}}
+                <div class="w-full lg:w-[28%] px-6 py-3 md:py-4 rounded-2xl focus-within:bg-white/5 hover:bg-white/5 transition-all duration-300 group relative">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-hover:text-[#c2a265] transition-colors">Region</label>
                     <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-300 group-hover:text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                        <select name="governorate" class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none appearance-none cursor-pointer">
-                            <option value="">All Regions</option>
-                            @foreach(['Amman', 'Irbid', 'Zarqa', 'Aqaba', 'Jerash', 'Madaba', 'Salt', 'Karak', 'Ajloun'] as $gov)
-                                <option value="{{ $gov }}" {{ request('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
+                        <svg class="w-4 h-4 text-gray-500 group-hover:text-[#c2a265]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                        <select name="governorate" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 p-0 font-bold text-sm md:text-base outline-none appearance-none cursor-pointer">
+                            <option value="" class="text-gray-900">All Regions</option>
+                            @foreach(['Amman', 'Irbid', 'Zarqa', 'Aqaba', 'Jerash', 'Madaba', 'Salt', 'Karak', 'Ajloun', 'Mafraq', 'Tafilah', 'Ma\'an'] as $gov)
+                                <option value="{{ $gov }}" class="text-gray-900" {{ request('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                             @endforeach
                         </select>
+                        <svg class="w-4 h-4 text-gray-500 absolute right-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                 </div>
 
-                {{-- Price Range --}}
-                <div class="w-full md:w-[30%] flex divide-x divide-gray-100 group">
-                    <div class="w-1/2 px-8 py-4 hover:bg-gray-50/80 transition-all duration-300">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Min Price</label>
+                {{-- Price Range (Min / Max) --}}
+                <div class="w-full lg:w-[30%] flex rounded-2xl overflow-hidden focus-within:bg-white/5 hover:bg-white/5 transition-all duration-300 group">
+                    <div class="w-1/2 px-6 py-3 md:py-4 border-r border-white/10 cursor-text" onclick="document.getElementById('min_price').focus()">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#c2a265] transition-colors">Min Price</label>
                         <div class="flex items-center">
-                            <span class="text-[10px] font-black text-gray-300 mr-1.5">JOD</span>
-                            <input type="number" name="min_price" value="{{ request('min_price') }}" placeholder="0"
-                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
+                            <span class="text-[10px] font-black text-gray-500 mr-1.5">JOD</span>
+                            <input type="number" id="min_price" name="min_price" value="{{ request('min_price') }}" placeholder="0"
+                                   class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 p-0 font-bold text-sm md:text-base outline-none">
                         </div>
                     </div>
-                    <div class="w-1/2 px-8 py-4 hover:bg-gray-50/80 transition-all duration-300">
-                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 group-hover:text-[#1d5c42]">Max Price</label>
+                    <div class="w-1/2 px-6 py-3 md:py-4 cursor-text" onclick="document.getElementById('max_price').focus()">
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 group-focus-within:text-[#c2a265] transition-colors">Max Price</label>
                         <div class="flex items-center">
-                            <span class="text-[10px] font-black text-gray-300 mr-1.5">JOD</span>
-                            <input type="number" name="max_price" value="{{ request('max_price') }}" placeholder="Any"
-                                   class="w-full bg-transparent border-none text-gray-900 placeholder-gray-400 focus:ring-0 p-0 font-bold text-base outline-none">
+                            <span class="text-[10px] font-black text-gray-500 mr-1.5">JOD</span>
+                            <input type="number" id="max_price" name="max_price" value="{{ request('max_price') }}" placeholder="Any"
+                                   class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 p-0 font-bold text-sm md:text-base outline-none">
                         </div>
                     </div>
                 </div>
 
-                {{-- Buttons --}}
-                <div class="w-full md:w-[15%] p-2 flex items-center justify-center md:justify-end gap-2 rounded-b-3xl md:rounded-r-full">
+                {{-- Action Buttons --}}
+                <div class="w-full lg:w-[15%] p-2 flex items-center justify-center lg:justify-end gap-2 mt-2 lg:mt-0 shrink-0">
                     @if(request()->anyFilled(['name', 'governorate', 'min_price', 'max_price']))
-                        <a href="{{ route('explore') }}" title="Clear Filters" class="bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 p-4 rounded-full transition-all transform active:scale-95 flex items-center justify-center border border-transparent hover:border-red-100 group">
+                        <a href="{{ route('explore') }}" title="Clear Filters" class="bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 w-12 h-12 md:w-14 md:h-14 rounded-full transition-all transform active:scale-95 flex items-center justify-center shrink-0 border border-white/10 hover:border-red-500/30">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
                     @endif
-                    <button type="submit" class="bg-[#1d5c42] hover:bg-[#154230] text-white px-8 py-4 md:p-4 rounded-full md:rounded-full shadow-lg hover:shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 group w-full md:w-auto">
+                    <button type="submit" class="bg-gradient-to-tr from-[#1d5c42] to-[#14402e] hover:to-[#1d5c42] text-white h-12 md:h-14 px-8 rounded-full shadow-lg shadow-[#1d5c42]/30 border border-white/10 hover:shadow-[#1d5c42]/50 transition-all transform active:scale-95 flex items-center justify-center gap-2 flex-1 lg:flex-none group">
                         <svg class="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        <span class="md:hidden font-black uppercase text-xs tracking-widest">Search</span>
+                        <span class="lg:hidden font-black uppercase text-xs tracking-widest">Search</span>
                     </button>
                 </div>
 
@@ -148,105 +144,142 @@
     </div>
 
     {{-- ==========================================
-         3. FARMS GRID (PREMIUM CARDS)
+         3. FARMS GRID (REFINED UX CARDS)
          ========================================== --}}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-gray-200 pb-6 gap-4">
+    <div class="max-w-[96%] xl:max-w-7xl mx-auto mb-10 flex flex-col sm:flex-row sm:justify-between sm:items-end border-b border-gray-200 pb-6 gap-4 fade-in-up" style="animation-delay: 0.3s;">
         <div>
-            <h2 class="text-4xl font-black text-gray-900 tracking-tight">Available Escapes</h2>
-            <p class="text-base font-medium text-gray-500 mt-2">Discover handpicked locations for your next retreat.</p>
+            <h2 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+                <span class="w-2 h-8 rounded-full bg-[#c2a265]"></span>
+                Available Escapes
+            </h2>
+            <p class="text-sm md:text-base font-medium text-gray-500 mt-2 ml-5">Discover handpicked locations for your next retreat.</p>
         </div>
-        <div class="inline-flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-sm border border-gray-200">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#1d5c42] animate-pulse"></span>
-            <span class="text-xs font-black text-[#1d5c42] uppercase tracking-widest">{{ $farms->total() }} Locations</span>
+        <div class="inline-flex items-center gap-2 bg-white px-5 py-2.5 rounded-2xl shadow-sm border border-gray-100">
+            <span class="w-2 h-2 rounded-full bg-[#1d5c42] animate-pulse"></span>
+            <span class="text-[10px] font-black text-gray-700 uppercase tracking-widest">{{ $farms->total() }} Locations Found</span>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div class="max-w-[96%] xl:max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             @forelse ($farms as $index => $farm)
-                <div class="group cursor-pointer transform transition-all duration-500 hover:-translate-y-2 relative"
-                     style="animation: fade-in-up 0.8s ease-out {{ $index * 0.1 }}s both;">
-                    
-                    {{-- 💖 Modern Favorite Button --}}
-                    <div class="absolute top-4 right-4 z-20">
-                        @auth
-                            @php
-                                $isFavorited = auth()->user()->favorites()->where('farm_id', $farm->id)->exists();
-                            @endphp
-                            <form action="{{ $isFavorited ? route('favorites.destroy', $farm->id) : route('favorites.store', $farm->id) }}" method="POST">
-                                @csrf
-                                @if($isFavorited) @method('DELETE') @endif
-                                <button title="Toggle Favorite" class="p-2.5 rounded-full backdrop-blur-md transition-all shadow-md active:scale-95 hover:scale-105 {{ $isFavorited ? 'bg-white text-red-500' : 'bg-black/40 text-white hover:bg-white hover:text-red-500' }}">
-                                    <svg class="w-5 h-5 {{ $isFavorited ? 'fill-current' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                                </button>
-                            </form>
-                        @else
-                            <a href="{{ route('login') }}" class="block p-2.5 rounded-full backdrop-blur-md bg-black/40 text-white hover:bg-white hover:text-red-500 transition-all shadow-md active:scale-95 hover:scale-105">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            </a>
-                        @endauth
-                    </div>
+                <div class="group bg-white rounded-[2rem] p-3 shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-100 hover:border-[#1d5c42]/30 hover:shadow-[0_25px_50px_rgba(29,92,66,0.12)] transform transition-all duration-500 hover:-translate-y-2 flex flex-col relative"
+                     style="animation: fade-in-up 0.8s ease-out {{ ($index % 6) * 0.1 }}s both;">
 
-                    {{-- Rating Badge --}}
-                    @if(isset($farm->average_rating) && $farm->average_rating > 0)
-                        <div class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5 border border-slate-100">
-                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-900">{{ number_format($farm->average_rating, 1) }}</span>
-                        </div>
-                    @endif
+                    {{-- Inner Card Image Wrapper --}}
+                    <div class="relative aspect-[4/3] rounded-[1.5rem] overflow-hidden mb-5 bg-gray-100 shadow-inner">
 
-                    {{-- Card Image Container --}}
-                    <div class="relative aspect-[4/3] rounded-[2rem] overflow-hidden mb-4 shadow-sm group-hover:shadow-xl transition-all duration-500 border border-slate-100 bg-gray-100">
-                        <a href="{{ route('farms.show', $farm->id) }}" class="block w-full h-full">
-                            @if($farm->main_image)
-                                <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" 
-                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out">
+                        {{-- 💖 Glassmorphic Favorite Button --}}
+                        <div class="absolute top-3 right-3 z-30">
+                            @auth
+                                @php
+                                    $isFavorited = auth()->user()->favorites()->where('farm_id', $farm->id)->exists();
+                                @endphp
+                                <form action="{{ $isFavorited ? route('favorites.destroy', $farm->id) : route('favorites.store', $farm->id) }}" method="POST">
+                                    @csrf
+                                    @if($isFavorited) @method('DELETE') @endif
+                                    <button title="Toggle Favorite" class="p-2.5 rounded-xl backdrop-blur-md transition-all duration-300 shadow-lg active:scale-95 hover:scale-105 border border-white/20 {{ $isFavorited ? 'bg-white/90 text-red-500' : 'bg-black/40 text-white hover:bg-white/90 hover:text-red-500' }}">
+                                        <svg class="w-5 h-5 {{ $isFavorited ? 'fill-current' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                    </button>
+                                </form>
                             @else
-                                <div class="w-full h-full flex flex-col items-center justify-center bg-slate-50">
-                                    <svg class="w-12 h-12 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <a href="{{ route('login') }}" class="block p-2.5 rounded-xl backdrop-blur-md bg-black/40 text-white hover:bg-white/90 hover:text-red-500 transition-all duration-300 shadow-lg border border-white/20 active:scale-95 hover:scale-105">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                </a>
+                            @endauth
+                        </div>
+
+                        {{-- ⭐ Glassmorphic Rating Badge --}}
+                        @if(isset($farm->average_rating) && $farm->average_rating > 0)
+                            <div class="absolute top-3 left-3 z-30 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-lg border border-white/20 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-[#f4e4c1]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <span class="text-[11px] font-bold text-white tracking-widest">{{ number_format($farm->average_rating, 1) }}</span>
+                            </div>
+                        @endif
+
+                        <a href="{{ route('farms.show', $farm->id) }}" class="absolute inset-0 z-10 block w-full h-full">
+                            @if($farm->main_image)
+                                <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}"
+                                     class="w-full h-full object-cover image-zoom relative -z-10">
+                            @else
+                                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative -z-10">
+                                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 </div>
                             @endif
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </a>
                     </div>
 
-                    {{-- Card Info --}}
-                    <div class="px-2">
-                        <div class="flex justify-between items-start">
-                            <h3 class="text-base font-black text-slate-900 truncate pr-4 group-hover:text-emerald-700 transition-colors tracking-tight">{{ $farm->name }}</h3>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 shrink-0">{{ $farm->governorate }}</span>
+                    {{-- Card Content Info --}}
+                    <div class="px-3 pb-2 flex flex-col flex-1 relative z-0">
+                        <div class="flex justify-between items-start gap-4 mb-2">
+                            <h3 class="text-lg font-black text-gray-900 truncate group-hover:text-[#1d5c42] transition-colors tracking-tight">
+                                <a href="{{ route('farms.show', $farm->id) }}" class="focus:outline-none">{{ $farm->name }}</a>
+                            </h3>
+                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shrink-0 border border-gray-200">
+                                {{ $farm->governorate }}
+                            </span>
                         </div>
-                        
-                        <p class="text-sm font-medium text-slate-500 mt-1 flex items-center gap-1 opacity-80">
-                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+
+                        <p class="text-sm font-medium text-gray-500 flex items-center gap-1.5 opacity-90 mb-5 line-clamp-1">
+                            <svg class="w-4 h-4 text-[#c2a265] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                             {{ Str::limit($farm->location, 35) }}
                         </p>
-                        
-                        <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-lg font-black text-slate-900 tracking-tighter">JOD {{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ shift</span>
+
+                        {{-- 💡 NEW: Stacked Pricing with Icons --}}
+                        <div class="mt-auto bg-gray-50/50 rounded-2xl p-3 border border-gray-100 mb-4">
+                            <div class="flex items-center justify-between py-1">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                    Morning
+                                </span>
+                                <span class="text-xs font-black text-gray-900">JOD {{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
                             </div>
-                            <a href="{{ route('farms.show', $farm->id) }}" class="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 group/btn">
-                                Details <svg class="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
-                            </a>
+                            <div class="flex items-center justify-between py-1 border-t border-gray-100/80">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                    Evening
+                                </span>
+                                <span class="text-xs font-black text-gray-900">JOD {{ number_format($farm->price_per_evening_shift ?? 0, 0) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between py-1 border-t border-gray-100/80">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-[#1d5c42] flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-[#1d5c42]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Full Day
+                                </span>
+                                <span class="text-sm font-black text-[#1d5c42]">JOD {{ number_format($farm->price_per_full_day ?? 0, 0) }}</span>
+                            </div>
                         </div>
+
+                        {{-- 💡 NEW: Prominent Details Button --}}
+                        <a href="{{ route('farms.show', $farm->id) }}" class="w-full bg-white text-[#1d5c42] border-2 border-[#1d5c42]/10 hover:border-[#1d5c42] hover:bg-[#1d5c42] hover:text-white px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-center transition-all duration-300 shadow-sm hover:shadow-lg focus:outline-none">
+                            View Details
+                        </a>
+
                     </div>
                 </div>
             @empty
-                <div class="col-span-full py-24 text-center">
-                    <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-gray-200">
-                        <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <div class="col-span-full py-24 text-center bg-white rounded-[2.5rem] border border-gray-100 shadow-sm fade-in-up">
+                    <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 10h.01M14 14h.01M10 14h.01M14 10h.01"></path></svg>
                     </div>
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">No Escapes Found</h3>
-                    <p class="text-base text-gray-500 max-w-sm mx-auto">Try adjusting your filters or destination to discover hidden gems.</p>
+                    <h3 class="text-2xl font-black text-gray-900 mb-2">No Escapes Found</h3>
+                    <p class="text-sm font-medium text-gray-500 max-w-sm mx-auto mb-6">We couldn't find any farms matching your specific filters. Try adjusting your search criteria.</p>
+                    <a href="{{ route('explore') }}" class="inline-flex items-center gap-2 bg-[#1d5c42] text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-[#1d5c42]/30 hover:bg-[#14402e] transition-all">
+                        Clear All Filters
+                    </a>
                 </div>
             @endforelse
         </div>
 
-        {{-- Custom Pagination --}}
-        <div class="mt-16 flex justify-center pb-8">
-            {{ $farms->links() }}
-        </div>
+        {{-- Custom Pagination Wrapper --}}
+        @if($farms->hasPages())
+            <div class="mt-16 flex justify-center pb-8 fade-in-up" style="animation-delay: 0.8s;">
+                <div class="bg-white px-6 py-3 rounded-full shadow-sm border border-gray-100">
+                    {{ $farms->links() }}
+                </div>
+            </div>
+        @endif
 
     </div>
 </div>

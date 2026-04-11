@@ -262,13 +262,16 @@ class SuperAdminController extends Controller
     /**
      * Display System Settings page.
      */
-    public function system()
-    {
-        $users             = User::all();
-        $defaultCommission = $this->getCommissionRate();
+public function system()
+{
+    // جلب المستخدمين مع التقسيم ليعمل الـ Pagination في الـ Blade
+    $users = User::latest()->paginate(10);
 
-        return view('admin.system', compact('users', 'defaultCommission'));
-    }
+    // تأكد من جلب قيمة العمولات من الإعدادات إذا كانت مخزنة في الداتابيز
+    $defaultCommission = config('mazraa.commission_rate', 10);
+
+    return view('admin.system', compact('users', 'defaultCommission'));
+}
 
     /**
      * Persist system settings to a local JSON config file.
