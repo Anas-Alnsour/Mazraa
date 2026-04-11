@@ -59,9 +59,10 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized or already paid.');
         }
 
-        Stripe::setApiKey(env('STRIPE_SECRET'));
-        $amountInFils = (int) (round($booking->total_price, 2) * 1000);
+        // ✅ السطر المطلوب لحل مشكلة الـ AuthenticationException
+        Stripe::setApiKey(config('services.stripe.secret'));
 
+        $amountInFils = (int) (round($booking->total_price, 2) * 1000);
         $startDate = \Carbon\Carbon::parse($booking->start_time)->format('Y-m-d H:i');
         $endDate = \Carbon\Carbon::parse($booking->end_time)->format('Y-m-d H:i');
 
@@ -92,12 +93,11 @@ class PaymentController extends Controller
 
     public function success(Request $request, FarmBooking $booking)
     {
-        Stripe::setApiKey(env('STRIPE_SECRET'));
+        Stripe::setApiKey(config('services.stripe.secret'));
         try {
             $session = Session::retrieve($request->get('session_id'));
             if ($session->payment_status === 'paid') {
 
-                // Idempotency guard: don't double-process if already confirmed
                 if ($booking->payment_status === 'paid') {
                     return redirect()->route('bookings.show', $booking->id)
                         ->with('success', 'Your booking is already confirmed!');
@@ -110,11 +110,6 @@ class PaymentController extends Controller
                     'stripe_payment_intent_id' => $session->payment_intent,
                 ]);
 
-
-                // --- FINANCIAL SPLIT: ADMIN COMMISSION ---
-                // Financial transactions removed from here - now triggered upon booking completion by owner
-
-                // --- 📩 SEND NOTIFICATIONS ---
                 $booking->user->notify(new BookingConfirmedNotification($booking));
                 if ($booking->farm && $booking->farm->owner_id) {
                     \App\Models\User::find($booking->farm->owner_id)->notify(new NewBookingReceivedNotification($booking));
@@ -130,7 +125,6 @@ class PaymentController extends Controller
 
         return redirect()->route('explore')->with('error', 'Payment not completed.');
     }
-
 
     public function cancel(FarmBooking $booking)
     {
@@ -154,14 +148,11 @@ class PaymentController extends Controller
         }
 
         $totalPrice = $orders->sum('total_price');
-
         return view('payment.select_supply', compact('order_id', 'totalPrice'));
     }
 
-    // --- دفع الفيزا (Stripe) للمشتريات ---
     public function checkoutSupply(Request $request, $order_id)
     {
-        // 💡 التعديل الأهم: فحص حالة pending_payment بدلاً من pending
         $orders = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
             ->whereIn('status', ['pending_payment', 'pending_assignment'])
@@ -172,10 +163,13 @@ class PaymentController extends Controller
         }
 
         $totalPrice = $orders->sum('total_price');
-        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+
+        // ✅ تحديد المفتاح لعملية التوريد أيضاً
+        Stripe::setApiKey(config('services.stripe.secret'));
+
         $amountInFils = (int) ($totalPrice * 1000);
 
-        $checkoutSession = \Stripe\Checkout\Session::create([
+        $checkoutSession = Session::create([
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
@@ -202,10 +196,10 @@ class PaymentController extends Controller
 
     public function successSupply(Request $request, $order_id)
     {
-        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+        Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
-            $session = \Stripe\Checkout\Session::retrieve($request->get('session_id'));
+            $session = Session::retrieve($request->get('session_id'));
 
             if ($session->payment_status === 'paid') {
                 $orders = SupplyOrder::where('order_id', $order_id)
@@ -215,16 +209,12 @@ class PaymentController extends Controller
                     ->get();
 
                 if ($orders->isEmpty()) {
-                    // Idempotency: already processed
                     return redirect()->route('supplies.my_orders')
                         ->with('success', 'Your order has already been confirmed!');
                 }
 
                 foreach ($orders as $order) {
-                    // Move to 'pending' so the supply company sees and dispatches it
                     $order->update(['status' => 'pending']);
-
-                    // Financial transactions removed from here - now triggered upon delivery completion by driver
                  }
 
                 return redirect()->route('supplies.my_orders')
@@ -238,8 +228,6 @@ class PaymentController extends Controller
         return redirect()->route('supplies.my_orders')->with('error', 'Payment not completed.');
     }
 
-
-    // --- دفع كليك (CliQ) للمشتريات ---
     public function processCliqSupply(Request $request, $order_id)
     {
         $orders = SupplyOrder::where('order_id', $order_id)
@@ -268,7 +256,7 @@ class PaymentController extends Controller
 
         foreach ($orders as $order) {
             $order->update([
-                'status' => 'pending_verification' // بتستنى الإدارة تأكد التحويل
+                'status' => 'pending_verification'
             ]);
         }
 
@@ -276,4 +264,3 @@ class PaymentController extends Controller
             ->with('success', 'Market payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
     }
 }
-
