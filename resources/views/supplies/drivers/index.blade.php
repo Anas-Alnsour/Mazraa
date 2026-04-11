@@ -1,39 +1,75 @@
 @extends('layouts.supply')
 
-@section('title', 'Fleet & Dispatch Core')
+@section('title', 'Fleet Roster')
 
 @section('content')
 <style>
     .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
-    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+    .fade-in-up-stagger { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
 
     .table-scroll::-webkit-scrollbar { height: 8px; width: 6px; }
     .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
-    .table-scroll::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    .table-scroll::-webkit-scrollbar-thumb:hover { background: #10b981; } /* Emerald hover */
+
+    /* Native CSS Pagination (Replaced @apply for Blade Compatibility) */
+    .custom-pagination nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .custom-pagination .page-item .page-link {
+        background-color: #0f172a;
+        border: none;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 900;
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+        background-color: #059669; /* Emerald-600 */
+        color: white;
+    }
+    .custom-pagination .page-item.active .page-link {
+        background-color: #059669; /* Emerald-600 */
+        color: white;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+    .custom-pagination .page-item.disabled .page-link {
+        background-color: transparent;
+        opacity: 0.3;
+        color: #334155;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
 </style>
 
 <div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in">
 
     {{-- 🌟 1. Premium Header Section --}}
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/80 p-8 md:p-12 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-2xl transition-all hover:border-blue-500/30 fade-in-up">
-        <div class="absolute -left-20 -top-20 w-80 h-80 bg-blue-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/80 p-8 md:p-12 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-2xl transition-all hover:border-teal-500/30 fade-in-up">
+        <div class="absolute -left-20 -top-20 w-80 h-80 bg-teal-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="absolute -right-20 -bottom-20 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none"></div>
 
         <div class="relative z-10 flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
-            <div class="w-16 h-16 rounded-[1.5rem] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.2)] shrink-0">
+            <div class="w-16 h-16 rounded-[1.5rem] bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.2)] shrink-0">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
             </div>
             <div>
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 shadow-inner mx-auto md:mx-0">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Logistics Network
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Logistics Network
                 </div>
-                <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">Delivery <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Fleet</span></h1>
+                <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">Delivery <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">Fleet</span></h1>
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Manage personnel, routes, and dispatch nodes.</p>
             </div>
         </div>
 
         <div class="relative z-10 w-full md:w-auto mt-6 md:mt-0 flex justify-center md:justify-end">
-            <a href="{{ route('supplies.drivers.create') }}" class="w-full md:w-auto px-8 py-5 bg-gradient-to-tr from-blue-600 to-indigo-500 hover:to-indigo-400 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_30px_rgba(59,130,246,0.3)] transform hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
+            <a href="{{ route('supplies.drivers.create') }}" class="w-full md:w-auto px-8 py-5 bg-gradient-to-tr from-teal-600 to-emerald-500 hover:to-emerald-400 text-slate-950 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] transform hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                 Deploy New Driver
             </a>
@@ -66,13 +102,13 @@
     <div class="bg-slate-900/60 rounded-[3rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl fade-in-up" style="animation-delay: 0.15s;">
         <div class="px-8 py-8 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
             <h3 class="text-xl font-black text-white tracking-tight flex items-center gap-3">
-                <div class="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20 text-blue-400">
+                <div class="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 </div>
                 Active Personnel
             </h3>
             <span class="bg-slate-950 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-800 shadow-inner">
-                Total Nodes: <span class="text-blue-400 ml-1">{{ $drivers->total() ?? $drivers->count() }}</span>
+                Total Nodes: <span class="text-emerald-400 ml-1">{{ $drivers->total() ?? $drivers->count() }}</span>
             </span>
         </div>
 
@@ -89,16 +125,16 @@
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
                         @foreach($drivers as $driver)
-                            <tr class="hover:bg-white/5 transition-colors group">
+                            <tr class="hover:bg-teal-500/5 transition-colors group">
 
                                 {{-- Driver Identity --}}
                                 <td class="px-10 py-6 whitespace-nowrap">
                                     <div class="flex items-center gap-5">
-                                        <div class="h-14 w-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-blue-400 font-black text-xl shadow-inner group-hover:border-blue-500/50 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all uppercase shrink-0">
-                                            {{ substr($driver->name, 0, 1) }}
+                                        <div class="h-14 w-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-emerald-400 font-black text-xl shadow-inner group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase shrink-0">
+                                            {{ substr($driver->name ?? 'A', 0, 1) }}
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="text-base font-black text-white group-hover:text-blue-400 transition-colors truncate tracking-tight mb-1">{{ $driver->name }}</p>
+                                            <p class="text-base font-black text-white group-hover:text-emerald-400 transition-colors truncate tracking-tight mb-1">{{ $driver->name }}</p>
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[8px] font-black text-slate-400 uppercase tracking-widest">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></span> Dispatch Ready
                                             </span>
@@ -121,10 +157,10 @@
                                 {{-- Actions Matrix --}}
                                 <td class="px-10 py-6 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
-                                        <a href="{{ route('supplies.drivers.edit', $driver->id) }}" class="flex items-center justify-center gap-2 p-3.5 bg-slate-950 text-slate-400 border border-slate-700 hover:border-blue-500 hover:text-blue-400 rounded-xl transition-all shadow-inner active:scale-95" title="Configure Agent">
+                                        <a href="{{ route('supplies.drivers.edit', $driver->id) }}" class="flex items-center justify-center gap-2 p-3.5 bg-slate-950 text-slate-400 border border-slate-700 hover:border-emerald-500 hover:text-emerald-400 rounded-xl transition-all shadow-inner active:scale-95" title="Configure Agent">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </a>
-                                        <form action="{{ route('supplies.drivers.destroy', $driver->id) }}" method="POST" onsubmit="return confirm('WARNING: Terminate this agent from the fleet?');" class="inline-block">
+                                        <form action="{{ route('supplies.drivers.destroy', $driver->id) }}" method="POST" onsubmit="return confirm('WARNING: Terminate this agent from the fleet?');" class="inline-block m-0">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="flex items-center justify-center gap-2 p-3.5 bg-slate-950 text-rose-500 border border-slate-700 hover:border-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all active:scale-95 shadow-inner" title="Terminate Agent">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -142,7 +178,7 @@
             @if(method_exists($drivers, 'hasPages') && $drivers->hasPages())
                 <div class="px-10 py-10 border-t border-slate-800 bg-slate-950/40 flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
                     <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                        Displaying <span class="text-blue-400">{{ $drivers->count() }}</span> of <span class="text-white">{{ $drivers->total() }}</span> agents
+                        Displaying <span class="text-emerald-400">{{ $drivers->count() }}</span> of <span class="text-white">{{ $drivers->total() }}</span> agents
                     </p>
                     <div class="custom-pagination">
                         {{ $drivers->links() }}
@@ -158,7 +194,7 @@
                 </div>
                 <h3 class="text-3xl font-black text-white mb-2 tracking-tight">Fleet Roster Empty</h3>
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] max-w-sm mx-auto mb-8 leading-relaxed">No delivery agents detected in your sector. Deploy your first driver to begin dispatching orders.</p>
-                <a href="{{ route('supplies.drivers.create') }}" class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex items-center gap-3">
+                <a href="{{ route('supplies.drivers.create') }}" class="px-8 py-4 bg-gradient-to-r from-teal-600 to-emerald-500 hover:to-emerald-400 text-slate-950 font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center gap-3">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     Initialize First Agent
                 </a>
@@ -166,12 +202,4 @@
         @endif
     </div>
 </div>
-
-<style>
-    /* Custom Pagination Styling Overrides */
-    .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-500 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-blue-600 hover:text-white shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]; }
-    .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-</style>
 @endsection
