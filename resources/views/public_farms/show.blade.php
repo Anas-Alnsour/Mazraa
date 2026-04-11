@@ -316,12 +316,22 @@
                                             class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none cursor-pointer">
                                         <svg class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     </div>
+
+                                    {{-- 💡 Calendar Guide Note --}}
+                                    <div class="mt-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 border-b border-slate-200 pb-1">Availability Guide:</p>
+                                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-600 flex-wrap">
+                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-orange-300 bg-orange-100"></span> Morning Booked</div>
+                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-indigo-300 bg-indigo-100"></span> Evening Booked</div>
+                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-slate-300 bg-slate-200"></span> Fully Booked</div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div id="shiftsContainer" style="display: none;" class="space-y-4">
                                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Available Shifts</label>
                                     <div class="grid grid-cols-2 gap-3">
-                                        <button type="button" id="btnMorning" onclick="selectShift('morning')" 
+                                        <button type="button" id="btnMorning" onclick="selectShift('morning')"
                                             class="shift-btn group p-4 border-2 border-slate-100 rounded-2xl bg-white hover:border-emerald-600 flex flex-col items-center justify-center transition-all disabled:opacity-50">
                                             <span class="text-xs font-black uppercase tracking-widest transition-colors mb-1">☀️ Morning</span>
                                             <span class="text-[9px] font-bold text-slate-400">8 AM - 5 PM</span>
@@ -345,12 +355,12 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Check-in</label>
-                                        <input type="text" id="multi_start_date" placeholder="Date" 
+                                        <input type="text" id="multi_start_date" placeholder="Date"
                                             class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none">
                                     </div>
                                     <div>
                                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-2">Check-out</label>
-                                        <input type="text" id="multi_end_date" placeholder="Date" 
+                                        <input type="text" id="multi_end_date" placeholder="Date"
                                             class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 outline-none">
                                     </div>
                                 </div>
@@ -455,7 +465,7 @@
                                 Reserve My Spot
                                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                             </button>
-                            
+
                             <div class="flex items-center justify-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">
                                 <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg> Secure Pay</span>
                                 <span class="flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Instant</span>
@@ -604,9 +614,6 @@
         // --- UI TOGGLES & LOGIC ---
         window.setBookingMode = function(mode) {
             document.getElementById('booking_mode').value = mode;
-            document.getElementById('modeSingle').className = mode === 'single' ? 'bg-white shadow-md text-[#1d5c42] flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none' : 'text-gray-500 hover:text-gray-800 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none';
-            document.getElementById('modeMulti').className = mode === 'multi' ? 'bg-white shadow-md text-blue-600 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none' : 'text-gray-500 hover:text-gray-800 flex-1 py-3 text-[10px] md:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 focus:outline-none';
-
             if(mode === 'single') {
                 document.getElementById('singleDayUI').style.display = 'block';
                 document.getElementById('multiDayUI').style.display = 'none';
@@ -823,7 +830,7 @@
 
         function initPickupMap() {
             if(!toggle || !section) return;
-            
+
             toggle.addEventListener('change', function() {
                 if(this.checked) {
                     section.style.display = 'block';

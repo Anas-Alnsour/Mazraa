@@ -94,7 +94,7 @@
     <div class="max-w-[96%] xl:max-w-7xl mx-auto relative z-30 -mt-20">
 
         {{-- Glassmorphic Actions Bar --}}
-        <div class="bg-white/90 backdrop-blur-2xl rounded-[2rem] p-4 lg:p-5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08)] border border-white flex flex-col sm:flex-row justify-between items-center gap-4 mb-12 fade-in-up" style="animation-delay: 0.2s;">
+        <div class="bg-white/90 backdrop-blur-2xl rounded-[2rem] p-4 lg:p-5 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.08)] border border-white flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 fade-in-up" style="animation-delay: 0.2s;">
             <div class="px-3 flex items-center gap-3">
                 <div class="w-12 h-12 rounded-xl bg-[#1d5c42]/10 text-[#1d5c42] flex items-center justify-center font-black text-xl shadow-inner border border-[#1d5c42]/20">
                     {{ $bookings->count() }}
@@ -116,6 +116,27 @@
                 </a>
             </div>
         </div>
+
+        {{-- 🌟 48-Hour Restriction Notice --}}
+        @if ($bookings->isNotEmpty())
+            <div class="mb-12 bg-amber-50 border border-amber-200 rounded-[2rem] p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-start gap-4">
+                    <div class="bg-amber-100 p-3 rounded-2xl text-amber-600 border border-amber-200 shrink-0">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest mb-1.5">Modification Policy</h3>
+                        <p class="text-sm text-amber-800/80 font-medium leading-relaxed max-w-2xl">
+                            Cancellations, modifications, and transport additions are <b>disabled if your check-in is within 48 hours</b>. For extreme emergencies, please contact our support team immediately.
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ route('contact') }}" class="w-full md:w-auto px-6 py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-amber-500/20 active:scale-95 text-center border border-amber-600/50 flex justify-center items-center gap-2 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Contact Support
+                </a>
+            </div>
+        @endif
 
         {{-- Flash Messages --}}
         @if (session('success'))
@@ -172,11 +193,15 @@
                         $startDate = \Carbon\Carbon::parse($booking->start_time);
                         $endDate = \Carbon\Carbon::parse($booking->end_time);
                         $isMultiDay = $startDate->startOfDay()->diffInDays($endDate->startOfDay()) > 1;
+
+                        // 💡 48 HOURS LOGIC (Lock changes if within 48 hours of check-in)
+                        $hoursUntilCheckin = now()->diffInHours($startDate, false);
+                        $isWithin48Hours = ($hoursUntilCheckin > 0 && $hoursUntilCheckin <= 48) || $hoursUntilCheckin <= 0;
                     @endphp
 
                     <div class="booking-card-wrapper fade-in-up-stagger group bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(29,92,66,0.1)] border border-gray-100 hover:border-[#1d5c42]/20 overflow-hidden transition-all duration-500 flex flex-col h-full relative" style="animation-delay: {{ 0.2 + ($index * 0.1) }}s;">
 
-                        {{-- Image Header (Inside a padding frame like the new explore page) --}}
+                        {{-- Image Header --}}
                         <div class="p-3 pb-0">
                             <div class="relative h-56 md:h-64 overflow-hidden rounded-[1.5rem] bg-gray-100 shadow-inner">
                                 <img src="{{ $booking->farm?->main_image ? asset('storage/' . $booking->farm->main_image) : asset('backgrounds/home.JPG') }}"
@@ -268,25 +293,36 @@
                                     Details
                                 </a>
 
-                                {{-- Contextual Second Button --}}
+                                {{-- Contextual Second Button with 48h Lock Logic --}}
                                 @if($rawStatus !== 'cancelled' && $rawStatus !== 'completed' && $rawStatus !== 'finished')
-                                    <form action="{{ route('bookings.destroy', $booking->id) }}" method="POST"
-                                          onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');"
-                                          class="col-span-1 h-full">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="w-full h-full py-3.5 bg-white text-rose-500 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors border border-rose-100 text-center shadow-sm active:scale-95 flex items-center justify-center gap-1.5">
-                                            Cancel
-                                        </button>
-                                    </form>
+                                    @if($isWithin48Hours)
+                                        {{-- 💡 Locked Button due to <48h --}}
+                                        <div class="col-span-1 py-3.5 bg-gray-50 text-gray-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-xl border border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-1.5 shadow-inner" title="Modifications locked within 48 hours">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                            Locked
+                                        </div>
+                                    @else
+                                        {{-- Unlocked Cancel Button --}}
+                                        <form action="{{ route('bookings.destroy', $booking->id) }}" method="POST"
+                                              onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');"
+                                              class="col-span-1 h-full">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="w-full h-full py-3.5 bg-white text-rose-500 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors border border-rose-100 text-center shadow-sm active:scale-95 flex items-center justify-center gap-1.5">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    @endif
                                 @elseif($rawStatus === 'completed' || $rawStatus === 'finished')
+                                    {{-- Review Button --}}
                                     <button type="button" @click="openReviewModal({{ $booking->farm?->id ?? 'null' }}, '{{ addslashes($booking->farm?->name ?? 'Deleted Farm') }}')"
                                             class="col-span-1 h-full py-3.5 bg-white text-emerald-600 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-colors border border-emerald-200 text-center shadow-sm active:scale-95 flex items-center justify-center gap-1.5">
                                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                         Review
                                     </button>
                                 @else
+                                    {{-- General Locked Button (For other statuses like pending_verification) --}}
                                     <div class="col-span-1 py-3.5 bg-gray-50 text-gray-400 font-black text-[9px] md:text-[10px] uppercase tracking-widest rounded-xl border border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-1.5 shadow-inner">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                                         Locked

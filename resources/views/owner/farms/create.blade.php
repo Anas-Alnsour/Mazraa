@@ -61,7 +61,13 @@
         }
         .dark-select:focus { border-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important; outline: none; }
         .dark-select option { background-color: #0f172a; color: #fff; }
+
+        /* Leaflet Map Styling (Fallback) */
+        .leaflet-container { background: #020617 !important; border-radius: 1.5rem; }
     </style>
+
+    {{-- Leaflet CSS for Fallback Map --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <div class="pb-24 pt-4 fade-in-up">
         <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -165,7 +171,7 @@
                         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Drag the pin to set exact coordinates. Required for accurate supply routing.</p>
 
                         <div class="rounded-3xl overflow-hidden border-4 border-slate-950 shadow-[0_0_30px_rgba(0,0,0,0.8)] h-[450px] relative">
-                            <div id="farm-map" class="absolute inset-0"></div>
+                            <div id="farm-map" class="absolute inset-0 z-0"></div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -297,82 +303,69 @@
         </form>
     </div>
 
+    {{-- Leaflet Map Scripts (Fallback Solution) --}}
     @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initMap" async defer></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function initMap() {
-            const latInput = document.getElementById('latitude');
-            const lngInput = document.getElementById('longitude');
+        document.addEventListener('DOMContentLoaded', function() {
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
 
-            let initialLat = parseFloat(latInput.value) || 31.9522;
-            let initialLng = parseFloat(lngInput.value) || 35.2332;
+            // Default Amman Coordinates
+            var initialLat = latInput.value ? parseFloat(latInput.value) : 31.9522;
+            var initialLng = lngInput.value ? parseFloat(lngInput.value) : 35.9334;
 
-            // Dark Map Style for God Mode
-            const darkStyle = [
-                { "elementType": "geometry", "stylers": [{ "color": "#020617" }] },
-                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] },
-                { "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-                { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#94a3b8" }] },
-                { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-                { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#334155" }] },
-                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
-                { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-                { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#334155" }] },
-                { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-                { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] }
-            ];
-
-            const map = new google.maps.Map(document.getElementById('farm-map'), {
-                zoom: 10,
-                center: { lat: initialLat, lng: initialLng },
-                styles: darkStyle,
-                disableDefaultUI: false,
+            // Initialize OpenStreetMap via Leaflet
+            var map = L.map('farm-map', {
+                center: [initialLat, initialLng],
+                zoom: 12,
+                zoomControl: true
             });
 
-            // Custom Blue/Teal Pin for Map
-            const markerIcon = {
-                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z',
-                fillColor: '#10b981',
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: '#020617',
-                scale: 1.5,
-                anchor: new google.maps.Point(12, 24),
-            };
+            // Add Dark Tile Layer (CartoDB Dark Matter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
 
-            const marker = new google.maps.Marker({
-                position: { lat: initialLat, lng: initialLng },
-                map: map,
-                draggable: true,
-                icon: markerIcon,
-                title: "Farm Location"
+            // Custom Emerald Marker
+            var emeraldIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:#10b981;width:20px;height:20px;border-radius:50%;border:3px solid #020617;box-shadow:0 0 15px rgba(16,185,129,0.8);"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
             });
+
+            var marker = L.marker([initialLat, initialLng], {
+                icon: emeraldIcon,
+                draggable: true
+            }).addTo(map);
 
             function updateInputs(lat, lng) {
-                latInput.value = lat.toFixed(8);
-                lngInput.value = lng.toFixed(8);
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
             }
 
-            marker.addListener('dragend', function() {
-                const pos = marker.getPosition();
-                updateInputs(pos.lat(), pos.lng());
+            // Drag event
+            marker.on('dragend', function(e) {
+                var position = marker.getLatLng();
+                updateInputs(position.lat, position.lng);
             });
 
-            map.addListener('click', function(e) {
-                marker.setPosition(e.latLng);
-                updateInputs(e.latLng.lat(), e.latLng.lng());
+            // Click event
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateInputs(e.latlng.lat, e.latlng.lng);
             });
 
+            // Initialize default values if empty
             if (!latInput.value || !lngInput.value) {
                 updateInputs(initialLat, initialLng);
             }
-        }
-        window.initMap = initMap;
+        });
 
+        // File upload text preview scripts
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('main_image').addEventListener('change', function(e) {
                 if(e.target.files.length > 0) {

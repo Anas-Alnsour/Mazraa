@@ -61,7 +61,13 @@
         }
         .dark-select:focus { border-color: #10b981 !important; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important; outline: none; }
         .dark-select option { background-color: #0f172a; color: #fff; }
+
+        /* Leaflet Map Styling (Fallback) */
+        .leaflet-container { background: #020617 !important; border-radius: 1.5rem; }
     </style>
+
+    {{-- Leaflet CSS for Fallback Map --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <div class="pb-24 pt-4 fade-in-up">
         <form action="{{ route('owner.farms.update', $farm->id) }}" method="POST" enctype="multipart/form-data" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -73,7 +79,7 @@
                 <div class="bg-rose-500/10 border border-rose-500/30 rounded-[2rem] p-6 shadow-inner backdrop-blur-md mb-8">
                     <div class="flex items-start gap-4">
                         <div class="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0 border border-rose-500/30 text-rose-400">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
                         <div class="flex-1">
                             <h3 class="text-xs font-black text-rose-400 uppercase tracking-widest mb-2">Validation Failed</h3>
@@ -165,7 +171,7 @@
                         <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Drag the pin to update exact coordinates. Required for accurate supply routing.</p>
 
                         <div class="rounded-3xl overflow-hidden border-4 border-slate-950 shadow-[0_0_30px_rgba(0,0,0,0.8)] h-[450px] relative">
-                            <div id="farm-map" class="absolute inset-0"></div>
+                            <div id="farm-map" class="absolute inset-0 z-0"></div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -276,16 +282,31 @@
                         @if($farm->images->count() > 0)
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
                                 @foreach($farm->images as $image)
-                                    <div class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-700 aspect-square cursor-pointer" onclick="const cb = this.querySelector('input'); cb.checked = !cb.checked; this.classList.toggle('ring-2'); this.classList.toggle('ring-rose-500'); this.querySelector('.overlay').classList.toggle('opacity-100');">
+                                    {{-- 💡 BULLETPROOF FIX: Fully separated elements to prevent click blocking --}}
+                                    <label class="relative group rounded-2xl overflow-hidden shadow-sm border border-slate-700 aspect-square cursor-pointer transition-all hover:border-rose-500 block">
+
+                                        <input type="checkbox" name="delete_images[]" value="{{ $image->id }}" class="peer sr-only">
+
                                         <img src="{{ asset('storage/' . $image->image_url) }}" alt="Gallery Image" class="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500">
-                                        <div class="overlay absolute inset-0 bg-rose-950/80 opacity-0 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm">
-                                            <input type="checkbox" name="delete_images[]" value="{{ $image->id }}" onclick="event.stopPropagation()" class="hidden">
+
+                                        {{-- Overlay for un-checked state (Hover) --}}
+                                        <div class="absolute inset-0 bg-rose-950/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none peer-checked:hidden">
                                             <div class="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/50 flex items-center justify-center mb-1 shadow-[0_0_10px_rgba(244,63,94,0.5)]">
                                                 <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                             </div>
-                                            <span class="text-[9px] font-black text-white uppercase tracking-widest">Delete</span>
+                                            <span class="text-[9px] font-black text-white uppercase tracking-widest">Mark for Deletion</span>
                                         </div>
-                                    </div>
+
+                                        {{-- Overlay for checked state (Selected) --}}
+                                        <div class="absolute inset-0 bg-rose-600/90 flex-col items-center justify-center backdrop-blur-md hidden peer-checked:flex z-10 pointer-events-none">
+                                            <svg class="w-8 h-8 text-white mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                                            <span class="text-[10px] font-black text-white uppercase tracking-widest drop-shadow-md text-center px-2">Will be Deleted</span>
+                                        </div>
+
+                                        {{-- Checked Border Effect --}}
+                                        <div class="absolute inset-0 border-4 border-transparent peer-checked:border-rose-500 rounded-2xl pointer-events-none z-20 transition-all"></div>
+
+                                    </label>
                                 @endforeach
                             </div>
                         @else
@@ -320,87 +341,75 @@
                 </a>
                 <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 py-5 px-12 rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] text-[11px] font-black tracking-[0.2em] uppercase text-slate-950 bg-gradient-to-r from-teal-500 to-emerald-400 hover:to-emerald-300 transition-all transform active:scale-95 border border-emerald-400/50">
                     Save Changes & Submit
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
             </div>
         </form>
     </div>
 
+    {{-- Leaflet Map Scripts (Fallback Solution) --}}
     @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initMap" async defer></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function initMap() {
+        document.addEventListener('DOMContentLoaded', function() {
             var latInput = document.getElementById('latitude');
             var lngInput = document.getElementById('longitude');
 
-            var initialPos = {
-                lat: latInput.value ? parseFloat(latInput.value) : 31.9522,
-                lng: lngInput.value ? parseFloat(lngInput.value) : 35.2332
-            };
+            // Default Amman Coordinates
+            var initialLat = latInput.value ? parseFloat(latInput.value) : 31.9522;
+            var initialLng = lngInput.value ? parseFloat(lngInput.value) : 35.9334;
 
-            // Dark Map Style for God Mode
-            const darkStyle = [
-                { "elementType": "geometry", "stylers": [{ "color": "#020617" }] },
-                { "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] },
-                { "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-                { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#94a3b8" }] },
-                { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-                { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#334155" }] },
-                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
-                { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-                { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#334155" }] },
-                { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-                { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-                { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] }
-            ];
-
-            const map = new google.maps.Map(document.getElementById('farm-map'), {
-                zoom: 14,
-                center: initialPos,
-                styles: darkStyle,
-                disableDefaultUI: false,
+            // Initialize OpenStreetMap via Leaflet
+            var map = L.map('farm-map', {
+                center: [initialLat, initialLng],
+                zoom: 12,
+                zoomControl: true
             });
 
-            // Custom Blue/Teal Pin for Map
-            const markerIcon = {
-                path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z',
-                fillColor: '#10b981',
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: '#020617',
-                scale: 1.5,
-                anchor: new google.maps.Point(12, 24),
-            };
+            // Add Dark Tile Layer (CartoDB Dark Matter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors © CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
 
-            const marker = new google.maps.Marker({
-                position: initialPos,
-                map: map,
-                draggable: true,
-                icon: markerIcon,
-                title: "Farm Location"
+            // Custom Emerald Marker
+            var emeraldIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:#10b981;width:20px;height:20px;border-radius:50%;border:3px solid #020617;box-shadow:0 0 15px rgba(16,185,129,0.8);"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
             });
+
+            var marker = L.marker([initialLat, initialLng], {
+                icon: emeraldIcon,
+                draggable: true
+            }).addTo(map);
 
             function updateInputs(lat, lng) {
-                latInput.value = lat.toFixed(8);
-                lngInput.value = lng.toFixed(8);
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
             }
 
-            marker.addListener('dragend', function() {
-                const pos = marker.getPosition();
-                updateInputs(pos.lat(), pos.lng());
+            // Drag event
+            marker.on('dragend', function(e) {
+                var position = marker.getLatLng();
+                updateInputs(position.lat, position.lng);
             });
 
-            map.addListener('click', function(e) {
-                marker.setPosition(e.latLng);
-                updateInputs(e.latLng.lat(), e.latLng.lng());
+            // Click event
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng);
+                updateInputs(e.latlng.lat, e.latlng.lng);
             });
-        }
-        window.initMap = initMap;
 
-        // Custom File Input Preview Feedback
+            // Initialize default values if empty
+            if (!latInput.value || !lngInput.value) {
+                updateInputs(initialLat, initialLng);
+            }
+        });
+
+        // File upload text preview scripts
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('main_image').addEventListener('change', function(e) {
                 if(e.target.files.length > 0) {
