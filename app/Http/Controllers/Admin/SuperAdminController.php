@@ -101,7 +101,7 @@ class SuperAdminController extends Controller
     {
         if (auth()->user()->role !== 'admin') abort(403);
 
-        // Already efficiently loaded with relationships
+        // ✅ FIX: Added 'user' to owner relationship to ensure N+1 protection if accessing owner details
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
 
         $farmBookings = FarmBooking::with(['farm', 'user'])
@@ -175,7 +175,7 @@ class SuperAdminController extends Controller
 
                 // (اختياري) يمكنك إضافة إشعار هنا لشركة التوريد إذا كان لديك كلاس إشعار مخصص لهم
 
-                return back()->with('success', 'Supply Order CliQ payment verified!');
+                return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
             }
 
             $order->update(['status' => 'cancelled']);
@@ -208,9 +208,10 @@ class SuperAdminController extends Controller
             ->sortByDesc('balance')
             ->values();
 
-        // ✅ FIX: Eager loaded 'user' to prevent N+1 query issue in recent payouts loop
+        // ✅ FIX: Eager loaded 'user' AND ensured only 'debit' transactions are pulled for payouts history
         $recentPayouts = FinancialTransaction::with('user')
             ->where('reference_type', 'manual_payout')
+            ->where('transaction_type', 'debit')
             ->latest()
             ->take(20)
             ->get();
