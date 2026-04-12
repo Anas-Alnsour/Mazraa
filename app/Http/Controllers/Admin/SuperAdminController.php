@@ -13,6 +13,8 @@ use App\Models\FinancialTransaction;
 use Carbon\Carbon;
 use App\Notifications\FarmApprovedNotification;
 use App\Notifications\PayoutProcessedNotification;
+use App\Notifications\BookingConfirmedNotification;
+use App\Notifications\NewBookingReceivedNotification;
 use Illuminate\Support\Facades\DB;
 
 class SuperAdminController extends Controller
@@ -139,11 +141,25 @@ class SuperAdminController extends Controller
 
         // ── 2. CliQ for Booking ──────────────────────────────
         elseif ($type === 'booking') {
-            $booking = FarmBooking::with('farm')->findOrFail($id);
+            // ✅ التعديل: جلبنا الـ user مع الـ farm لنستطيع إرسال الإشعار له
+            $booking = FarmBooking::with(['farm', 'user'])->findOrFail($id);
 
             if ($action === 'approve') {
                 $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
-                return back()->with('success', 'Farm Booking CliQ payment verified and funds distributed!');
+
+                // ✅ التعديل الأهم: إرسال الإشعارات عند الموافقة اليدوية على CliQ
+                if ($booking->user) {
+                    $booking->user->notify(new BookingConfirmedNotification($booking));
+                }
+
+                if ($booking->farm && $booking->farm->owner_id) {
+                    $owner = User::find($booking->farm->owner_id);
+                    if ($owner) {
+                        $owner->notify(new NewBookingReceivedNotification($booking));
+                    }
+                }
+
+                return back()->with('success', 'Farm Booking CliQ payment verified and notifications sent!');
             }
 
             $booking->update(['payment_status' => 'failed', 'status' => 'cancelled']);
@@ -152,11 +168,14 @@ class SuperAdminController extends Controller
 
         // ── 3. CliQ for Supply Order ──────────────────────────────
         elseif ($type === 'supply_order') {
-            $order = SupplyOrder::with('supply')->findOrFail($id);
+            $order = SupplyOrder::with(['supply', 'user'])->findOrFail($id);
 
             if ($action === 'approve') {
                 $order->update(['status' => 'pending']);
-                return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
+
+                // (اختياري) يمكنك إضافة إشعار هنا لشركة التوريد إذا كان لديك كلاس إشعار مخصص لهم
+
+                return back()->with('success', 'Supply Order CliQ payment verified!');
             }
 
             $order->update(['status' => 'cancelled']);
