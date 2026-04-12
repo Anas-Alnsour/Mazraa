@@ -8,6 +8,13 @@
         .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
         .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
         .table-scroll::-webkit-scrollbar-thumb:hover { background: #c2a265; }
+
+        /* Native CSS Pagination */
+        .custom-pagination nav { display: flex; align-items: center; gap: 0.5rem; }
+        .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #c2a265; color: #020617; }
+        .custom-pagination .page-item.active .page-link { background-color: #c2a265; color: #020617; box-shadow: 0 0 20px rgba(194, 162, 101, 0.4); }
+        .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
     </style>
 
     <div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in" x-data="{ payoutModal: false, isProcessing: false, isSuccess: false }">
@@ -32,12 +39,12 @@
                 <div class="grid grid-cols-2 gap-4 shrink-0 w-full md:w-auto">
                     <div class="bg-slate-950/80 backdrop-blur-3xl border border-slate-800 p-8 rounded-[2.5rem] text-center shadow-inner group hover:border-[#c2a265]/40 transition-all">
                         <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black mb-3 group-hover:text-[#c2a265] transition-colors">Available</p>
-                        <p class="text-4xl font-black text-white tracking-tighter leading-none mb-1 group-hover:scale-105 transition-transform">{{ number_format($availableBalance, 2) }}</p>
+                        <p class="text-4xl font-black text-white tracking-tighter leading-none mb-1 group-hover:scale-105 transition-transform">{{ number_format($availableBalance ?? 0, 2) }}</p>
                         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">JOD</span>
                     </div>
                     <div class="bg-slate-950/80 backdrop-blur-3xl border border-slate-800 p-8 rounded-[2.5rem] text-center shadow-inner group hover:border-emerald-500/40 transition-all">
                         <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-black mb-3 group-hover:text-emerald-500 transition-colors">Pending</p>
-                        <p class="text-4xl font-black text-slate-300 tracking-tighter leading-none mb-1 group-hover:scale-105 transition-transform">{{ number_format($pendingRevenue, 2) }}</p>
+                        <p class="text-4xl font-black text-slate-300 tracking-tighter leading-none mb-1 group-hover:scale-105 transition-transform">{{ number_format($pendingRevenue ?? 0, 2) }}</p>
                         <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">JOD</span>
                     </div>
                 </div>
@@ -178,7 +185,7 @@
                         <h3 class="text-3xl font-black text-center text-white tracking-tighter mb-2">Liquidity Transfer</h3>
 
                         @if($hasBankDetails)
-                            <p class="text-[11px] font-bold text-slate-400 text-center mb-8 tracking-[0.2em] uppercase">Withdrawing <strong class="text-emerald-400 text-sm">{{ number_format($availableBalance, 2) }} JOD</strong> to origin</p>
+                            <p class="text-[11px] font-bold text-slate-400 text-center mb-8 tracking-[0.2em] uppercase">Withdrawing <strong class="text-emerald-400 text-sm">{{ number_format($availableBalance ?? 0, 2) }} JOD</strong> to origin</p>
 
                             <div class="bg-slate-950 border border-slate-800 rounded-3xl p-6 mb-10 shadow-inner">
                                 <span class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 block">Destination Routing</span>
@@ -199,7 +206,7 @@
 
                         <form action="{{ route('owner.payout.request') }}" method="POST" @submit="isProcessing = true">
                             @csrf
-                            <button type="submit" :disabled="isProcessing || {{ $availableBalance <= 0 ? 'true' : 'false' }} || !{{ $hasBankDetails ? 'true' : 'false' }}" class="w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:to-emerald-400 text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] transition-all shadow-[0_15px_30px_rgba(16,185,129,0.3)] flex justify-center items-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-1 transform active:scale-95">
+                            <button type="submit" :disabled="isProcessing || {{ ($availableBalance ?? 0) <= 0 ? 'true' : 'false' }} || !{{ $hasBankDetails ? 'true' : 'false' }}" class="w-full py-5 bg-gradient-to-r from-emerald-600 to-teal-500 hover:to-emerald-400 text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-[1.5rem] transition-all shadow-[0_15px_30px_rgba(16,185,129,0.3)] flex justify-center items-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed hover:-translate-y-1 transform active:scale-95">
                                 <span x-show="!isProcessing">Execute Transfer</span>
                                 <span x-show="isProcessing" class="flex items-center gap-2">
                                     <svg class="animate-spin h-5 w-5 text-slate-950" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0110-8V0C5 0 0 5 0 12h4zm2 5.3A7.9 7.9 0 014 12H0c0 3 1 5.8 3 8l3-2.7z"></path></svg> Processing...
@@ -223,10 +230,3 @@
         </template>
     </div>
 </x-owner-layout>
-
-<style>
-    .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-400 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-[#c2a265] hover:text-slate-950 shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-[#c2a265] text-slate-950 shadow-[0_0_20px_rgba(194,162,101,0.4)]; }
-    .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-</style>

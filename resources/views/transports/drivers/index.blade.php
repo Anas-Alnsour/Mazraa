@@ -12,6 +12,13 @@
     .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+    /* Custom Pagination Styling Overrides */
+    .custom-pagination nav { display: flex; align-items: center; gap: 0.5rem; }
+    .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+    .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #3b82f6; color: white; }
+    .custom-pagination .page-item.active .page-link { background-color: #3b82f6; color: white; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+    .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
 </style>
 
 <div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in">
@@ -156,7 +163,7 @@
                 </div>
                 <h3 class="text-3xl font-black text-white mb-2 tracking-tight">Roster Empty</h3>
                 <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] max-w-sm mx-auto mb-8 leading-relaxed">No delivery agents active in your sector. Deploy an agent to begin dispatching orders.</p>
-                <a href="{{ route('transport.drivers.create') }}" class="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all flex items-center gap-3">
+                <a href="{{ route('transport.drivers.create') }}" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:to-cyan-400 text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(6,182,212,0.3)] active:scale-95 transition-all flex items-center gap-3">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     Initialize First Agent
                 </a>
@@ -164,12 +171,4 @@
         @endif
     </div>
 </div>
-
-<style>
-    /* Pagination Overrides */
-    .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-500 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-blue-600 hover:text-white shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]; }
-    .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-</style>
 @endsection

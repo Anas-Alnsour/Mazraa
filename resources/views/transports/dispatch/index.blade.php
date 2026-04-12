@@ -169,6 +169,11 @@
                                 <div class="truncate text-slate-700">To: {{ $job->farmBooking->farm->name ?? 'Farm' }}</div>
                                 <div>Pass: {{ $job->passengers ?? 0 }} PAX</div>
                             </div>
+
+                            {{-- 💡 FIX: Update Status Button for Active Jobs --}}
+                            <a href="{{ route('transport.dispatch.edit', $job->id) }}" class="w-full block mt-4 text-center bg-white hover:bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest py-2 rounded-xl border-2 border-emerald-100 transition-colors active:scale-95">
+                                Update Status
+                            </a>
                         </div>
                     @empty
                         <div class="h-full flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white/50">

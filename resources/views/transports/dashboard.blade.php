@@ -12,6 +12,13 @@
     .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+
+    /* Custom Pagination Styling */
+    .custom-pagination nav { display: flex; align-items: center; gap: 0.5rem; }
+    .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+    .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #4f46e5; color: white; }
+    .custom-pagination .page-item.active .page-link { background-color: #4f46e5; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+    .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
 </style>
 
 <div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in">
@@ -248,7 +255,7 @@
             @else
                 <div class="py-32 text-center flex flex-col items-center">
                     <div class="w-24 h-24 rounded-[2rem] bg-slate-950 flex items-center justify-center mb-6 border border-slate-800 shadow-inner">
-                        <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                        <svg class="w-12 h-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                     </div>
                     <h3 class="text-xl font-black text-white mb-2 tracking-tight">Market Empty</h3>
                     <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Waiting for new farm requests to be broadcasted to the network.</p>
@@ -270,12 +277,12 @@
                     <table class="w-full text-left whitespace-nowrap border-collapse min-w-[1000px]">
                         <thead class="bg-slate-950/80 border-b border-slate-800">
                             <tr>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-widest">Node ID</th>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-widest">Client & Route</th>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-widest">Fleet Assignment</th>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-widest">Temporal Log</th>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status Matrix</th>
-                                <th class="px-10 py-7 border-b border-slate-100 bg-slate-50 text-right text-[9px] font-black text-slate-500 uppercase tracking-widest">Action Gateway</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Node ID</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Client & Route</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Fleet Assignment</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Temporal Log</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status Matrix</th>
+                                <th class="px-10 py-7 text-right text-[9px] font-black text-slate-500 uppercase tracking-widest">Action Gateway</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/40">
@@ -311,7 +318,7 @@
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap">
                                         <p class="text-xs font-black text-slate-200">{{ optional($job->pickup_time ?? $job->Farm_Arrival_Time)->format('M d, Y') ?? 'N/A' }}</p>
-                                        <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1.5 font-mono">{{ optional($job->pickup_time ?? $job->Farm_Arrival_Time)->format('h:i A') ?? 'N/A' }}</p>
+                                        <p class="text-[9px] font-bold text-slate-500 mt-1.5 uppercase tracking-widest font-mono bg-slate-950 inline-block px-2 py-1 rounded border border-slate-800">{{ optional($job->pickup_time ?? $job->Farm_Arrival_Time)->format('h:i A') ?? 'N/A' }}</p>
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap text-center">
                                         @php
@@ -332,9 +339,16 @@
                                         </span>
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap text-right">
-                                        <a href="{{ route('transport.dispatch.edit', $job->id) }}" class="inline-flex items-center justify-center p-3.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 transition-colors shadow-inner active:scale-95 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0" title="Manage Protocol">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                        </a>
+                                        {{-- 💡 FIX: Logic to show settings button for active/editable jobs, or lock for completed ones --}}
+                                        @if(!in_array(strtolower($job->status), ['completed', 'cancelled']))
+                                            <a href="{{ route('transport.dispatch.edit', $job->id) }}" class="inline-flex items-center justify-center p-3.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 transition-colors shadow-inner active:scale-95 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0" title="Manage Protocol">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                            </a>
+                                        @else
+                                            <div class="inline-flex items-center justify-center p-3.5 bg-slate-950/50 border border-slate-800 text-slate-600 rounded-xl cursor-not-allowed shadow-inner opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0" title="Archived / Locked">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -349,10 +363,10 @@
             @else
                 <div class="py-32 text-center flex flex-col items-center">
                     <div class="w-24 h-24 rounded-[2rem] bg-slate-950 flex items-center justify-center mb-6 border border-slate-800 shadow-inner">
-                        <svg class="w-12 h-12 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        <svg class="w-12 h-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                     </div>
                     <h3 class="text-2xl font-black text-white mb-2 tracking-tight">No Active Dispatches</h3>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] max-w-sm">Accept jobs from the market above to build your operational list.</p>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Accept jobs from the market above to build your operational list.</p>
                 </div>
             @endif
         </div>
@@ -362,8 +376,8 @@
 <style>
     /* Pagination Overrides */
     .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-400 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-indigo-600 hover:text-white shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-indigo-600 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]; }
+    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-400 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-blue-600 hover:text-white shadow-lg; }
+    .custom-pagination .active .page-link { @apply bg-blue-600 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]; }
     .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
 </style>
 @endsection

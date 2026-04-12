@@ -61,7 +61,7 @@
                 <div class="relative z-10">
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Lifetime Earnings</p>
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-5xl font-black text-white tracking-tighter">{{ $totalEarnings ?? '0.00' }}</h3>
+                        <h3 class="text-5xl font-black text-white tracking-tighter">{{ number_format($totalEarnings ?? 0, 2) }}</h3>
                         <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">JOD</span>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
                     @if(isset($activeBookingsCount) && $activeBookingsCount > 0)
-                    <div class="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse">
+                    <div class="flex items-center gap-1.5 px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse">
                         <span class="w-1.5 h-1.5 rounded-full bg-current"></span> Action Req
                     </div>
                     @endif
@@ -96,7 +96,7 @@
                     <div class="w-16 h-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-indigo-400 border border-slate-800 shadow-inner group-hover:scale-110 transition-transform duration-500">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
-                    <div class="flex items-center gap-1.5 px-4 py-2 bg-slate-950 text-indigo-400 border-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-inner">
+                    <div class="flex items-center gap-1.5 px-4 py-2 bg-slate-950 text-indigo-400 border border-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-inner">
                         Portfolio
                     </div>
                 </div>
@@ -157,18 +157,18 @@
                                         </div>
                                     </td>
                                     <td class="px-8 py-6 whitespace-nowrap">
-                                        <span class="text-sm font-black text-slate-200">{{ $booking->farm->name ?? 'Luxury Estate' }}</span>
+                                        <span class="text-sm font-black text-slate-200 group-hover:text-white transition-colors">{{ $booking->farm->name ?? 'Luxury Estate' }}</span>
                                     </td>
                                     <td class="px-8 py-6 whitespace-nowrap text-center">
                                         @php
-                                            $statusClasses = $booking->status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/30 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]';
+                                            $statusClasses = $booking->status === 'pending' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/30 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.2)]' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]';
                                         @endphp
-                                        <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border {{ $statusClasses }}">
-                                            {{ $booking->status }}
+                                        <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest {{ $statusClasses }}">
+                                            {{ str_replace('_', ' ', $booking->status) }}
                                         </span>
                                     </td>
                                     <td class="px-8 py-6 text-right whitespace-nowrap">
-                                        <p class="text-xs font-black text-slate-300 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 inline-block">{{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}</p>
+                                        <p class="text-xs font-black text-slate-300 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 inline-block shadow-inner">{{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}</p>
                                         <p class="text-[9px] font-bold text-slate-500 uppercase mt-2 tracking-[0.2em]">{{ str_replace('_', ' ', $booking->event_type) }}</p>
                                     </td>
                                 </tr>

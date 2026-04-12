@@ -59,6 +59,30 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized or already paid.');
         }
 
+        // 🛡️ الحماية من الحجز المزدوج (Double Booking Guard)
+        $overlappingBooking = \App\Models\FarmBooking::where('farm_id', $booking->farm_id)
+            ->whereIn('payment_status', ['paid', 'confirmed'])
+            ->where('id', '!=', $booking->id)
+            ->where(function ($query) use ($booking) {
+                $query->whereBetween('start_time', [$booking->start_time, $booking->end_time])
+                      ->orWhereBetween('end_time', [$booking->start_time, $booking->end_time])
+                      ->orWhere(function ($q) use ($booking) {
+                          $q->where('start_time', '<=', $booking->start_time)
+                            ->where('end_time', '>=', $booking->end_time);
+                      });
+            })
+            ->first();
+
+        if ($overlappingBooking) {
+            $booking->update([
+                'status' => 'cancelled',
+                'payment_status' => 'failed'
+            ]);
+
+            return redirect()->route('explore')
+                ->with('error', 'We are sorry! This property was just booked and paid for by another user moments ago. Your reservation attempt has been cancelled.');
+        }
+
         // ✅ السطر المطلوب لحل مشكلة الـ AuthenticationException
         Stripe::setApiKey(config('services.stripe.secret'));
 

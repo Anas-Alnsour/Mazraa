@@ -54,7 +54,6 @@ class OwnerFarmController extends Controller
         $mainImagePath = $request->file('main_image')->store('farms/covers', 'public');
 
         // 2. Insert the Farm into the database
-        // Automatically set owner_id, pending status, and unapproved state
         $farm = Farm::create([
             'name'                      => $validated['name'],
             'description'               => $validated['description'],
@@ -76,7 +75,6 @@ class OwnerFarmController extends Controller
         if ($request->hasFile('gallery')) {
             $galleryImages = [];
             foreach ($request->file('gallery') as $file) {
-                // Store each image securely
                 $galleryPath = $file->store('farms/gallery', 'public');
 
                 $galleryImages[] = [
@@ -86,11 +84,9 @@ class OwnerFarmController extends Controller
                     'updated_at' => now(),
                 ];
             }
-            // Bulk insert for performance optimization
             FarmImage::insert($galleryImages);
         }
 
-        // 4. Redirect with Success Flash Message
         return redirect()->route('owner.farms.index')
             ->with('success', 'Farm created successfully! It is now pending admin approval.');
     }
@@ -100,7 +96,6 @@ class OwnerFarmController extends Controller
      */
     public function edit(Farm $farm)
     {
-        // التحقق من الملكية
         if ($farm->owner_id !== Auth::id()) {
             abort(403, 'Unauthorized.');
         }
@@ -110,7 +105,6 @@ class OwnerFarmController extends Controller
 
     /**
      * تحديث بيانات المزرعة
-     * (ملاحظة: يمكنك لاحقاً تحويل هذا الـ Validation إلى UpdateFarmRequest إذا أردت)
      */
     public function update(Request $request, Farm $farm)
     {
@@ -125,28 +119,26 @@ class OwnerFarmController extends Controller
             'price_per_morning_shift'   => 'required|numeric|min:0',
             'price_per_evening_shift'   => 'required|numeric|min:0',
             'price_per_full_day'        => 'required|numeric|min:0',
-            'image'                     => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // الغلاف الجديد
-            'gallery.*'                 => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120', // صور المعرض الجديدة
-            'delete_images'             => 'nullable|array', // مصفوفة لصور يراد حذفها
+            'main_image'                => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'gallery.*'                 => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'delete_images'             => 'nullable|array',
         ]);
 
         // 1. تحديث البيانات الأساسية وصورة الغلاف
-        if ($request->hasFile('image')) {
+        if ($request->hasFile('main_image')) {
             if ($farm->main_image) {
                 Storage::disk('public')->delete($farm->main_image);
             }
-            $validated['main_image'] = $request->file('image')->store('farms/covers', 'public');
+            $validated['main_image'] = $request->file('main_image')->store('farms/covers', 'public');
         }
         $farm->update($validated);
 
         // 2. حذف الصور المختارة من المعرض
         if ($request->has('delete_images')) {
-            foreach ($request->delete_images as $imageId) {
-                $img = FarmImage::find($imageId);
-                if ($img && $img->farm_id == $farm->id) {
-                    Storage::disk('public')->delete($img->image_url);
-                    $img->delete();
-                }
+            $imagesToDelete = FarmImage::whereIn('id', $request->delete_images)->where('farm_id', $farm->id)->get();
+            foreach ($imagesToDelete as $img) {
+                Storage::disk('public')->delete($img->image_url);
+                $img->delete();
             }
         }
 

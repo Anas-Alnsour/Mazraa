@@ -38,7 +38,7 @@
                     </h2>
                 </div>
 
-                <div class="w-full overflow-x-auto table-scroll">
+                <div class="w-full overflow-x-auto table-scroll bg-slate-900/20">
                     <table class="w-full text-left border-collapse min-w-[1100px]">
                         <thead>
                             <tr class="bg-slate-950/80 border-b border-slate-800">
@@ -56,7 +56,7 @@
                                     {{-- Guest Identity --}}
                                     <td class="px-10 py-6 whitespace-nowrap">
                                         <div class="flex items-center gap-5">
-                                            <div class="w-14 h-14 rounded-[1.2rem] bg-slate-950 border border-slate-700 flex items-center justify-center text-white font-black text-lg shadow-inner group-hover:border-[#c2a265]/50 group-hover:text-[#c2a265] transition-all shrink-0">
+                                            <div class="w-14 h-14 rounded-[1.2rem] bg-slate-950 border border-slate-700 flex items-center justify-center text-white font-black text-lg shadow-inner group-hover:border-[#c2a265]/50 group-hover:text-[#c2a265] transition-all shrink-0 uppercase">
                                                 {{ substr($booking->user->name ?? 'G', 0, 1) }}
                                             </div>
                                             <div class="min-w-0">
@@ -181,14 +181,15 @@
             </div>
         @endif
     </div>
-</x-owner-layout>
 
-<style>
-    .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-400 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-indigo-600 hover:text-white shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-indigo-600 text-white shadow-[0_0_20px_rgba(99,102,241,0.4)]; }
-    .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-    .table-scroll::-webkit-scrollbar { height: 8px; width: 6px; }
-    .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
-    .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
-</style>
+    <style>
+        .custom-pagination nav { display: flex; align-items: center; gap: 0.5rem; }
+        .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #6366f1; color: white; }
+        .custom-pagination .page-item.active .page-link { background-color: #6366f1; color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
+        .table-scroll::-webkit-scrollbar { height: 8px; width: 6px; }
+        .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
+    </style>
+</x-owner-layout>

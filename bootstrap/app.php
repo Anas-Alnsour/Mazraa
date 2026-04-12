@@ -14,8 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
+
+        // ✅ تم إضافة استثناء جميع مسارات Stripe من الـ CSRF Token ليعمل الـ Webhook بنجاح
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'stripe/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

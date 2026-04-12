@@ -1,7 +1,19 @@
 <x-owner-layout>
     <x-slot name="header">Asset Directory</x-slot>
 
-    <div class="space-y-10 pb-24 animate-god-in">
+    <style>
+        .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
+        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Pagination Styling */
+        .custom-pagination nav { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+        .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #10b981; color: white; }
+        .custom-pagination .page-item.active .page-link { background-color: #10b981; color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
+    </style>
+
+    <div class="space-y-10 pb-24 animate-god-in fade-in-up">
 
         {{-- 🌟 Premium Header Section --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-slate-900/80 p-8 md:p-12 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-2xl transition-all hover:border-emerald-500/30">
@@ -149,11 +161,4 @@
             </div>
         @endif
     </div>
-
-    <style>
-        .custom-pagination nav { @apply flex items-center justify-center gap-2; }
-        .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-500 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-emerald-600 hover:text-white shadow-lg; }
-        .custom-pagination .active .page-link { @apply bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]; }
-        .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-    </style>
 </x-owner-layout>

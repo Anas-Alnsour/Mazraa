@@ -66,7 +66,6 @@ class TransportDispatchController extends Controller
             return redirect()->back()->with('error', 'This job is no longer available.');
         }
 
-        // 💡 التعديل الصحيح لدالة acceptJob: فقط تحديث الـ company_id والحالة
         $job->update([
             'company_id' => Auth::id(),
             'status' => 'accepted'
@@ -82,8 +81,9 @@ class TransportDispatchController extends Controller
     {
         $job = Transport::with(['user', 'farmBooking.farm'])->findOrFail($id);
 
-        if ($job->company_id !== Auth::id() || !in_array($job->status, ['accepted', 'assigned'])) {
-            abort(403, 'Unauthorized or invalid job status.');
+        // 💡 FIX: Allow access to active statuses (accepted, assigned, in_progress, in_way)
+        if ($job->company_id !== Auth::id() || in_array($job->status, ['completed', 'cancelled'])) {
+            abort(403, 'Unauthorized or invalid job status. This job is archived or completed.');
         }
 
         // Load drivers WITH their linked vehicle so UI can display it
@@ -102,8 +102,9 @@ class TransportDispatchController extends Controller
     {
         $job = Transport::findOrFail($id);
 
-        if ($job->company_id !== Auth::id() || !in_array($job->status, ['accepted', 'assigned'])) {
-            abort(403, 'Unauthorized action.');
+        // 💡 FIX: Same security check for update
+        if ($job->company_id !== Auth::id() || in_array($job->status, ['completed', 'cancelled'])) {
+            abort(403, 'Unauthorized action. Job is archived.');
         }
 
         $request->validate([
@@ -128,7 +129,7 @@ class TransportDispatchController extends Controller
             $driver->increment('trips_count');
         }
 
-        // Auto-pull vehicle from driver's permanent link — no manual input needed
+        // Auto-pull vehicle from driver's permanent link
         $job->update([
             'driver_id'  => $driver->id,
             'vehicle_id' => $driver->transportVehicle->id,
@@ -138,6 +139,6 @@ class TransportDispatchController extends Controller
         // Mark vehicle as in_use
         $driver->transportVehicle->update(['status' => 'in_use']);
 
-        return redirect()->route('transport.dispatch.index')->with('success', 'Driver assigned successfully. Vehicle auto-linked from driver profile.');
+        return redirect()->route('transport.dashboard')->with('success', 'Dispatch configuration saved successfully.');
     }
 }

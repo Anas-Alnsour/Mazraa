@@ -12,9 +12,16 @@
     .table-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb:hover { background: #10b981; }
+
+    /* Custom Pagination Styling */
+    .custom-pagination nav { display: flex; align-items: center; gap: 0.5rem; justify-content: center; }
+    .custom-pagination .page-item .page-link { background-color: #0f172a; border: none; color: #64748b; font-size: 11px; font-weight: 900; padding: 0.75rem 1.25rem; border-radius: 0.75rem; transition: all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+    .custom-pagination .page-item:not(.active):not(.disabled) .page-link:hover { background-color: #10b981; color: white; }
+    .custom-pagination .page-item.active .page-link { background-color: #10b981; color: white; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+    .custom-pagination .page-item.disabled .page-link { background-color: transparent; opacity: 0.3; color: #334155; cursor: not-allowed; box-shadow: none; }
 </style>
 
-<div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in">
+<div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 pt-4 animate-god-in">
 
     {{-- 🌟 1. Header Section (Ultra-Modern) --}}
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-slate-900/80 p-8 md:p-12 rounded-[3rem] border border-slate-800 shadow-2xl relative overflow-hidden backdrop-blur-2xl transition-all hover:border-emerald-500/30 fade-in-up">
@@ -51,6 +58,14 @@
                 <button @click="show = false" class="text-slate-600 hover:text-white transition-colors p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
         @endif
+        @if(session('error'))
+            <div x-show="show" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="opacity-0 translate-x-10" x-transition:enter-end="opacity-100 translate-x-0" x-transition:leave="transition ease-in duration-300 transform" x-transition:leave-start="opacity-100 translate-x-0" x-transition:leave-end="opacity-0 translate-x-10" class="pointer-events-auto bg-slate-900/95 backdrop-blur-2xl border border-rose-500/40 rounded-[2rem] shadow-[0_20px_50px_rgba(244,63,94,0.2)] p-5 flex items-start gap-4 w-96 relative overflow-hidden" x-cloak>
+                <div class="absolute bottom-0 left-0 h-1 bg-rose-500 w-full animate-[progress-shrink_6s_linear_forwards]"></div>
+                <div class="bg-rose-500/20 p-3 rounded-xl text-rose-400 shrink-0 border border-rose-500/30 shadow-inner"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                <div class="flex-1 mt-1"><h4 class="font-black text-white text-xs uppercase tracking-[0.2em]">System Alert</h4><p class="text-slate-400 text-[11px] mt-1.5 font-medium leading-relaxed">{{ session('error') }}</p></div>
+                <button @click="show = false" class="text-slate-600 hover:text-white transition-colors p-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+        @endif
     </div>
     <style>@keyframes progress-shrink { from { width: 100%; } to { width: 0%; } }</style>
 
@@ -70,7 +85,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
                         @foreach($supplies as $item)
-                            <tr class="hover:bg-slate-800/40 transition-colors group">
+                            <tr class="hover:bg-white/5 transition-colors group">
 
                                 {{-- Product Info --}}
                                 <td class="px-10 py-6 whitespace-nowrap">
@@ -155,7 +170,7 @@
 
         @else
             {{-- 🌟 Empty State (Zero Data) --}}
-            <div class="py-32 text-center bg-slate-900/40 border-dashed border-0 border-t border-slate-800 flex flex-col items-center">
+            <div class="py-32 text-center bg-slate-900/40 border-dashed border-0 border-t border-slate-800 flex flex-col items-center shadow-inner relative overflow-hidden">
                 <div class="w-24 h-24 bg-slate-950 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner border border-slate-800 relative z-10">
                     <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                 </div>
@@ -169,12 +184,4 @@
         @endif
     </div>
 </div>
-
-<style>
-    /* Pagination Overrides */
-    .custom-pagination nav { @apply flex items-center gap-2; }
-    .custom-pagination .page-link { @apply bg-slate-900 border-none text-slate-500 text-[11px] font-black px-5 py-3 rounded-xl transition-all hover:bg-emerald-600 hover:text-white shadow-lg; }
-    .custom-pagination .active .page-link { @apply bg-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]; }
-    .custom-pagination .disabled .page-link { @apply bg-transparent opacity-20 text-slate-700 cursor-not-allowed; }
-</style>
 @endsection
