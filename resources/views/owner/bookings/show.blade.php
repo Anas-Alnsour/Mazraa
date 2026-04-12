@@ -162,7 +162,7 @@
                         <span class="font-black text-white">{{ number_format($booking->total_price - $booking->tax_amount, 2) }} <span class="text-[10px] uppercase text-slate-500 ml-1">JOD</span></span>
                     </div>
                     <div class="flex justify-between items-center text-slate-400">
-                        <span class="text-sm font-black tracking-tight">Tax (16%)</span>
+                        <span class="text-sm font-black tracking-tight">Tax</span>
                         <span class="font-black text-slate-300">+{{ number_format($booking->tax_amount, 2) }}</span>
                     </div>
                     <div class="flex justify-between items-center text-slate-400 pt-5 border-t border-slate-800">

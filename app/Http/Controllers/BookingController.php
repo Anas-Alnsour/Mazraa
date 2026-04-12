@@ -404,16 +404,23 @@ class BookingController extends Controller
 
         $difference = $newTotalPrice - $booking->total_price;
 
+        // ✅ تم التعديل إلى USD
         if ($difference > 0 && $booking->payment_status === 'paid') {
             Stripe::setApiKey(config('services.stripe.secret'));
             try {
+                $exchangeRate = 1.41;
+                $amountInCents = (int)(round($difference * $exchangeRate, 2) * 100);
+
                 $checkoutSession = Session::create([
                     'payment_method_types' => ['card'],
                     'line_items' => [[
                         'price_data' => [
-                            'currency' => 'jod',
-                            'product_data' => ['name' => 'Upgrade Booking - ' . $farm->name],
-                            'unit_amount' => (int)(round($difference, 2) * 1000),
+                            'currency' => 'usd', // 👈 USD
+                            'product_data' => [
+                                'name' => 'Upgrade Booking - ' . $farm->name,
+                                'description' => '(Converted to USD)'
+                            ],
+                            'unit_amount' => $amountInCents,
                         ],
                         'quantity' => 1,
                     ]],
@@ -444,13 +451,17 @@ class BookingController extends Controller
             }
         }
 
+        // ✅ تم التعديل إلى USD بالنسبة للاسترجاع (Refund) ليتوافق مع الدفعة الأصلية
         if ($difference < 0 && $booking->payment_status === 'paid' && $booking->stripe_payment_intent_id) {
             $refundAmount = abs($difference);
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
             try {
+                $exchangeRate = 1.41;
+                $amountInCents = (int)(round($refundAmount * $exchangeRate, 2) * 100);
+
                 \Stripe\Refund::create([
                     'payment_intent' => $booking->stripe_payment_intent_id,
-                    'amount' => (int)(round($refundAmount, 2) * 1000), // Stripe JOD uses Fils (x1000)
+                    'amount' => $amountInCents, // Stripe uses Cents for USD
                 ]);
             } catch (\Exception $e) {
                 \Log::error("Booking Update Refund Failed: " . $e->getMessage());

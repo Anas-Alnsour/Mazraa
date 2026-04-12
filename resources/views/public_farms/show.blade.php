@@ -454,7 +454,7 @@
                                         <span id="invoiceTransportCost" class="text-white">0.00 JOD</span>
                                     </div>
                                     <div class="flex justify-between items-center text-slate-300">
-                                        <span>Platform Service (16%)</span>
+                                        <span>Platform Service</span>
                                         <span id="invoiceTax" class="text-white">0.00 JOD</span>
                                     </div>
                                     <div class="flex justify-between items-end pt-5 border-t border-white/10 mt-2">

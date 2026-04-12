@@ -85,7 +85,10 @@ class PaymentController extends Controller
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        $amountInFils = (int) (round($booking->total_price, 2) * 1000);
+        // ✅ تحويل العملة إلى دولار أمريكي
+        $exchangeRate = 1.41;
+        $amountInCents = (int) (round($booking->total_price * $exchangeRate, 2) * 100);
+
         $startDate = \Carbon\Carbon::parse($booking->start_time)->format('Y-m-d H:i');
         $endDate = \Carbon\Carbon::parse($booking->end_time)->format('Y-m-d H:i');
 
@@ -93,12 +96,12 @@ class PaymentController extends Controller
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'jod',
+                    'currency' => 'usd', // 👈 تم التعديل
                     'product_data' => [
                         'name' => 'Farm Booking: ' . $booking->farm->name,
-                        'description' => 'From: ' . $startDate . ' | To: ' . $endDate,
+                        'description' => 'From: ' . $startDate . ' | To: ' . $endDate . ' (Testing Mode: Converted to USD)',
                     ],
-                    'unit_amount' => $amountInFils,
+                    'unit_amount' => $amountInCents,
                 ],
                 'quantity' => 1,
             ]],
@@ -188,18 +191,20 @@ class PaymentController extends Controller
         $totalPrice = $orders->sum('total_price');
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        $amountInFils = (int) ($totalPrice * 1000);
+        // ✅ تحويل العملة إلى دولار أمريكي
+        $exchangeRate = 1.41;
+        $amountInCents = (int) (round($totalPrice * $exchangeRate, 2) * 100);
 
         $checkoutSession = Session::create([
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'jod',
+                    'currency' => 'usd', // 👈 تم التعديل
                     'product_data' => [
                         'name' => 'Supply Order Invoice: #' . $order_id,
-                        'description' => 'Payment for ' . $orders->count() . ' supply items.',
+                        'description' => 'Payment for ' . $orders->count() . ' supply items. (Testing Mode)',
                     ],
-                    'unit_amount' => $amountInFils,
+                    'unit_amount' => $amountInCents,
                 ],
                 'quantity' => 1,
             ]],
