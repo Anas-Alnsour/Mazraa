@@ -11,15 +11,30 @@ return new class extends Migration
      */
 public function up(): void
 {
-    Schema::create('transports', function (Blueprint $table) {
+ Schema::create('transports', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id'); // <- هنا
+
+        // ربط مع جدول users (المالك)
+        $table->foreignId('user_id')
+              ->constrained('users')
+              ->onDelete('cascade');
+
         $table->string('transport_type');
         $table->integer('passengers');
-        $table->foreignId('driver_id');
+
+        // ربط مع جدول users كسائق، لازم يكون nullable
+        $table->foreignId('driver_id')
+              ->nullable()
+              ->constrained('users')
+              ->nullOnDelete();
+
         $table->string('start_and_return_point');
-        $table->foreignId('farm_id')->constrained('farms')->onDelete('cascade');
-        //$table->string('destination');
+
+        // ربط مع جدول farms
+        $table->foreignId('farm_id')
+              ->constrained('farms')
+              ->onDelete('cascade');
+
         $table->float('distance');
         $table->float('price');
         $table->dateTime('Farm_Arrival_Time');

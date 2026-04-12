@@ -13,7 +13,7 @@ return new class extends Migration
             $table->decimal('pickup_lng', 11, 8)->nullable();
 
             $table->unsignedBigInteger('driver_id')->nullable()->change();
-            $table->foreign('driver_id')->references('id')->on('users')->nullOnDelete();
+            //$table->foreign('driver_id')->references('id')->on('users')->nullOnDelete();
 
             $table->decimal('commission_amount', 10, 2)->nullable();
             $table->decimal('net_company_amount', 10, 2)->nullable();
