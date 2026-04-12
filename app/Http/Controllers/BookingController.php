@@ -76,7 +76,7 @@ class BookingController extends Controller
         }
 
         $totalBeforeTax  = $farmPrice + $transportCost + $suppliesTotal;
-        $taxAmount       = $totalBeforeTax * 0.16;
+        $taxAmount       = $totalBeforeTax * 0.10;
         $finalTotal      = $totalBeforeTax + $taxAmount;
         $commissionAmount = $farmPrice * ($farm->commission_rate / 100);
         $netOwnerAmount  = $farmPrice - $commissionAmount;
@@ -396,7 +396,7 @@ class BookingController extends Controller
             ->sum('total_price');
 
         $totalBeforeTax = $farmPrice + $transportCost + $originalSuppliesCost;
-        $taxAmount = $totalBeforeTax * 0.16;
+        $taxAmount = $totalBeforeTax * 0.10;
         $newTotalPrice = $totalBeforeTax + $taxAmount;
 
         $commissionAmount = $farmPrice * ($farm->commission_rate / 100);

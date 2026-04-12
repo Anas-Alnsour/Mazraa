@@ -285,6 +285,7 @@
                         {{-- Finalized Form Structure --}}
                         <form action="{{ route('bookings.store') }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
+                            <input type="hidden" name="distance" id="distance_input" value="0">
                             <input type="hidden" name="farm_id" value="{{ $farm->id }}">
                             <input type="hidden" name="booking_date" id="booking_date">
                             <input type="hidden" name="booking_mode" x-model="bookingMode">
@@ -781,7 +782,7 @@
             }
 
             let totalBeforeTax = base + transportCost;
-            let tax = totalBeforeTax * 0.16;
+            let tax = totalBeforeTax * 0.10;
             let grandTotal = totalBeforeTax + tax;
 
             document.getElementById('farmRentalLabel').innerText = label;
@@ -876,6 +877,7 @@
                     if(data.routes && data.routes.length > 0) {
                         let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
                         transportCost = parseFloat((25 + (distanceKm * 0.5)).toFixed(2));
+                        document.getElementById('distance_input').value = distanceKm;
                         document.getElementById('distVal').innerText = distanceKm;
                         document.getElementById('costVal').innerText = transportCost;
                         document.getElementById('transport_cost').value = transportCost;
