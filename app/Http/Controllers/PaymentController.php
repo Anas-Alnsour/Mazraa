@@ -83,7 +83,6 @@ class PaymentController extends Controller
                 ->with('error', 'We are sorry! This property was just booked and paid for by another user moments ago. Your reservation attempt has been cancelled.');
         }
 
-        // ✅ السطر المطلوب لحل مشكلة الـ AuthenticationException
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $amountInFils = (int) (round($booking->total_price, 2) * 1000);
@@ -187,8 +186,6 @@ class PaymentController extends Controller
         }
 
         $totalPrice = $orders->sum('total_price');
-
-        // ✅ تحديد المفتاح لعملية التوريد أيضاً
         Stripe::setApiKey(config('services.stripe.secret'));
 
         $amountInFils = (int) ($totalPrice * 1000);
@@ -239,7 +236,10 @@ class PaymentController extends Controller
 
                 foreach ($orders as $order) {
                     $order->update(['status' => 'pending']);
-                 }
+                }
+
+                // ✅ مسح سلة المشتريات بعد عملية الدفع الناجحة لمنع الدفع المزدوج والتكرار
+                session()->forget('cart');
 
                 return redirect()->route('supplies.my_orders')
                     ->with('success', 'Supply payment successful! Your order is now being processed.');
@@ -283,6 +283,9 @@ class PaymentController extends Controller
                 'status' => 'pending_verification'
             ]);
         }
+
+        // ✅ مسح سلة المشتريات للـ CliQ أيضاً
+        session()->forget('cart');
 
         return redirect()->route('supplies.my_orders')
             ->with('success', 'Market payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);

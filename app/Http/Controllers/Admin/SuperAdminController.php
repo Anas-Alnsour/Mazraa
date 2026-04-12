@@ -74,6 +74,7 @@ class SuperAdminController extends Controller
         // ---------------------------------------------------------
         $verifiedFarms = Farm::where('is_approved', true)->select('id', 'name', 'latitude', 'longitude')->get();
 
+        // ✅ FIX: Eager loaded 'user' to prevent N+1 query issue in the dashboard recent transactions loop
         $recentTransactions = FinancialTransaction::with('user')
             ->orderBy('created_at', 'desc')
             ->take(6)
@@ -98,6 +99,7 @@ class SuperAdminController extends Controller
     {
         if (auth()->user()->role !== 'admin') abort(403);
 
+        // Already efficiently loaded with relationships
         $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
 
         $farmBookings = FarmBooking::with(['farm', 'user'])
@@ -141,9 +143,6 @@ class SuperAdminController extends Controller
 
             if ($action === 'approve') {
                 $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
-
-                // Financial transactions removed from here - now triggered upon booking completion by owner
-
                 return back()->with('success', 'Farm Booking CliQ payment verified and funds distributed!');
             }
 
@@ -157,9 +156,6 @@ class SuperAdminController extends Controller
 
             if ($action === 'approve') {
                 $order->update(['status' => 'pending']);
-
-                // Financial transactions removed from here - now triggered upon delivery completion by driver
-
                 return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
             }
 
@@ -176,8 +172,6 @@ class SuperAdminController extends Controller
      */
     public function payouts()
     {
-        // Efficient: get all vendors with their credit/debit totals in ONE query,
-        // then compute available balance in PHP — no nested collection maps on raw model data.
         $vendorRoles = ['farm_owner', 'supply_company', 'transport_company'];
 
         $vendors = User::whereIn('role', $vendorRoles)
@@ -195,7 +189,7 @@ class SuperAdminController extends Controller
             ->sortByDesc('balance')
             ->values();
 
-        // Recent payout history
+        // ✅ FIX: Eager loaded 'user' to prevent N+1 query issue in recent payouts loop
         $recentPayouts = FinancialTransaction::with('user')
             ->where('reference_type', 'manual_payout')
             ->latest()
@@ -262,16 +256,16 @@ class SuperAdminController extends Controller
     /**
      * Display System Settings page.
      */
-public function system()
-{
-    // جلب المستخدمين مع التقسيم ليعمل الـ Pagination في الـ Blade
-    $users = User::latest()->paginate(10);
+    public function system()
+    {
+        // جلب المستخدمين مع التقسيم ليعمل الـ Pagination في الـ Blade
+        $users = User::latest()->paginate(10);
 
-    // تأكد من جلب قيمة العمولات من الإعدادات إذا كانت مخزنة في الداتابيز
-    $defaultCommission = config('mazraa.commission_rate', 10);
+        // تأكد من جلب قيمة العمولات من الإعدادات إذا كانت مخزنة في الداتابيز
+        $defaultCommission = config('mazraa.commission_rate', 10);
 
-    return view('admin.system', compact('users', 'defaultCommission'));
-}
+        return view('admin.system', compact('users', 'defaultCommission'));
+    }
 
     /**
      * Persist system settings to a local JSON config file.

@@ -6,10 +6,13 @@
     {{-- Flatpickr CSS for Custom Calendar --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+    {{-- ✅ تم إضافة Leaflet CSS للخريطة البديلة --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         /* Smooth Fade In Stagger */
         .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        .fade-in-up-stagger { animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
         @keyframes fadeInUp {
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
@@ -279,7 +282,7 @@
                             </div>
                         </div>
 
-                        {{-- Finalized Form Structure with preserved logic --}}
+                        {{-- Finalized Form Structure --}}
                         <form action="{{ route('bookings.store') }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
                             <input type="hidden" name="farm_id" value="{{ $farm->id }}">
@@ -413,9 +416,10 @@
                                         </div>
                                     </div>
 
+                                    {{-- Map Display Area --}}
                                     <div class="relative p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm" id="originalMapContainer">
                                         <div id="pickup-map-wrapper" class="w-full h-[200px] rounded-2xl z-0 relative overflow-hidden transition-all duration-300">
-                                            <div id="pickup-map" class="w-full h-full"></div>
+                                            <div id="pickup-map" class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-sm">Map Loading...</div>
                                             <button type="button" id="expandMapBtn" class="absolute bottom-3 right-3 bg-white/95 backdrop-blur px-4 py-2 rounded-xl shadow-md text-[10px] font-black text-slate-800 hover:text-emerald-600 border border-slate-100 z-[1000] flex items-center gap-2">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                                 EXPAND
@@ -481,9 +485,10 @@
     <div id="mapBackdrop"></div>
 
     @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps" async defer></script>
+    {{-- ✅ تم الاعتماد على مكتبة Leaflet لتكون البديل الآمن لخرائط جوجل --}}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps"></script>
 
     <?php
         $bookingsData = [];
@@ -518,10 +523,11 @@
 
         let farmLat = <?php echo $farm->latitude ? '"' . $farm->latitude . '"' : 'null'; ?>;
         let farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
+        const farmNameStr = '<?php echo addslashes($farm->name); ?>';
 
         // Fallback to Amman if Farm coordinates are totally missing
         if(!farmLat || farmLat === 'null') farmLat = 31.9522;
-        if(!farmLng || farmLng === 'null') farmLng = 35.2332;
+        if(!farmLng || farmLng === 'null') farmLng = 35.9334;
 
         const existingBookings = <?php echo json_encode($bookingsData); ?>;
         const blockedDates = <?php echo json_encode($blockedData); ?>;
@@ -536,7 +542,6 @@
         let morningBookedDates = [];
         let eveningBookedDates = [];
 
-        // Parse bookings into a hashmap for the calendar UI
         let dateMap = {};
         const addStatus = (date, shift) => {
             if(!dateMap[date]) dateMap[date] = { morning: false, evening: false };
@@ -573,7 +578,6 @@
             }
         };
 
-        // Init Single Day Calendar
         const singlePicker = flatpickr("#booking_date_flatpickr", {
             ...fpConfig,
             onChange: function(selectedDates, dateStr, instance) {
@@ -582,14 +586,12 @@
                     const shiftsContainer = document.getElementById('shiftsContainer');
                     shiftsContainer.classList.remove('hidden');
                     shiftsContainer.style.display = 'block';
-
                     checkAvailability(dateStr);
                     resetShiftSelection();
                 }
             }
         });
 
-        // Init Multi Day Calendars
         let multiStartPicker = flatpickr("#multi_start_date", {
             ...fpConfig,
             onChange: function(selectedDates, dateStr) {
@@ -611,7 +613,6 @@
             }
         });
 
-        // --- UI TOGGLES & LOGIC ---
         window.setBookingMode = function(mode) {
             document.getElementById('booking_mode').value = mode;
             if(mode === 'single') {
@@ -750,7 +751,6 @@
 
             document.getElementById('booking_date').value = sDate.toISOString().split('T')[0];
             document.getElementById('shift_input').value = 'full_day';
-
             document.getElementById('start_time').value = sDate.toISOString().split('T')[0] + ' 10:00:00';
             document.getElementById('end_time').value = eDate.toISOString().split('T')[0] + ' 08:00:00';
 
@@ -788,133 +788,88 @@
             document.getElementById('farmRentalDisplay').innerText = base.toFixed(2) + ' JOD';
             document.getElementById('invoiceTax').innerText = tax.toFixed(2) + ' JOD';
             document.getElementById('invoiceTotal').innerText = grandTotal.toFixed(2) + ' JOD';
-
             document.getElementById('bookingSummary').style.display = 'block';
         }
 
-        /* --- STATIC FARM MAP (GOOGLE MAPS) --- */
-        let fMap;
-        const farmMapEl = document.getElementById('farm-map-display');
-        function initFarmMap() {
-            if(!farmMapEl) return;
-            const farmPos = { lat: parseFloat(farmLat), lng: parseFloat(farmLng) };
-            fMap = new google.maps.Map(farmMapEl, {
-                zoom: 13,
-                center: farmPos,
-                disableDefaultUI: true,
-                zoomControl: true,
-                scrollwheel: false
-            });
+        /* --- 🌍 DUAL MAP SYSTEM (GOOGLE OR LEAFLET) --- */
+        let pickupMapObj, pickupMarkerObj;
 
-            const farmName = <?php echo json_encode($farm->name); ?>;
-            const marker = new google.maps.Marker({
-                position: farmPos,
-                map: fMap,
-                title: farmName
-            });
+        window.initAllMaps = function() {
+            const farmMapEl = document.getElementById('farm-map-display');
+            const pickupMapEl = document.getElementById('pickup-map');
 
-            const infoWindow = new google.maps.InfoWindow({
-                content: `<b style='color:#1d5c42'>${farmName}</b>`
-            });
+            // Check if Google Maps is available
+            const useGoogleMaps = (typeof google === 'object' && typeof google.maps === 'object');
 
-            marker.addListener("click", () => {
-                infoWindow.open(fMap, marker);
-            });
-        }
+            if (farmMapEl) {
+                if (useGoogleMaps) {
+                    const farmPos = { lat: parseFloat(farmLat), lng: parseFloat(farmLng) };
+                    const fMap = new google.maps.Map(farmMapEl, {
+                        zoom: 13, center: farmPos, disableDefaultUI: true, zoomControl: true
+                    });
+                    new google.maps.Marker({ position: farmPos, map: fMap, title: farmNameStr });
+                } else {
+                    const lMap = L.map('farm-map-display').setView([farmLat, farmLng], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(lMap);
+                    L.marker([farmLat, farmLng]).addTo(lMap).bindPopup(farmNameStr).openPopup();
+                }
+            }
 
-        /* --- TRANSPORT MAP LOGIC (GOOGLE MAPS) --- */
-        let pickupMap, pickupMarker;
-        const toggle = document.getElementById('toggleTransport');
-        const section = document.getElementById('transportSection');
-        const invRow = document.getElementById('invoiceTransport');
+            const toggle = document.getElementById('toggleTransport');
+            const section = document.getElementById('transportSection');
+            const invRow = document.getElementById('invoiceTransport');
 
-        function initPickupMap() {
-            if(!toggle || !section) return;
+            if(toggle && section) {
+                toggle.addEventListener('change', function() {
+                    if(this.checked) {
+                        section.style.display = 'block';
+                        document.getElementById('requires_transport').value = "1";
+                        if(invRow) invRow.style.display = 'flex';
 
-            toggle.addEventListener('change', function() {
-                if(this.checked) {
-                    section.style.display = 'block';
-                    document.getElementById('requires_transport').value = "1";
-                    if(invRow) invRow.style.display = 'flex';
+                        if(!pickupMapObj) {
+                            const defaultLat = 31.9522, defaultLng = 35.9334;
 
-                    if(!pickupMap) {
-                        const defaultPos = { lat: 31.9522, lng: 35.9334 };
-                        pickupMap = new google.maps.Map(document.getElementById('pickup-map'), {
-                            zoom: 12,
-                            center: defaultPos
-                        });
-
-                        pickupMap.addListener('click', function(e) {
-                            setPickupMarker(e.latLng.lat(), e.latLng.lng());
-                        });
+                            if (useGoogleMaps) {
+                                pickupMapObj = new google.maps.Map(pickupMapEl, { zoom: 12, center: { lat: defaultLat, lng: defaultLng } });
+                                pickupMapObj.addListener('click', function(e) {
+                                    setPickupMarkerDual(e.latLng.lat(), e.latLng.lng(), true);
+                                });
+                            } else {
+                                pickupMapObj = L.map('pickup-map').setView([defaultLat, defaultLng], 12);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(pickupMapObj);
+                                pickupMapObj.on('click', function(e) {
+                                    setPickupMarkerDual(e.latlng.lat, e.latlng.lng, false);
+                                });
+                            }
+                        }
+                    } else {
+                        section.style.display = 'none';
+                        if(invRow) invRow.style.display = 'none';
+                        document.getElementById('requires_transport').value = "0";
+                        transportCost = 0;
+                        document.getElementById('transport_cost').value = 0;
+                        document.getElementById('transportCalc').style.display = 'none';
+                        updateInvoice();
                     }
-                } else {
-                    section.style.display = 'none';
-                    if(invRow) invRow.style.display = 'none';
-                    document.getElementById('requires_transport').value = "0";
-                    transportCost = 0;
-                    document.getElementById('transport_cost').value = 0;
-                    document.getElementById('transportCalc').style.display = 'none';
-                    updateInvoice();
-                }
-            });
-        }
-
-        const expandBtn = document.getElementById('expandMapBtn');
-        const mapWrapper = document.getElementById('pickup-map-wrapper');
-        const originalMapContainer = document.getElementById('originalMapContainer');
-        const backdrop = document.getElementById('mapBackdrop');
-        let isExpanded = false;
-
-        if(expandBtn) {
-            expandBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                isExpanded = !isExpanded;
-                if(isExpanded) {
-                    document.body.appendChild(mapWrapper);
-                    mapWrapper.classList.add('map-fullscreen');
-                    backdrop.classList.add('active');
-                    expandBtn.innerHTML = "Collapse Map";
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    originalMapContainer.appendChild(mapWrapper);
-                    mapWrapper.classList.remove('map-fullscreen');
-                    backdrop.classList.remove('active');
-                    expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
-                    document.body.style.overflow = 'auto';
-                }
-            });
-        }
-
-        window.searchPickupLocation = function() {
-            const query = document.getElementById('pickup_search').value;
-            if(!query) return;
-
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=JO`)
-            .then(res => res.json())
-            .then(data => {
-                if(data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    pickupMap.setCenter({ lat, lng: lon });
-                    pickupMap.setZoom(14);
-                    setPickupMarker(lat, lon);
-                } else {
-                    alert("Location not found in Jordan. Try a more specific address.");
-                }
-            });
+                });
+            }
         };
 
-        function setPickupMarker(lat, lng) {
-            if(pickupMarker) pickupMarker.setMap(null);
-            pickupMarker = new google.maps.Marker({
-                position: { lat, lng },
-                map: pickupMap
-            });
+        function setPickupMarkerDual(lat, lng, isGoogle) {
+            if (isGoogle) {
+                if(pickupMarkerObj) pickupMarkerObj.setMap(null);
+                pickupMarkerObj = new google.maps.Marker({ position: { lat, lng }, map: pickupMapObj });
+            } else {
+                if(pickupMarkerObj) pickupMapObj.removeLayer(pickupMarkerObj);
+                pickupMarkerObj = L.marker([lat, lng]).addTo(pickupMapObj);
+            }
 
             document.getElementById('pickup_lat').value = lat;
             document.getElementById('pickup_lng').value = lng;
 
+            // Calculate Route
             fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${farmLng},${farmLat}?overview=false`)
                 .then(res => res.json())
                 .then(data => {
@@ -931,10 +886,59 @@
                 });
         }
 
-        window.initAllMaps = function() {
-            initFarmMap();
-            initPickupMap();
+        window.searchPickupLocation = function() {
+            const query = document.getElementById('pickup_search').value;
+            if(!query) return;
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=JO`)
+            .then(res => res.json())
+            .then(data => {
+                if(data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    const isGoogle = (typeof google === 'object' && typeof google.maps === 'object');
+
+                    if (isGoogle) {
+                        pickupMapObj.setCenter({ lat, lng: lon });
+                        pickupMapObj.setZoom(14);
+                    } else {
+                        pickupMapObj.setView([lat, lon], 14);
+                    }
+                    setPickupMarkerDual(lat, lon, isGoogle);
+                } else {
+                    alert("Location not found in Jordan. Try a more specific address.");
+                }
+            });
         };
+
+        // Fullscreen map logic
+        const expandBtn = document.getElementById('expandMapBtn');
+        const mapWrapper = document.getElementById('pickup-map-wrapper');
+        const originalMapContainer = document.getElementById('originalMapContainer');
+        const backdrop = document.getElementById('mapBackdrop');
+        let isExpanded = false;
+
+        if(expandBtn) {
+            expandBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                isExpanded = !isExpanded;
+                if(isExpanded) {
+                    document.body.appendChild(mapWrapper);
+                    mapWrapper.classList.add('map-fullscreen');
+                    backdrop.classList.add('active');
+                    expandBtn.innerHTML = "Collapse Map";
+                    document.body.style.overflow = 'hidden';
+                    if (pickupMapObj && typeof pickupMapObj.invalidateSize === 'function') setTimeout(() => pickupMapObj.invalidateSize(), 300);
+                } else {
+                    originalMapContainer.appendChild(mapWrapper);
+                    mapWrapper.classList.remove('map-fullscreen');
+                    backdrop.classList.remove('active');
+                    expandBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg> Expand`;
+                    document.body.style.overflow = 'auto';
+                    if (pickupMapObj && typeof pickupMapObj.invalidateSize === 'function') setTimeout(() => pickupMapObj.invalidateSize(), 300);
+                }
+            });
+        }
     </script>
     @endpush
 @endsection
