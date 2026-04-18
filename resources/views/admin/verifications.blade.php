@@ -64,6 +64,7 @@
                             <div class="w-full lg:w-1/3 flex items-center justify-end gap-3 mt-4 lg:mt-0">
                                 <form action="{{ route('admin.verifications.handle', ['id' => $farm->id, 'type' => 'farm_approval']) }}" method="POST" class="flex gap-3 w-full">
                                     @csrf
+                                    @method('Patch')
                                     <button type="submit" name="action" value="reject" class="flex-1 px-6 py-4 bg-slate-900 border border-rose-500/30 text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-500 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2" onclick="return confirm('Reject and delete farm permanently?');">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                         Reject
