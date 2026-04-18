@@ -17,6 +17,7 @@ class Vehicle extends Model
         'license_plate',
         'capacity',
         'status',
+        'company_id',
     ];
 
     public function company(): BelongsTo

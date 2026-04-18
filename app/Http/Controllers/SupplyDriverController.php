@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Http\Requests\StoreDriverRequest;
 use App\Http\Requests\UpdateDriverRequest;
 use Illuminate\Http\Request;
@@ -31,8 +32,9 @@ class SupplyDriverController extends Controller
     {
         $validated = $request->validated();
         $company = Auth::user();
-
-        User::create([
+       
+        // 1. إنشاء السائق
+        $driver = User::create([
             'name'       => $validated['name'],
             'email'      => $validated['email'],
             'phone'      => $validated['phone'],
@@ -46,8 +48,23 @@ class SupplyDriverController extends Controller
             'longitude'   => $company->longitude,
         ]);
 
+        // 2. إنشاء المركبة
+        $vehicle = Vehicle::create([
+        'license_plate' => $request->license_plate,
+        'type' => $request->type,
+        'capacity' => $request->capacity,
+        'status' => 'Available',
+        'driver_id' => $driver->id, // ربط المركبة بالسائق
+        'company_id'    => $company->id,
+        ]);
+        
+        // 3. تحديث السائق وربطه بالمركبة
+        $driver->update([
+        'transport_vehicle_id' => $vehicle->id,
+        ]);
+
         return redirect()->route('supplies.drivers.index')
-            ->with('success', 'Local delivery driver added to your fleet successfully.');
+            ->with('success', 'Local delivery driver and vehicle added to your fleet successfully.');
     }
 
     public function edit(User $driver)

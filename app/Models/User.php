@@ -18,7 +18,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-protected $fillable = [
+    protected $fillable = [
         'name',
         'email',
         'password',
@@ -141,5 +141,13 @@ protected $fillable = [
     public function supplyDriverJobs()
     {
         return $this->hasMany(\App\Models\SupplyOrder::class, 'driver_id');
+    }
+
+    // ==================================================
+    // اضافة علاقة 1-to-1 بين السائق والمركبة المخصصة له بشكل دائم  
+    // ==================================================
+    public function vehicle()
+    {
+        return $this->hasOne(Vehicle::class, 'id', 'transport_vehicle_id');
     }
 }

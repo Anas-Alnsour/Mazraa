@@ -18,10 +18,10 @@ class StoreDriverRequest extends FormRequest
     {
         $rules = [
             'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'phone'    => 'required|string|max:20',
+            'email'    => 'required|string|email|max:255|unique:users,email',
+            'phone'    => 'required|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
-            'shift'    => ['required', 'string', Rule::in(['morning', 'evening', 'full_day'])],
+            'shift'    => ['required', 'string', Rule::in(['morning', 'evening'/*, 'full_day'*/])],
         ];
 
         if (Auth::user()->role === 'transport_company') {

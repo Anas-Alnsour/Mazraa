@@ -158,7 +158,7 @@
                             </div>
                             <input id="email" name="email" type="email" autocomplete="email" required autofocus
                                 class="pl-14 block w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 sm:text-base py-4 font-medium transition-all duration-300 {{ $errors->has('email') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}"
-                                value="{{ old('email') }}" placeholder="driver@transport.com">
+                                value="{{ old('email') }}" placeholder="example@domain.com">
                         </div>
                         <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-red-600 font-bold" />
                     </div>

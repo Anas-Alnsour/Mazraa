@@ -152,34 +152,71 @@
                             <select name="shift" id="shift" required class="w-full dark-select pl-12 py-4 font-bold text-sm">
                                 <option value="morning" {{ old('shift', $driver->shift) == 'morning' ? 'selected' : '' }}>☀️ Morning Shift (08:00 AM - 05:00 PM)</option>
                                 <option value="evening" {{ old('shift', $driver->shift) == 'evening' ? 'selected' : '' }}>🌙 Evening Shift (07:00 PM - 06:00 AM)</option>
-                                <option value="full_day" {{ old('shift', $driver->shift) == 'full_day' ? 'selected' : '' }}>🕒 Full Day Availability</option>
+                                {{-- <option value="full_day" {{ old('shift', $driver->shift) == 'full_day' ? 'selected' : '' }}>🕒 Full Day Availability</option> --}}
                             </select>
                         </div>
                     </div>
                 </div>
 
                 {{-- Security Protocol (Optional for Update) --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 p-6 md:p-8 bg-slate-950/50 rounded-[2rem] border border-slate-800 shadow-inner">
-                    <div class="md:col-span-2">
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#020617] border border-slate-800 text-[9px] font-black text-amber-400 uppercase tracking-widest w-max mb-2">
-                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                            Security Update (Optional)
-                        </div>
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Leave blank to retain current clearance codes.</p>
-                    </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 p-6 md:p-8 bg-slate-950/50 rounded-[2rem] border border-slate-800 shadow-inner">
+    <div class="md:col-span-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#020617] border border-slate-800 text-[9px] font-black text-amber-400 uppercase tracking-widest w-max mb-2">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            Security Update (Optional)
+        </div>
+        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Leave blank to retain current clearance codes.</p>
+    </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">New Password</label>
-                        <input type="password" name="password" id="password" placeholder="••••••••"
-                            class="w-full supply-input px-5 py-4 font-bold tracking-widest focus:border-amber-500 focus:ring-amber-500">
-                    </div>
+    <div class="space-y-2">
+        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">New Password</label>
+        <div class="relative group">
+            <input type="password" name="password" id="new_password" placeholder="••••••••"
+                class="w-full bg-slate-800/50 border border-slate-700 text-white supply-input px-5 py-4 pr-12 font-bold tracking-widest focus:border-amber-500 focus:outline-none transition-all">
+            
+            <button type="button" onclick="togglePassword('new_password', 'eye_new')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-white hover:text-amber-500 transition-colors">
+                <svg id="eye_new" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+            </button>
+        </div>
+    </div>
 
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Verify Password</label>
-                        <input type="password" name="password_confirmation" id="password_confirmation" placeholder="••••••••"
-                            class="w-full supply-input px-5 py-4 font-bold tracking-widest focus:border-amber-500 focus:ring-amber-500">
-                    </div>
-                </div>
+    <div class="space-y-2">
+        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Verify Password</label>
+        <div class="relative group">
+            <input type="password" name="password_confirmation" id="verify_password" placeholder="••••••••"
+                class="w-full bg-slate-800/50 border border-slate-700 text-white supply-input px-5 py-4 pr-12 font-bold tracking-widest focus:border-amber-500 focus:outline-none transition-all">
+            
+            <button type="button" onclick="togglePassword('verify_password', 'eye_verify')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-white hover:text-amber-500 transition-colors">
+                <svg id="eye_verify" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // دالة ذكية واحدة للتحكم بجميع حقول كلمة السر
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        
+        const eyeOpen = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />';
+        const eyeClosed = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />';
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = eyeClosed;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = eyeOpen;
+        }
+    }
+</script>
             </div>
 
             {{-- Action Buttons --}}

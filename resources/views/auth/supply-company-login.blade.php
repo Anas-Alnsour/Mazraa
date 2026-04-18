@@ -55,7 +55,7 @@
         <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#020617] h-screen sticky top-0">
 
             {{-- Animated Background Image - Supply/Warehouse Theme --}}
-            <img src="https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?q=80&w=2000&auto=format&fit=crop"
+            <img src="{{ asset('images/company-supply.png') }}"
                  alt="Supply Background"
                  class="absolute inset-0 w-full h-full object-cover opacity-60 animate-slow-zoom">
 
@@ -157,7 +157,7 @@
                             </div>
                             <input id="email" name="email" type="email" autocomplete="email" required autofocus
                                 class="pl-14 block w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-base py-4 font-medium transition-all duration-300 {{ $errors->has('email') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}"
-                                value="{{ old('email') }}" placeholder="supply@company.com">
+                                value="{{ old('email') }}" placeholder="example@domain.com">
                         </div>
                         <x-input-error :messages="$errors->get('email')" class="mt-2 text-sm text-red-600 font-bold" />
                     </div>

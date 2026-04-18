@@ -30,21 +30,18 @@
         @keyframes shimmer { 100% { transform: translateX(100%); } }
 
         /* 🌟 UX: Custom Flatpickr Styles */
-        /* Morning Booked -> Show Orange Top-Left, White Bottom-Right */
         .flatpickr-day.booked-morning:not(.flatpickr-disabled, .selected, .startRange, .endRange, .inRange) {
             background: linear-gradient(135deg, #ffedd5 50%, #ffffff 50%) !important;
             border-color: #fdba74 !important;
             color: #1e293b !important;
             font-weight: 900;
         }
-        /* Evening Booked -> Show White Top-Left, Indigo Bottom-Right */
         .flatpickr-day.booked-evening:not(.flatpickr-disabled, .selected, .startRange, .endRange, .inRange) {
             background: linear-gradient(135deg, #ffffff 50%, #e0e7ff 50%) !important;
             border-color: #a5b4fc !important;
             color: #1e293b !important;
             font-weight: 900;
         }
-        /* Fully Booked -> Grayed out and crossed */
         .flatpickr-day.flatpickr-disabled {
             background: #f1f5f9 !important;
             color: #94a3b8 !important;
@@ -271,9 +268,10 @@
                 <div class="lg:w-[40%] xl:w-[35%] relative">
                     <div class="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 sticky top-28 z-20 shadow-2xl shadow-slate-200/50">
 
+                        {{-- ✅ التعديل #1: السعر ديناميكي يبدأ بـ — ويتغير عند اختيار الشفت --}}
                         <div class="flex items-baseline justify-between mb-8 pb-6 border-b border-gray-100">
                             <div>
-                                <span class="text-3xl font-black text-slate-900 tracking-tighter">{{ number_format($farm->price_per_morning_shift ?? 0, 0) }}</span>
+                                <span id="displayPrice" class="text-3xl font-black text-slate-900 tracking-tighter">—</span>
                                 <span class="text-sm font-bold text-slate-500 uppercase tracking-widest">JOD / shift</span>
                             </div>
                             <div class="flex items-center gap-1.5 font-bold text-sm text-slate-900">
@@ -380,9 +378,9 @@
                                         <option value="Wedding">💍 Wedding / Engagement</option>
                                         <option value="Other">✨ Family Gathering / Other</option>
                                     </select>
-                                    {{-- <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
                                         <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div> --}}
+                                    </div>
                                 </div>
                             </div>
 
@@ -486,7 +484,6 @@
     <div id="mapBackdrop"></div>
 
     @push('scripts')
-    {{-- ✅ تم الاعتماد على مكتبة Leaflet لتكون البديل الآمن لخرائط جوجل --}}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps"></script>
@@ -526,7 +523,6 @@
         let farmLng = <?php echo $farm->longitude ? '"' . $farm->longitude . '"' : 'null'; ?>;
         const farmNameStr = '<?php echo addslashes($farm->name); ?>';
 
-        // Fallback to Amman if Farm coordinates are totally missing
         if(!farmLat || farmLat === 'null') farmLat = 31.9522;
         if(!farmLng || farmLng === 'null') farmLng = 35.9334;
 
@@ -643,6 +639,9 @@
             document.getElementById('start_time').value = '';
             document.getElementById('end_time').value = '';
 
+            // ✅ التعديل #2: إعادة السعر إلى — عند reset
+            document.getElementById('displayPrice').textContent = '—';
+
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
                 btn.classList.add('border-gray-200', 'bg-white');
@@ -683,6 +682,10 @@
             resetShiftSelection();
             currentShiftType = type;
             document.getElementById('shift_input').value = type;
+
+            // ✅ التعديل #3: تحديث السعر المعروض حسب الشفت المختار
+            const priceMap = { morning: priceMorning, evening: priceEvening, full_day: priceFullDay };
+            document.getElementById('displayPrice').textContent = priceMap[type].toLocaleString();
 
             if (type === 'morning') {
                 btnMorning.classList.remove('border-gray-200', 'bg-white');
@@ -755,6 +758,9 @@
             document.getElementById('start_time').value = sDate.toISOString().split('T')[0] + ' 10:00:00';
             document.getElementById('end_time').value = eDate.toISOString().split('T')[0] + ' 08:00:00';
 
+            // ✅ تحديث السعر في وضع multi-day أيضاً
+            document.getElementById('displayPrice').textContent = (priceFullDay * multiDaysCount).toLocaleString();
+
             selectedShift = true;
             currentShiftType = 'multi_day';
             document.getElementById('confirmBookingBtn').disabled = false;
@@ -799,7 +805,6 @@
             const farmMapEl = document.getElementById('farm-map-display');
             const pickupMapEl = document.getElementById('pickup-map');
 
-            // Check if Google Maps is available
             const useGoogleMaps = (typeof google === 'object' && typeof google.maps === 'object');
 
             if (farmMapEl) {
@@ -870,7 +875,6 @@
             document.getElementById('pickup_lat').value = lat;
             document.getElementById('pickup_lng').value = lng;
 
-            // Calculate Route
             fetch(`https://router.project-osrm.org/route/v1/driving/${lng},${lat};${farmLng},${farmLat}?overview=false`)
                 .then(res => res.json())
                 .then(data => {

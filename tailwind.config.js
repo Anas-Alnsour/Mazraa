@@ -14,6 +14,17 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            // --- أضفنا الحركة هنا ---
+            animation: {
+                'slow-zoom': 'slow-zoom 20s ease-in-out infinite',
+            },
+            keyframes: {
+                'slow-zoom': {
+                    '0%, 100%': { transform: 'scale(1)' },
+                    '50%': { transform: 'scale(1.1)' },
+                },
+            },
+            // -----------------------
         },
     },
 
