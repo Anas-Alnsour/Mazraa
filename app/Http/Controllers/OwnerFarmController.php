@@ -58,6 +58,7 @@ class OwnerFarmController extends Controller
             'name'                      => $validated['name'],
             'description'               => $validated['description'],
             'governorate'               => $validated['governorate'],
+            'location'                  => $validated['location'],
             'location_link'             => $validated['location_link'] ?? null,
             'capacity'                  => $validated['capacity'],
             'price_per_morning_shift'   => $validated['price_per_morning_shift'],
@@ -169,7 +170,7 @@ class OwnerFarmController extends Controller
         if ($farm->main_image) {
             Storage::disk('public')->delete($farm->main_image);
         }
-        foreach($farm->images as $img) {
+        foreach ($farm->images as $img) {
             Storage::disk('public')->delete($img->image_url);
         }
 

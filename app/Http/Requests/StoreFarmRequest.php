@@ -28,6 +28,7 @@ class StoreFarmRequest extends FormRequest
             'name'                      => ['required', 'string', 'max:255'],
             'description'               => ['required', 'string'],
             'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
+            'location'                  => ['required', 'string', 'max:255'],
             'location_link'             => ['nullable', 'url', 'max:255'],
             'capacity'                  => ['required', 'integer', 'min:1'],
             'price_per_morning_shift'   => ['required', 'numeric', 'min:0'],

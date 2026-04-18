@@ -179,7 +179,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // 💡 راوتات الـ Verifications المعدلة (للمزارع وطلبات التوريد)
     Route::get('/verifications', [SuperAdminController::class, 'verifications'])->name('verifications');
-    Route::post('/verifications/{id}/{type}', [SuperAdminController::class, 'handleVerification'])->name('verifications.handle');
+    Route::patch('/verifications/{id}/{type?}', [SuperAdminController::class, 'handleVerification'])->name('verifications.handle');
 
     Route::get('/system', [SuperAdminController::class, 'system'])->name('system');
     Route::post('/system/update', [SuperAdminController::class, 'updateSystem'])->name('system.update');

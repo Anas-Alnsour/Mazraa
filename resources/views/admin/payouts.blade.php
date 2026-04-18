@@ -133,9 +133,9 @@
                                         <option value="{{ $vendor->id }}">{{ $vendor->name }} ({{ number_format($vendor->balance, 2) }} JOD)</option>
                                     @endforeach
                                 </select>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-slate-500">
+                                {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-slate-500">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                                </div>
+                                </div> --}}
                             </div>
                         </div>
 
