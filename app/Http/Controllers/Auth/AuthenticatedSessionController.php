@@ -29,42 +29,41 @@ class AuthenticatedSessionController extends Controller
         return view('auth.portal-login');
     }
 
-    /**
-     * معالجة تسجيل الدخول والتوجيه
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
         $user = Auth::user();
 
-       // --- STRICT B2B / B2C GATEWAY LOGIC ---
-        // 💡 THE FIX: Use input() to check the actual value instead of has()
-        $isPortalLogin = $request->routeIs('portal.login') || $request->input('portal_login') == '1';
-
-        if ($isPortalLogin && $user->role === 'user') {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            throw ValidationException::withMessages([
-                'email' => 'Access Denied: Please use the Customer Login gateway.',
-            ]);
-        }
+        $isPortalLogin = $request->input('portal_login') == '1';
+        $expectedRole  = $request->input('expected_role');
 
         if (!$isPortalLogin && $user->role !== 'user') {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            Auth::logout();
+
             throw ValidationException::withMessages([
-                'email' => 'Access Denied: Please use the Partner Portal gateway.',
+                'email' => 'This login is only for customers.',
             ]);
         }
-        // --------------------------------------
+
+        if ($isPortalLogin && $user->role === 'user') {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Please use the normal login page.',
+            ]);
+        }
+
+        if ($expectedRole && $user->role !== $expectedRole) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Wrong login page for your role.',
+            ]);
+        }
 
         $request->session()->regenerate();
-        session(['role' => $user->role]);
 
-        // توجيه صارم وإجباري بناءً على الداشبوردات الجديدة
-        $redirectUrl = match ($user->role) {
+        return redirect(match ($user->role) {
             'admin'             => '/admin',
             'farm_owner'        => '/owner/dashboard',
             'supply_company'    => '/supplies/dashboard',
@@ -73,10 +72,7 @@ class AuthenticatedSessionController extends Controller
             'supply_driver'     => '/driver/supply/dashboard',
             'user'              => '/dashboard',
             default             => '/',
-        };
-
-        // إرجاع توجيه إجباري
-        return redirect($redirectUrl);
+        });
     }
 
     /**

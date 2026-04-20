@@ -1,22 +1,5 @@
 <x-owner-layout>
-    <x-slot name="header">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in-up">
-            <div class="flex items-center gap-4">
-                <a href="{{ route('owner.farms.index') }}" class="p-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 rounded-2xl transition-all shadow-inner active:scale-95 group">
-                    <svg class="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                </a>
-                <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1 shadow-inner">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Property Registration
-                    </div>
-                    <h1 class="text-3xl font-black text-white tracking-tighter">List a New <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">Farm</span></h1>
-                </div>
-            </div>
-            <div class="text-left md:text-right hidden md:block">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Status: Pending Super Admin Approval</p>
-            </div>
-        </div>
-    </x-slot>
+    <x-slot name="header">Create Farm</x-slot>
 
     <style>
         .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
@@ -70,6 +53,25 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <div class="pb-24 pt-4 fade-in-up">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in-up">
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('owner.farms.index') }}" class="p-3 bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 rounded-2xl transition-all shadow-inner active:scale-95 group">
+                        <svg class="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </a>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1 shadow-inner">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Property Registration
+                        </div>
+                        <h1 class="text-3xl font-black text-white tracking-tighter">List a New <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">Farm</span></h1>
+                    </div>
+                </div>
+                <div class="text-left md:text-right hidden md:block">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">Status: Pending Super Admin Approval</p>
+                </div>
+            </div>
+        </div>
+
         <form action="{{ route('owner.farms.store') }}" method="POST" enctype="multipart/form-data" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             @csrf
 

@@ -147,6 +147,7 @@
 
                     {{-- 💡 السر هنا: تأكدنا إن الـ Name هو portal_login --}}
                     <input type="hidden" name="portal_login" value="1">
+                    <input type="hidden" name="expected_role" value="supply_driver">
 
                     {{-- Email Input --}}
                     <div class="group transition-all duration-700 delay-200 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
@@ -166,24 +167,9 @@
 
                     {{-- Password Input --}}
                     <div class="group transition-all duration-700 delay-300 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <div class="flex items-center justify-between mb-2">
-                            <label for="password" class="block text-[11px] font-black uppercase tracking-widest text-gray-500 transition-colors group-focus-within:text-teal-600">Password</label>
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-[11px] font-black uppercase tracking-widest text-teal-600 hover:text-teal-700 transition-colors">
-                                    Forgot password?
-                                </a>
-                            @endif
-                        </div>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                            </div>
-                            <input id="password" name="password" type="password" autocomplete="current-password" required
-                                class="pl-14 block w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 sm:text-base py-4 font-medium transition-all duration-300 {{ $errors->has('password') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}"
-                                placeholder="••••••••">
-                        </div>
+                        <x-password-toggle id="password" name="password" type="login" color="teal">
+                            Password
+                        </x-password-toggle>
                         <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-red-600 font-bold" />
                     </div>
 

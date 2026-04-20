@@ -125,20 +125,13 @@
 
                     {{-- Passwords --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-400 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <div class="group">
-                            <label for="password" class="block text-[11px] font-black uppercase tracking-widest text-gray-500 mb-2 transition-colors group-focus-within:text-[#1d5c42]">Password</label>
-                            <input id="password" name="password" type="password" required
-                                class="block w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] sm:text-sm py-4 px-5 font-medium transition-all duration-300 {{ $errors->has('password') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}"
-                                placeholder="••••••••">
-                            <x-input-error :messages="$errors->get('password')" class="mt-2 text-xs text-red-600 font-bold" />
-                        </div>
+                        <x-password-toggle id="password" name="password" type="signup" color="gray">
+                            Password
+                        </x-password-toggle>
 
-                        <div class="group">
-                            <label for="password_confirmation" class="block text-[11px] font-black uppercase tracking-widest text-gray-500 mb-2 transition-colors group-focus-within:text-[#1d5c42]">Confirm Password</label>
-                            <input id="password_confirmation" name="password_confirmation" type="password" required
-                                class="block w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] sm:text-sm py-4 px-5 font-medium transition-all duration-300"
-                                placeholder="••••••••">
-                        </div>
+                        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup" color="gray">
+                            Confirm Password
+                        </x-password-toggle>
                     </div>
                     {{-- Partner Type Selection --}}
                     <div class="group transition-all duration-700 delay-[450ms] transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
@@ -154,9 +147,9 @@
                                 <option value="supply_company" {{ old('role') === 'supply_company' ? 'selected' : '' }}>Supply Company (B2B Marketplace)</option>
                                 <option value="transport_company" {{ old('role') === 'transport_company' ? 'selected' : '' }}>Transport Company (Logistics)</option>
                             </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-[#1d5c42]">
+                            {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-[#1d5c42]">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
+                            </div> --}}
                         </div>
                         <x-input-error :messages="$errors->get('role')" class="mt-2 text-xs text-red-600 font-bold" />
                     </div>

@@ -211,9 +211,9 @@
                                                         <option value="{{ $driver->id }}">{{ $driver->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                                                {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
                                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                                                </div>
+                                                </div> --}}
                                             </div>
                                             <button type="submit" class="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] active:scale-95 flex-shrink-0" title="Dispatch Order">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>

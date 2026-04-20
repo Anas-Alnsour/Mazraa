@@ -43,8 +43,12 @@
                         <div class="verify-card bg-slate-950/80 border border-slate-800 hover:border-emerald-500/30 rounded-[2rem] p-6 flex flex-col lg:flex-row items-center justify-between gap-8 hover:shadow-[0_15px_40px_rgba(0,0,0,0.4)]">
 
                             <div class="flex items-center gap-6 w-full lg:w-1/3">
-                                <div class="w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 shadow-inner">
-                                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <div class="w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 shadow-inner overflow-hidden">
+                                    @if($farm->main_image)
+                                        <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    @endif
                                 </div>
                                 <div>
                                     <h3 class="text-xl font-black text-white leading-tight mb-1">{{ $farm->name }}</h3>
@@ -62,6 +66,10 @@
                             </div>
 
                             <div class="w-full lg:w-1/3 flex items-center justify-end gap-3 mt-4 lg:mt-0">
+                                <a href="{{ route('admin.farms.show', $farm->id) }}" class="px-4 py-3 bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:border-emerald-500/50 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                    View Details
+                                </a>
                                 <form action="{{ route('admin.verifications.handle', ['id' => $farm->id, 'type' => 'farm_approval']) }}" method="POST" class="flex gap-3 w-full">
                                     @csrf
                                     @method('Patch')
