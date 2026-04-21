@@ -96,7 +96,7 @@
         <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#020617] h-screen sticky top-0">
 
             {{-- Animated Background Image - Transport/Road Theme --}}
-            <img src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=2000&auto=format&fit=crop"
+            <img src="{{ asset('images/transport-company.png') }}"
                 alt="Transport Background"
                 class="absolute inset-0 w-full h-full object-cover opacity-60 animate-slow-zoom">
 

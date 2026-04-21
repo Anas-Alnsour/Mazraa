@@ -107,7 +107,7 @@
 
         {{-- LEFT SIDE: VISUAL BRANDING --}}
         <div class="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-[#020617] sticky top-0 h-screen">
-            <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2000&auto=format&fit=crop"
+            <img src="{{ asset('images/partner-register.png') }}"
                 alt="Business Wealth Background"
                 class="absolute inset-0 w-full h-full object-cover opacity-[0.4] animate-slow-zoom">
             <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/80 to-transparent"></div>

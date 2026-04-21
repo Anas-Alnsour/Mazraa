@@ -67,7 +67,7 @@
         <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#020617]">
 
             {{-- Animated Background Image - Abstract Finance/Wealth --}}
-            <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=2000&auto=format&fit=crop"
+            <img src="{{ asset('images/portal-login.png') }}"
                  alt="Business Wealth Background"
                  class="absolute inset-0 w-full h-full object-cover opacity-[0.55] animate-slow-zoom">
 

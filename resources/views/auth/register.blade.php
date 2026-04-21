@@ -150,7 +150,7 @@
              LEFT SIDE: VISUAL BRANDING
              ========================================== --}}
         <div class="hidden lg:flex lg:w-[45%] xl:w-[50%] relative overflow-hidden bg-[#020617]">
-            <img src="{{ $bgImage }}" alt="Background"
+            <img src="{{ asset('images/home.jpg') }}"
                 class="absolute inset-0 w-full h-full object-cover opacity-[0.45] animate-slow-zoom {{ !$isPartner ? 'grayscale-[20%]' : '' }}">
             <div class="absolute inset-0 bg-gradient-to-tr {{ $bgGradientFrom }} {{ $bgGradientVia }} to-transparent">
             </div>

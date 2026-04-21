@@ -96,7 +96,7 @@
         <div class="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-[#020617]">
 
             {{-- Animated Background Image - Logistics/Warehouse Theme --}}
-            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000&auto=format&fit=crop"
+            <img src="{{ asset('images/supply-driver.png') }}"
                 alt="Supply Logistics Background"
                 class="absolute inset-0 w-full h-full object-cover opacity-50 animate-slow-zoom">
 
