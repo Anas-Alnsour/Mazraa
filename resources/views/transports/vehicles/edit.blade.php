@@ -151,7 +151,7 @@
                         </label>
                     </div>
                     <div class="relative">
-                        <input type="radio" name="status" id="status_booked" value="booked" class="status-radio sr-only" {{ old('status', $vehicle->status) === 'booked' ? 'checked' : '' }}>
+                        <input type="radio" name="status" id="status_booked" value="in_use" class="status-radio sr-only" {{ old('status', $vehicle->status) === 'booked' ? 'checked' : '' }}>
                         <label for="status_booked" class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-2xl cursor-pointer transition-all hover:border-blue-500/50 group shadow-inner">
                             <span class="w-3 h-3 rounded-full bg-blue-500 mb-3 shadow-[0_0_10px_#3b82f6] group-hover:scale-125 transition-transform"></span>
                             <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Booked</span>

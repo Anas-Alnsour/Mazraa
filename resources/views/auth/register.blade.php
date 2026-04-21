@@ -88,6 +88,19 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background-color: #cbd5e1;
         }
+
+
+        /* إخفاء أي أيقونة عين تأتي مع المكون الجاهز */
+        .hide-internal-eye button svg,
+        .hide-internal-eye .eye-icon {
+            display: none !important;
+        }
+
+        /* إذا كانت العين تظهر من المتصفح نفسه (مثل Edge/Chrome) */
+        input::-ms-reveal,
+        input::-ms-clear {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -313,11 +326,13 @@
                     {{-- Passwords Grid --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-[400ms] transform"
                         :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <x-password-toggle id="password" name="password" type="signup" color="green">
+                        <x-password-toggle id="password" name="password" type="signup" color="green" required
+                            hide-internal-eye>
                             Password
                         </x-password-toggle>
 
-                        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup" color="green">
+                        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup"
+                            color="green" required hide-internal-eye>
                             Confirm Password
                         </x-password-toggle>
                     </div>

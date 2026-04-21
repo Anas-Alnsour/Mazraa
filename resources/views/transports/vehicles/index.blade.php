@@ -1,6 +1,6 @@
 @extends('layouts.transport')
 
-@section('title', 'Fleet Vehicles')
+@section('title', 'Fleet Management - Vehicles & Drivers')
 
 @section('content')
 <style>
@@ -32,13 +32,13 @@
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black uppercase tracking-widest mb-3 shadow-inner text-slate-400">
                 <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span> Transport Assets
             </div>
-            <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-2 leading-none">Fleet <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400">Vehicles</span></h1>
-            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-3">Manage Your Transport Assets and assignments.</p>
+            <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-2 leading-none">Fleet <span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-400">Vehicles and Drivers</span></h1>
+            <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-3">Manage vehicles, drivers</p>
         </div>
 
         <a href="{{ route('transport.vehicles.create') }}" class="relative z-10 w-full md:w-auto px-8 py-5 bg-gradient-to-r from-cyan-600 to-blue-500 hover:to-blue-400 text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(8,145,178,0.3)] transition-all active:scale-95 flex items-center justify-center gap-3">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-            Add New Vehicle
+            Add New Vehicle/Driver
         </a>
     </div>
 

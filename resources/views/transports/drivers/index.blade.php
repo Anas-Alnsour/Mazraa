@@ -40,12 +40,12 @@
             </div>
         </div>
 
-        <div class="relative z-10 w-full md:w-auto mt-6 md:mt-0 flex justify-center md:justify-end gap-3">
+        {{-- <div class="relative z-10 w-full md:w-auto mt-6 md:mt-0 flex justify-center md:justify-end gap-3">
             <a href="{{ route('transport.drivers.create') }}" class="w-full md:w-auto px-8 py-5 bg-gradient-to-tr from-blue-600 to-cyan-500 hover:to-cyan-400 text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_30px_rgba(59,130,246,0.3)] transform hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                 Deploy New Agent
             </a>
-        </div>
+        </div> --}}
     </div>
 
     {{-- 🌟 2. Floating Toast Notifications --}}

@@ -120,6 +120,8 @@
                             <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Agent Identity</th>
                             <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Comms Protocol</th>
                             <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Activation Date</th>
+                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Type</th>
+                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">License Plate</th>
                             <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-right">Matrix Control</th>
                         </tr>
                     </thead>
@@ -153,6 +155,17 @@
                                     <p class="text-sm font-black text-slate-300">{{ $driver->created_at->format('M d, Y') }}</p>
                                     <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Node Initiated</p>
                                 </td>
+
+                                {{-- Driver Type --}}
+                                <td class="px-10 py-6 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                                        {{ $driver->vehicle->type ?? 'N/A' }}
+                                    </span>
+                                </td>
+                                {{-- License Plate --}}
+                                <td class="px-10 py-6 whitespace-nowrap">
+                                    <p class="text-sm font-black text-slate-300 tracking-widest">{{ $driver->vehicle->license_plate ?? 'N/A' }}</p>
+                                </td>   
 
                                 {{-- Actions Matrix --}}
                                 <td class="px-10 py-6 whitespace-nowrap text-right">

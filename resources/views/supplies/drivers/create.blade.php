@@ -280,7 +280,7 @@
                                 Plate Number <span class="text-cyan-500">*</span></label>
                             <input type="text" name="license_plate" id="license_plate"
                                 value="{{ old('license_plate') }}" required placeholder="e.g. 10-12345"
-                                class="w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
+                                class="rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
                         </div>
 
                         {{-- Capacity --}}
@@ -291,7 +291,7 @@
                             <div class="relative">
                                 <input type="number" name="capacity" id="capacity" min="1"
                                     value="{{ old('capacity') }}" required placeholder="e.g. 12"
-                                    class="w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
+                                    class="rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
                                 <div
                                     class="absolute inset-y-0 right-0 flex items-center pr-12 pointer-events-none text-slate-500 font-black text-[10px] uppercase tracking-widest">
                                     PAX
@@ -346,99 +346,88 @@
 
 
                     {{-- Security Protocol --}}
-                    <div
-                        class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 p-6 md:p-8 bg-slate-950/50 rounded-[2rem] border border-slate-800 shadow-inner">
+                    <div class="mt-8 p-6 md:p-8 bg-slate-950/50 rounded-[2rem] border border-slate-800 shadow-inner">
+
+                        {{-- Header Tag (صاير فوق الحقول تماماً وما بيخرب الـ Grid) --}}
                         <div
-                            class="md:col-span-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#020617] border border-slate-800 text-[9px] font-black text-rose-400 uppercase tracking-widest w-max mb-2">
+                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#020617] border border-slate-800 text-[9px] font-black text-rose-400 uppercase tracking-widest mb-6">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                </path>
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                             Security Protocol
                         </div>
 
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
-                                Access Password <span class="text-rose-500">*</span>
-                            </label>
+                        {{-- الحقول في شبكة متوازية --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
 
-                            <div class="relative group">
-                                <input type="password" name="password" id="password" required
-                                    class="w-full bg-slate-800/50 border border-slate-700 text-white supply-input px-5 py-4 pr-12 font-bold tracking-widest focus:border-rose-500 focus:outline-none transition-all">
-
-                                <button type="button" onclick="togglePassword()"
-                                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-white hover:text-rose-500 transition-colors">
-                                    <svg id="eye_icon" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    </svg>
-                                </button>
+                            {{-- الحقل الأول --}}
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
+                                    Access Password <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative group">
+                                    <input type="password" name="password" id="password" required
+                                        class="rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white px-5 py-4 pr-12 font-bold tracking-widest focus:border-rose-500 focus:outline-none transition-all">
+                                    <button type="button" onclick="togglePassword('password', 'eye_icon_main')"
+                                        class="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-rose-500 transition-colors">
+                                        <svg id="eye_icon_main" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                            class="w-5 h-5 text-white">
+                                            {{-- أيقونة العين المشطوبة (Default) --}}
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <script>
-                            function togglePassword() {
-                                const passwordInput = document.getElementById('password');
-                                const eyeIcon = document.getElementById('eye_icon');
-
-                                if (passwordInput.type === 'password') {
-                                    passwordInput.type = 'text';
-                                    // تغيير شكل الأيقونة عند الإظهار (اختياري: إضافة خط فوق العين)
-                                    eyeIcon.innerHTML =
-                                        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />';
-                                } else {
-                                    passwordInput.type = 'password';
-                                    // إعادة شكل العين الأصلية
-                                    eyeIcon.innerHTML =
-                                        '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />';
-                                }
-                            }
-                        </script>
-
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
-                                Verify Password <span class="text-rose-500">*</span>
-                            </label>
-
-                            <div class="relative group">
-                                <input type="password" name="password_confirmation" id="password_confirmation" required
-                                    class="w-full bg-slate-800/50 border border-slate-700 text-white supply-input px-5 py-4 pr-12 font-bold tracking-widest focus:border-rose-500 focus:outline-none transition-all">
-
-                                <button type="button" onclick="toggleVerifyPassword()"
-                                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-white hover:text-rose-500 transition-colors">
-                                    <svg id="eye_icon_verify" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    </svg>
-                                </button>
+                            {{-- الحقل الثاني (تم حذف mt-4 لضمان التساوي) --}}
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
+                                    Verify Password <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative group">
+                                    <input type="password" name="password_confirmation" id="password_confirmation"
+                                        required
+                                        class=" rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white px-5 py-4 pr-12 font-bold tracking-widest focus:border-rose-500 focus:outline-none transition-all">
+                                    <button type="button"
+                                        onclick="togglePassword('password_confirmation', 'eye_icon_verify')"
+                                        class="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-rose-500 transition-colors">
+                                        <svg id="eye_icon_verify" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                            class="w-5 h-5 text-white">
+                                            {{-- أيقونة العين المشطوبة (Default) --}}
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <script>
-                            // الدالة الخاصة بحقل التأكيد فقط
-                            function toggleVerifyPassword() {
-                                const confirmInput = document.getElementById('password_confirmation');
-                                const eyeIconVerify = document.getElementById('eye_icon_verify');
 
-                                if (confirmInput.type === 'password') {
-                                    confirmInput.type = 'text';
-                                    eyeIconVerify.innerHTML =
-                                        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />';
-                                } else {
-                                    confirmInput.type = 'password';
-                                    eyeIconVerify.innerHTML =
-                                        '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />';
-                                }
-                            }
-                        </script>
+                        </div>
                     </div>
 
+                    <script>
+                        function togglePassword(inputId, iconId) {
+                            const passwordInput = document.getElementById(inputId);
+                            const eyeIcon = document.getElementById(iconId);
+
+                            // مسارات الأيقونات
+                            const eyeOpenPath =
+                                '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />';
+                            const eyeClosedPath =
+                                '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />';
+
+                            if (passwordInput.type === 'password') {
+                                passwordInput.type = 'text';
+                                eyeIcon.innerHTML = eyeOpenPath;
+                            } else {
+                                passwordInput.type = 'password';
+                                eyeIcon.innerHTML = eyeClosedPath;
+                            }
+                        }
+                    </script>
 
                     {{-- Action Buttons --}}
                     <div class="pt-8 mt-8 flex flex-col md:flex-row justify-end gap-4 border-t border-slate-800">

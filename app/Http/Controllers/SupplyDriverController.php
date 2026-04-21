@@ -17,6 +17,7 @@ class SupplyDriverController extends Controller
     {
         $drivers = User::where('role', 'supply_driver')
             ->where('company_id', Auth::id())
+            ->with('vehicle')
             ->latest()
             ->paginate(10);
 

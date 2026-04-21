@@ -42,6 +42,18 @@
         @keyframes shimmer {
             100% { transform: translateX(100%); }
         }
+
+        /* إخفاء أي أيقونة عين تأتي مع المكون الجاهز */
+    .hide-internal-eye button svg, 
+    .hide-internal-eye .eye-icon { 
+        display: none !important; 
+    }
+    
+    /* إذا كانت العين تظهر من المتصفح نفسه (مثل Edge/Chrome) */
+    input::-ms-reveal,
+    input::-ms-clear {
+        display: none !important;
+    }
     </style>
 </head>
 
@@ -166,7 +178,7 @@
 
                     {{-- Password Input --}}
                     <div class="group transition-all duration-700 delay-300 transform" :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <x-password-toggle id="password" name="password" type="login" color="blue">
+                        <x-password-toggle id="password" name="password" type="login" color="blue" hide-internal-eye>
                             Password
                         </x-password-toggle>
                         <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-red-600 font-bold" />
