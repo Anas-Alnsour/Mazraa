@@ -5,28 +5,15 @@
 @section('content')
 <style>
     /* Premium Animations */
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-15px); }
-    }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
     .animate-float-slow { animation: float 8s ease-in-out infinite; }
-
     .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
     .fade-in-up-stagger { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-
-    @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(30px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
 
     /* Input Reset & Enhancements */
     input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Hide Scrollbar for Filter Menu */
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -72,17 +59,18 @@
                     Farm <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-yellow-200 to-yellow-500 italic font-serif font-medium pr-2">Supplies</span>
                 </h1>
                 <p class="text-sm md:text-base text-gray-300 font-medium max-w-lg mx-auto leading-relaxed drop-shadow-lg opacity-90">
-                    Premium supplies, groceries, and essentials delivered directly to your farm by our B2B partners.
+                    Premium supplies, groceries, and essentials delivered directly to your farm by our local B2B partners.
                 </p>
             </div>
         </div>
+
 
         {{-- ==========================================
              2. MAIN CONTENT
              ========================================== --}}
         <div class="max-w-[96%] xl:max-w-7xl mx-auto relative z-30 -mt-20">
 
-            {{-- 🌟 Filter Categories (Glassmorphic Scroll) --}}
+            {{-- 🌟 Filter Categories --}}
             @php
                 $categories = [
                     'لحوم ومشاوي', 'خضار وفواكه', 'مقبلات وسلطات', 'أدوات ومعدات الشواء',
@@ -108,13 +96,19 @@
                 </div>
             </div>
 
-            {{-- Actions Bar --}}
+            {{-- 🌟 Actions Bar & Regional Info --}}
             <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-[2.5rem] shadow-[0_10px_40px_rgba(0,0,0,0.04)] border border-gray-100 mb-12 gap-4 fade-in-up" style="animation-delay: 0.2s;">
-                <div class="px-5">
-                    <p class="text-sm font-black text-gray-800 uppercase tracking-widest flex items-center gap-3">
-                        {{ $currentCategory ? $currentCategory : 'Available Items' }}
-                        <span class="bg-[#1d5c42]/10 text-[#1d5c42] px-4 py-1.5 rounded-xl text-sm border border-[#1d5c42]/20">{{ $supplies->total() }}</span>
+                <div class="px-5 text-center sm:text-left">
+                    <p class="text-sm font-black text-gray-800 uppercase tracking-widest flex flex-col sm:flex-row items-center gap-3">
+                        {{ $currentCategory ? $currentCategory : 'Global Catalog' }}
+                        <span class="bg-[#1d5c42]/10 text-[#1d5c42] px-4 py-1.5 rounded-xl text-sm border border-[#1d5c42]/20">{{ $supplies->total() }} items</span>
                     </p>
+                    {{-- 💡 إظهار الفرع المرتبط بالحجز --}}
+                    @if($localCompany && !$isRestricted)
+                        <p class="text-[10px] font-bold text-emerald-600 mt-2 uppercase tracking-widest bg-emerald-50 inline-block px-3 py-1 rounded-lg border border-emerald-100">
+                            🟢 Routing orders to: {{ $localCompany->name }} ({{ $activeBooking->farm->governorate }})
+                        </p>
+                    @endif
                 </div>
                 @auth
                 <div class="flex flex-wrap sm:flex-nowrap gap-3 w-full sm:w-auto">
@@ -129,8 +123,45 @@
                 </div>
                 @endauth
             </div>
+                    {{-- 💡 STRICT TIMING POLICY DISCLAIMER --}}
+        <div class="bg-blue-50/80 border border-blue-100 p-6 mb-8 rounded-2xl shadow-sm fade-in-up">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 bg-blue-100 p-2 rounded-xl text-blue-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-black text-blue-900 uppercase tracking-widest mb-1">Strict Checkout Policy</h3>
+                    <div class="text-sm text-blue-800/80 font-medium leading-relaxed">
+                        <p>
+                            You may add items to your cart at any time. However, to ensure fresh and prompt delivery,
+                            <strong class="text-blue-900">checkout and payment are strictly allowed ONLY during your active farm booking duration, or exactly 2 hours before it starts.</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            {{-- Flash Messages & Rules --}}
+            {{-- 💡 Restriction Note (توضيح شرط الوقت بشكل صريح) --}}
+            @auth
+                @if(auth()->user()->role === 'user' && $isRestricted)
+                    <div class="mb-10 bg-amber-50 border border-amber-200 rounded-[2rem] p-6 shadow-sm flex items-start gap-4 fade-in-up">
+                        <div class="flex-shrink-0 bg-amber-100 p-3 rounded-2xl text-amber-600 border border-amber-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest mb-1.5">Action Required: Purchasing Disabled</h3>
+                            <p class="text-sm text-amber-800/80 font-medium leading-relaxed">
+                                You are currently browsing our global catalog. <strong>Please note that ordering supplies is strictly permitted ONLY during your active farm stay, or exactly 2 hours prior to your check-in time.</strong> You currently have no eligible bookings within this timeframe.
+                            </p>
+                            <a href="{{ route('explore') }}" class="inline-block mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-colors shadow-lg shadow-amber-500/20 active:scale-95 border border-amber-600/50">Book a Farm</a>
+                        </div>
+                    </div>
+                @endif
+            @endauth
+
+            {{-- Flash Messages --}}
             @if(session('success'))
                 <div class="mb-8 bg-emerald-50 border border-emerald-200 p-5 rounded-[1.5rem] flex items-center justify-between shadow-sm fade-in-up">
                     <div class="flex items-center gap-4">
@@ -148,33 +179,29 @@
                 </div>
             @endif
 
-            @auth
-                @if(auth()->user()->role === 'user' && empty($eligibleBookings))
-                    <div class="mb-10 bg-amber-50 border border-amber-200 rounded-[2rem] p-6 shadow-sm flex items-start gap-4 fade-in-up">
-                        <div class="flex-shrink-0 bg-amber-100 p-3 rounded-2xl text-amber-600 border border-amber-200">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest mb-1.5">Action Required</h3>
-                            <p class="text-sm text-amber-800/80 font-medium leading-relaxed">You can only order supplies up to 2 hours before your active farm booking starts, and during your stay. You currently have no eligible bookings within this timeframe.</p>
-                            <a href="{{ route('explore') }}" class="inline-block mt-4 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-colors shadow-lg shadow-amber-500/20 active:scale-95 border border-amber-600/50">Book a Farm First</a>
-                        </div>
-                    </div>
-                @endif
-            @endauth
-
-            {{-- Products Grid --}}
+            {{-- 🌟 Products Grid --}}
             @if ($supplies->isEmpty())
                 <div class="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] border border-gray-100 fade-in-up">
                     <div class="w-28 h-28 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-8 border border-gray-100 shadow-inner">
                         <svg class="w-14 h-14 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     </div>
                     <h3 class="text-3xl font-black text-gray-900 mb-3 tracking-tight">{{ $currentCategory ? 'No items in this category' : 'Marketplace is Empty' }}</h3>
-                    <p class="text-gray-500 mb-10 font-medium text-lg text-center max-w-lg">Our partners are currently restocking. Please check back soon!</p>
+                    <p class="text-gray-500 mb-10 font-medium text-lg text-center max-w-lg">Our catalog is currently being updated. Please check back soon!</p>
                 </div>
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
                     @foreach ($supplies as $index => $supply)
+                        @php
+                            // 💡 قراءة المخزون واسم الشركة بناءً على الفرع المحلي (إذا كان هناك حجز)
+                            $localStock = 0;
+                            $supplierName = 'Mazraa Official Catalog';
+
+                            if ($localCompany) {
+                                $inventory = $supply->inventories->where('company_id', $localCompany->id)->first();
+                                $localStock = $inventory ? $inventory->stock : 0;
+                                $supplierName = $localCompany->name;
+                            }
+                        @endphp
                         <div class="group bg-white rounded-[2.5rem] shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-[0_25px_50px_rgba(29,92,66,0.1)] border border-gray-100 hover:border-[#1d5c42]/30 overflow-hidden transition-all duration-500 flex flex-col h-full fade-in-up-stagger" style="animation-delay: {{ $index * 0.05 }}s">
 
                             {{-- 📷 Image Section --}}
@@ -200,34 +227,54 @@
                                     {{ $supply->name }}
                                 </h3>
 
-                                <p class="text-xs font-medium text-gray-500 line-clamp-2 mb-5 leading-relaxed h-8">
+                                <p class="text-xs font-medium text-gray-500 line-clamp-2 mb-4 leading-relaxed h-8">
                                     {{ $supply->description ?? 'Premium quality supply for your farm stay experience.' }}
                                 </p>
+
+                                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5 mb-2">
+                                    <svg class="w-3 h-3 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                    By {{ $supplierName }}
+                                </p>
+
+                                {{-- 💡 Stock Display (يظهر فقط إذا كان هناك حجز مسموح) --}}
+                                @if($localCompany && !$isRestricted)
+                                    <p class="text-[10px] font-bold {{ $localStock > 0 ? 'text-emerald-500' : 'text-rose-500' }} uppercase tracking-widest mb-3 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        Stock Available: {{ $localStock }}
+                                    </p>
+                                @endif
 
                                 <div class="mb-6 flex items-baseline gap-1 bg-gray-50 w-max px-4 py-2 rounded-[1rem] border border-gray-100 shadow-inner">
                                     <span class="text-2xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($supply->price, 2) }}</span>
                                     <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">JOD</span>
                                 </div>
 
-                                {{-- 🛒 Action Bar (Add to Cart) --}}
+                                {{-- 🛒 Action Bar (Add to Cart Logic) --}}
                                 <div class="mt-auto border-t border-gray-100 pt-5">
                                     @auth
                                         @if(auth()->user()->role === 'user')
-                                            <form action="{{ route('cart.add', $supply->id) }}" method="POST" class="flex flex-col xl:flex-row items-center gap-3">
-                                                @csrf
-                                                {{-- Sleek Qty Selector --}}
-                                                <div class="flex items-center justify-between w-full xl:w-auto bg-white border border-gray-200 rounded-[1.25rem] p-1 shadow-sm h-12" x-data="{ qty: 1 }">
-                                                    <button type="button" @click="if(qty > 1) qty--" class="w-10 h-full flex items-center justify-center rounded-[1rem] bg-gray-50 text-gray-600 hover:text-rose-500 hover:bg-rose-50 transition-colors font-black text-lg active:scale-95 focus:outline-none">-</button>
-                                                    <input type="number" name="quantity" x-model="qty" readonly class="qty-input">
-                                                    <button type="button" @click="if(qty < {{ $supply->stock }}) qty++" class="w-10 h-full flex items-center justify-center rounded-[1rem] bg-gray-50 text-gray-600 hover:text-[#1d5c42] hover:bg-emerald-50 transition-colors font-black text-lg active:scale-95 focus:outline-none">+</button>
-                                                </div>
-
-                                                {{-- Add Button --}}
-                                                <button type="submit" class="w-full xl:flex-1 h-12 bg-[#1d5c42] hover:bg-[#14402e] text-white font-black rounded-[1.25rem] transition-all duration-300 shadow-[0_10px_20px_rgba(29,92,66,0.2)] hover:shadow-[0_15px_25px_rgba(29,92,66,0.3)] active:scale-95 flex items-center justify-center gap-2 group/btn focus:outline-none border border-[#1d5c42]/50">
-                                                    <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                                                    <span class="text-[10px] md:text-xs uppercase tracking-widest">Add to Cart</span>
+                                            @if($isRestricted)
+                                                <button disabled class="w-full h-12 bg-gray-100 text-gray-400 font-black rounded-[1.25rem] text-[9px] uppercase tracking-widest cursor-not-allowed">
+                                                    Timing Restricted
                                                 </button>
-                                            </form>
+                                            @elseif($localStock <= 0)
+                                                <button disabled class="w-full h-12 bg-rose-50 text-rose-500 border border-rose-100 font-black rounded-[1.25rem] text-[9px] uppercase tracking-widest cursor-not-allowed">
+                                                    Out of Stock in {{ $activeBooking->farm->governorate ?? 'Region' }}
+                                                </button>
+                                            @else
+                                                <form action="{{ route('cart.add', $supply->id) }}" method="POST" class="flex flex-col xl:flex-row items-center gap-3">
+                                                    @csrf
+                                                    <div class="flex items-center justify-between w-full xl:w-auto bg-white border border-gray-200 rounded-[1.25rem] p-1 shadow-sm h-12" x-data="{ qty: 1, max: {{ $localStock > 0 ? $localStock : 1 }} }">
+                                                        <button type="button" @click="if(qty > 1) qty--" class="w-10 h-full flex items-center justify-center rounded-[1rem] bg-gray-50 text-gray-600 hover:text-rose-500 hover:bg-rose-50 transition-colors font-black text-lg active:scale-95 focus:outline-none">-</button>
+                                                        <input type="number" name="quantity" x-model="qty" readonly class="qty-input focus:ring-0">
+                                                        <button type="button" @click="if(qty < max) qty++" class="w-10 h-full flex items-center justify-center rounded-[1rem] bg-gray-50 text-gray-600 hover:text-[#1d5c42] hover:bg-emerald-50 transition-colors font-black text-lg active:scale-95 focus:outline-none">+</button>
+                                                    </div>
+
+                                                    <button type="submit" class="w-full xl:flex-1 h-12 bg-[#1d5c42] hover:bg-[#14402e] text-white font-black rounded-[1.25rem] transition-all duration-300 shadow-[0_10px_20px_rgba(29,92,66,0.2)] hover:shadow-[0_15px_25px_rgba(29,92,66,0.3)] active:scale-95 flex items-center justify-center gap-2 group/btn focus:outline-none border border-[#1d5c42]/50">
+                                                        <span class="text-[10px] md:text-xs uppercase tracking-widest">Add to Cart</span>
+                                                    </button>
+                                                </form>
+                                            @endif
                                         @else
                                             <div class="w-full h-12 bg-gray-50 border border-gray-200 text-gray-400 font-black text-[10px] flex items-center justify-center rounded-[1.25rem] uppercase tracking-widest shadow-inner">
                                                 Customer Accounts Only
@@ -246,7 +293,7 @@
             @endif
 
             {{-- 🌟 Pagination --}}
-            @if($supplies->hasPages())
+            @if(method_exists($supplies, 'hasPages') && $supplies->hasPages())
                 <div class="mt-16 flex justify-center fade-in-up delay-300 pb-8">
                     <div class="bg-white px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-gray-100">
                         {{ $supplies->appends(request()->query())->links() }}
@@ -256,7 +303,7 @@
 
         </div>
 
-        {{-- 🌟 Floating Cart Button (Premium Edition) --}}
+        {{-- 🌟 Floating Cart Button --}}
         @auth
             @php
                 $hasItemsInCart = \App\Models\SupplyOrder::where('user_id', auth()->id())->where('status', 'cart')->exists();

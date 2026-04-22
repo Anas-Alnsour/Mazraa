@@ -14,7 +14,7 @@ class SupplyCompanyDashboardController extends Controller
     /**
      * Display the Supply Company Dashboard. (Merged with Jules' Grouping Logic)
      */
-    public function index()
+    public function index(Request $request)
     {
         if (Auth::user()->role !== 'supply_company') {
             abort(403, 'Unauthorized access.');
@@ -27,7 +27,10 @@ class SupplyCompanyDashboardController extends Controller
         // ---------------------------------------------------------------
         $orders = SupplyOrder::with(['supply', 'user', 'driver', 'booking.farm'])
             ->whereHas('supply', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
+                // ✅ التعديل الأول: البحث داخل علاقة inventories بدلاً من جدول supplies مباشرة
+                $query->whereHas('inventories', function($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                });
             })
             ->whereNotIn('status', ['cart', 'pending_payment'])
             ->orderBy('created_at', 'desc')
@@ -61,12 +64,26 @@ class SupplyCompanyDashboardController extends Controller
         // Supporting metrics (used by some view sections)
         $activeOrdersCount = $orders->whereIn('status', ['pending', 'waiting_driver', 'in_way'])->count();
 
+        // ---------------------------------------------------------------
+        // 5. [NEW] Global Catalog & Local Inventory with Pagination & Filters
+        // ---------------------------------------------------------------
+        $query = \App\Models\Supply::with(['inventories' => function($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        }]);
+
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category', $request->category);
+        }
+
+        $globalSupplies = $query->paginate(12);
+
         return view('admin.supplies.dashboard', compact(
             'financials',
             'drivers',
             'recentOrders',
             'groupedOrders',
-            'activeOrdersCount'
+            'activeOrdersCount',
+            'globalSupplies'
         ));
     }
 
@@ -102,7 +119,10 @@ class SupplyCompanyDashboardController extends Controller
         try {
             SupplyOrder::where('order_id', $invoiceId)
                 ->whereHas('supply', function ($q) use ($user) {
-                    $q->where('company_id', $user->id);
+                    // ✅ التعديل الثاني: نفس الإصلاح هنا لكي يعمل تعيين السائق بدون مشاكل
+                    $q->whereHas('inventories', function($invQ) use ($user) {
+                        $invQ->where('company_id', $user->id);
+                    });
                 })
                 ->update([
                     'driver_id' => $driver->id,
@@ -124,5 +144,29 @@ class SupplyCompanyDashboardController extends Controller
         }
 
         return back()->with('success', 'Driver assigned successfully. Order is now waiting for driver pick-up.');
+    }
+
+    /**
+     * [NEW] Update specific stock for Centralized Global Supply Catalog
+     */
+    public function updateStock(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'supply_company') {
+            abort(403);
+        }
+
+        $request->validate([
+            'supply_id' => 'required|exists:supplies,id',
+            'stock' => 'required|integer|min:0',
+        ]);
+
+        \App\Models\SupplyInventory::updateOrCreate(
+            ['supply_id' => $request->supply_id, 'company_id' => $user->id],
+            ['stock' => $request->stock]
+        );
+
+        return back()->with('success', 'Local inventory updated successfully.');
     }
 }

@@ -87,7 +87,8 @@
                 Manage Farms
             </a>
 
-            <a href="{{ route('admin.supplies.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-[11px] uppercase tracking-widest {{ request()->routeIs('admin.supplies.*') ? 'bg-slate-800 text-lime-400 shadow-inner border border-lime-500/20' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border border-transparent hover:border-slate-700/50' }}">
+            {{-- ✅ التعديل هنا: توجيه رابط Global Inventory إلى Central Supplies الجديد --}}
+            <a href="{{ route('admin.central-supplies.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold text-[11px] uppercase tracking-widest {{ request()->routeIs('admin.central-supplies.*') || request()->routeIs('admin.supplies.*') ? 'bg-slate-800 text-lime-400 shadow-inner border border-lime-500/20' : 'text-slate-400 hover:bg-slate-800/50 hover:text-white border border-transparent hover:border-slate-700/50' }}">
                 <svg class="h-5 w-5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                 Global Inventory
             </a>
@@ -195,7 +196,7 @@
         {{-- 🌟 Dynamic Main Content --}}
         <main class="flex-1 overflow-y-auto p-4 lg:p-8 relative z-20">
 
-            {{-- 💡 FLOATING TOAST NOTIFICATIONS (FIXED & RESTORED) 💡 --}}
+            {{-- 💡 FLOATING TOAST NOTIFICATIONS 💡 --}}
             <div class="fixed top-24 right-5 z-[150] flex flex-col gap-3 pointer-events-none">
                 @if (session('success'))
                     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)"

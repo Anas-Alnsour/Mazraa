@@ -85,10 +85,10 @@ class User extends Authenticatable
         return $this->hasMany(\App\Models\Farm::class, 'owner_id');
     }
 
-    // 3. علاقة شركة التوريد بالمنتجات تبعتها
-    public function supplies()
+    // 3. علاقة شركة التوريد بالمخزون تبعها
+    public function supplyInventories()
     {
-        return $this->hasMany(\App\Models\Supply::class, 'company_id');
+        return $this->hasMany(\App\Models\SupplyInventory::class, 'company_id');
     }
 
     // 4. Financial transactions ledger entries for this user

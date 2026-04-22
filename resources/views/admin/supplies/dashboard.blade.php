@@ -13,11 +13,12 @@
     .table-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 8px; }
     .table-scroll::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
 
-    /* Select styling for Dark Mode */
     select option { background-color: #0f172a; color: #f8fafc; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
 
-<div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in">
+<div class="max-w-[96%] xl:max-w-7xl mx-auto space-y-10 pb-24 animate-god-in mt-8">
 
     {{-- 🌟 1. Floating Toast Notifications --}}
     <div x-data="{ show: true }" x-init="setTimeout(() => show = false, 6000)" class="fixed top-24 right-5 z-[150] flex flex-col gap-4 pointer-events-none">
@@ -105,8 +106,95 @@
         </div>
     </div>
 
+    {{-- 🌟 2.5 Global Catalog Local Stock & Filters (MERGED) --}}
+    @php
+        $categories = ['لحوم ومشاوي', 'خضار وفواكه', 'مقبلات وسلطات', 'أدوات ومعدات الشواء', 'تسالي وحلويات', 'مشروبات وثلج', 'مستلزمات السفرة والنظافة', 'ألعاب وترفيه'];
+        $currentCategory = request('category');
+    @endphp
+
+    <div class="mt-12 bg-slate-900/60 rounded-[3rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl fade-in-up" style="animation-delay: 0.45s;">
+
+        {{-- Matrix Header & Filters --}}
+        <div class="p-8 md:p-10 border-b border-slate-800 bg-slate-950/40 flex flex-col gap-8">
+
+            {{-- Titles --}}
+            <div>
+                <h3 class="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                    <div class="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                    </div>
+                    Local Inventory Matrix
+                </h3>
+                <p class="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-[0.2em] ml-1">Manage stock for global catalog products</p>
+            </div>
+
+            {{-- Categories Inside Header --}}
+            <div class="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
+                <a href="{{ route('supplies.dashboard') }}" class="whitespace-nowrap px-6 py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border {{ !$currentCategory ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_8px_20px_rgba(16,185,129,0.3)]' : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-emerald-400 shadow-sm' }}">
+                    الكل
+                </a>
+                @foreach($categories as $cat)
+                    <a href="{{ route('supplies.dashboard', ['category' => $cat]) }}" class="whitespace-nowrap px-6 py-3 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border {{ $currentCategory === $cat ? 'bg-emerald-600 text-white border-emerald-500 shadow-[0_8px_20px_rgba(16,185,129,0.3)]' : 'bg-slate-900 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-emerald-400 shadow-sm' }}">
+                        {{ $cat }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Products Grid --}}
+        <div class="p-8 bg-slate-900/20">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @forelse($globalSupplies as $product)
+                    @php
+                        $localStock = $product->inventories->first()?->stock ?? 0;
+                    @endphp
+                    <div class="bg-slate-950 rounded-[2rem] p-6 border border-slate-800 shadow-inner group relative overflow-hidden flex flex-col justify-between h-full hover:border-emerald-500/30 transition-colors">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
+                        <div class="relative z-10 w-full mb-4">
+                            @if($product->image)
+                                <img src="{{ asset('storage/' . $product->image) }}" class="w-full h-32 object-cover rounded-xl border border-slate-800 shadow-md">
+                            @else
+                                <div class="w-full h-32 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shadow-md">No Img</div>
+                            @endif
+                        </div>
+
+                        <div class="relative z-10 flex-1 flex flex-col">
+                            <h4 class="font-black text-white text-md truncate">{{ $product->name }}</h4>
+                            <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">{{ $product->category }}</p>
+                            <p class="text-emerald-400 text-sm font-bold mb-4 tracking-tight">JOD {{ number_format($product->price, 2) }}</p>
+
+                            <form action="{{ route('supplies.inventory.update') }}" method="POST" class="flex items-center space-x-2 mt-auto">
+                                @csrf
+                                <input type="hidden" name="supply_id" value="{{ $product->id }}">
+                                <input type="number" name="stock" value="{{ $localStock }}" min="0" class="w-full bg-slate-900 border border-slate-700/50 rounded-xl p-2.5 text-white font-black text-center focus:ring-2 focus:ring-emerald-500/50 shadow-inner appearance-none transition-all outline-none">
+                                <button type="submit" class="p-3 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 shrink-0" title="Save Stock">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full py-12 text-center flex flex-col items-center">
+                        <div class="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-4 border border-slate-800 shadow-inner">
+                            <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <p class="text-slate-500 font-bold uppercase tracking-widest text-[10px]">No products found in this category.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- 🌟 Pagination Links --}}
+        @if(method_exists($globalSupplies, 'hasPages') && $globalSupplies->hasPages())
+            <div class="p-6 bg-slate-950/50 border-t border-slate-800 flex justify-center text-white custom-pagination">
+                {{ $globalSupplies->appends(request()->query())->links() }}
+            </div>
+        @endif
+    </div>
+
     {{-- 🌟 3. Dispatching & Order Management --}}
-    <div class="bg-slate-900/60 rounded-[3rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl fade-in-up" style="animation-delay: 0.5s;">
+    <div class="bg-slate-900/60 rounded-[3rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl fade-in-up mt-12" style="animation-delay: 0.5s;">
 
         {{-- Header --}}
         <div class="p-8 md:p-10 border-b border-slate-800 bg-slate-950/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
@@ -201,7 +289,6 @@
                                             </div>
                                         </div>
                                     @else
-                                        {{-- Dispatch Form (Ultra Modern) --}}
                                         <form method="POST" action="{{ route('supplies.assign_driver', $order->id) }}" class="flex items-center justify-end gap-2">
                                             @csrf @method('PATCH')
                                             <div class="relative">
@@ -211,9 +298,6 @@
                                                         <option value="{{ $driver->id }}">{{ $driver->name }}</option>
                                                     @endforeach
                                                 </select>
-                                                {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
-                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                                                </div> --}}
                                             </div>
                                             <button type="submit" class="p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] active:scale-95 flex-shrink-0" title="Dispatch Order">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>

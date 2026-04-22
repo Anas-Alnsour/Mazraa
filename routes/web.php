@@ -109,7 +109,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/debug-bell', function () {
         $user = auth()->user();
-        
+
         // Force create a raw database notification directly
         $user->notifications()->create([
             'id' => \Illuminate\Support\Str::uuid(),
@@ -189,10 +189,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/payouts/record', [SuperAdminController::class, 'recordPayout'])->name('payouts.record');
     Route::get('/financials', [FinancialController::class, 'index'])->name('financials');
 
+    // ✅ تم توجيه راوت 'supplies' القديم ليعمل على متحكم الكتالوج المركزي الجديد
+    Route::resource('supplies', \App\Http\Controllers\Admin\CentralSupplyController::class);
+
+    // (اختياري) يمكنك إبقاء الراوت الإضافي إذا كنت تستخدمه في مكان آخر، أو الاعتماد على الأعلى
+    Route::resource('central-supplies', \App\Http\Controllers\Admin\CentralSupplyController::class);
+
     // Old resources mapped to admin logic
     Route::resource('farms', FarmAdminController::class);
-    Route::resource('supplies', SupplyAdminController::class);
     Route::resource('users', AdminUserController::class);
+
     // Admin Message Management
     Route::get('/contact-messages', [AdminContactController::class, 'index'])->name('contacts.index');
     Route::get('/contact-messages/{id}', [AdminContactController::class, 'show'])->name('contacts.show');
@@ -230,8 +236,8 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
 // --- [4] SUPPLY COMPANY ---
 Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('supplies.')->group(function () {
     Route::get('/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/inventory/update', [SupplyCompanyDashboardController::class, 'updateStock'])->name('inventory.update');
     Route::patch('/orders/{order}/assign-driver', [SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
-    Route::resource('items', SupplyItemController::class);
     Route::resource('drivers', SupplyDriverController::class);
 });
 
@@ -246,8 +252,15 @@ Route::middleware(['auth', 'role:transport_company'])->prefix('transport')->name
 });
 
 // ==========================================================================
-// 🚀 [8] NEW JULES DRIVER DASHBOARDS
+// 🚀 [8] NEW JULES DRIVER DASHBOARDS & NEW ARCHITECTURES
 // ==========================================================================
+
+// --- CENTRAL SUPPLY ADMIN (Phase 2) ---
+Route::middleware(['auth', 'role:central_supply_admin'])->prefix('central-supply')->name('central_supply.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\CentralSupplyController::class, 'index'])->name('dashboard');
+    Route::resource('supplies', \App\Http\Controllers\Admin\CentralSupplyController::class)->except(['index']);
+});
+
 
 // --- TRANSPORT DRIVER DASHBOARD ---
 Route::middleware(['auth', 'role:transport_driver'])->prefix('driver/transport')->name('transport.driver.')->group(function () {
@@ -308,7 +321,7 @@ Route::get('/test-bell', function () {
 
 Route::get('/test-my-bell', function () {
     $user = auth()->user();
-    
+
     if (!$user) {
         return 'Please log in first!';
     }

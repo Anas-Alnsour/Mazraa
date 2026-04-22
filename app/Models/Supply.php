@@ -11,18 +11,16 @@ class Supply extends Model
 {
     use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
 protected $fillable = [
-    'company_id',
     'name',
     'description',
     'category', 
     'price',
-    'stock',
     'image',
 ];
 
-    public function company()
+    public function inventories()
     {
-        return $this->belongsTo(User::class, 'company_id');
+        return $this->hasMany(SupplyInventory::class);
     }
 
     public function orders()

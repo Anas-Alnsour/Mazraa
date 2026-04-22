@@ -13,6 +13,11 @@
     }
     .delay-100 { animation-delay: 0.1s; }
     .delay-200 { animation-delay: 0.2s; }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .qty-input { background: transparent; border: none; text-align: center; width: 2.5rem; font-weight: 900; color: #111827; font-size: 0.875rem; pointer-events: none; }
+    .qty-input:focus { outline: none; box-shadow: none; }
 </style>
 
 <div class="bg-[#f8fafc] min-h-screen py-32 selection:bg-[#1d5c42] selection:text-white relative">
@@ -50,7 +55,7 @@
                     <div class="text-sm text-blue-800/80 font-medium leading-relaxed">
                         <p>
                             You may add items to your cart at any time. However, to ensure fresh and prompt delivery,
-                            <strong class="text-blue-900">checkout and payment are strictly allowed ONLY during your farm booking duration, or exactly 2 hours before your booking starts.</strong>
+                            <strong class="text-blue-900">checkout and payment are strictly allowed ONLY during your active farm booking duration, or exactly 2 hours before it starts.</strong>
                         </p>
                     </div>
                 </div>
@@ -109,16 +114,14 @@
                                                     {{ $item->supply->name ?? 'Product Unavailable' }}
                                                 </span>
 
-                                                {{-- [Sprint 4 UX] Individual destination removed; destination is now selected globally at checkout --}}
-
                                                 <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest flex items-center gap-1.5">
                                                     <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                                                    By {{ $item->supply->company->name ?? 'Vendor' }}
+                                                    By {{ $localCompany ? $localCompany->name : 'Mazraa Official' }}
                                                 </p>
                                             </div>
 
                                             <div class="mt-6 flex flex-wrap items-center gap-4">
-                                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100" x-data="{ qty: {{ $item->quantity }}, max: {{ $item->supply->stock ?? 1 }} }">
+                                                <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100" x-data="{ qty: {{ $item->quantity }} }">
                                                     @csrf
                                                     @method('PUT')
                                                     <input type="hidden" name="quantity" x-model="qty">
@@ -131,7 +134,7 @@
 
                                                         <span class="text-sm font-black text-gray-900 w-8 text-center select-none" x-text="qty"></span>
 
-                                                        <button type="button" @click="if(qty < max) qty++" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-gray-500 hover:text-[#1d5c42] hover:bg-[#1d5c42]/10 hover:border-[#1d5c42]/20 border border-transparent shadow-sm transition-all focus:outline-none active:scale-95">
+                                                        <button type="button" @click="qty++" class="w-8 h-8 flex items-center justify-center rounded-xl bg-white text-gray-500 hover:text-[#1d5c42] hover:bg-[#1d5c42]/10 hover:border-[#1d5c42]/20 border border-transparent shadow-sm transition-all focus:outline-none active:scale-95">
                                                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
                                                         </button>
                                                     </div>
@@ -140,14 +143,14 @@
                                                 </form>
 
                                                 <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-l-2 border-gray-100 pl-4 py-1">
-                                                    {{ number_format($item->supply->price, 2) }} JOD <span class="text-gray-300">/ unit</span>
+                                                    {{ number_format($item->supply->price ?? 0, 2) }} JOD <span class="text-gray-300">/ unit</span>
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div class="mt-4 sm:mt-0 flex flex-row sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-gray-100 pt-4 sm:pt-0">
                                             <div class="text-left sm:text-right flex flex-col sm:items-end ml-20 sm:ml-0 mb-4">
-                                                <span class="text-2xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($item->total_price, 2) }}</span>
+                                                <span class="text-2xl font-black text-[#1d5c42] tracking-tighter">{{ number_format($item->total_price ?? 0, 2) }}</span>
                                                 <span class="text-[9px] text-gray-400 uppercase tracking-widest font-black">JOD Total</span>
                                             </div>
 
@@ -199,7 +202,7 @@
                         {{-- [Sprint 4 UX] Global Destination Selection --}}
                         <form action="{{ route('cart.place_order') }}" method="POST" class="space-y-6">
                             @csrf
-                            
+
                             <div>
                                 <label for="booking_id" class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Delivery Destination <span class="text-red-500">*</span></label>
                                 @if(isset($eligibleBookings) && count($eligibleBookings) > 0)
@@ -218,11 +221,10 @@
                                         <p class="text-[8px] text-amber-600 font-bold mt-1">Visit the Explore page to book a farm before ordering supplies.</p>
                                         <a href="{{ route('explore') }}" class="inline-block mt-3 text-[9px] font-black text-[#1d5c42] hover:underline">Book Now</a>
                                     </div>
-                                    {{-- Hidden input or disabled state could go here, but validation will catch it --}}
                                 @endif
                             </div>
 
-                            <button type="submit" 
+                            <button type="submit"
                                 @if(!isset($eligibleBookings) || count($eligibleBookings) === 0) disabled title="Please select a booking first" @endif
                                 class="w-full bg-[#1d5c42] hover:bg-[#154230] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed shadow-[0_10px_20px_rgba(29,92,66,0.2)] hover:shadow-[0_15px_30px_rgba(29,92,66,0.3)] text-white font-black py-5 px-6 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px] md:text-xs">
                                 Confirm & Checkout
