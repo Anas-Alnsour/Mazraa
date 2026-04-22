@@ -268,6 +268,7 @@ class SupplyOrderController extends Controller
                     // [INVENTORY ROUTING] Check Local Stock
                     $localInventory = SupplyInventory::where('company_id', $localCompany->id)
                         ->where('supply_id', $item->supply_id)
+                        ->lockForUpdate()
                         ->first();
 
                     if (!$localInventory || $localInventory->stock < $item->quantity) {

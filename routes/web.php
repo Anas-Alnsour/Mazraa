@@ -235,10 +235,23 @@ Route::middleware(['auth', 'role:farm_owner'])->prefix('owner')->name('owner.')-
 
 // --- [4] SUPPLY COMPANY ---
 Route::middleware(['auth', 'role:supply_company'])->prefix('supplies')->name('supplies.')->group(function () {
-    Route::get('/dashboard', [SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/inventory/update', [SupplyCompanyDashboardController::class, 'updateStock'])->name('inventory.update');
-    Route::patch('/orders/{order}/assign-driver', [SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
-    Route::resource('drivers', SupplyDriverController::class);
+    // 🏢 Regional Branch Routes
+    Route::get('/dashboard', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/inventory/update', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'updateStock'])->name('inventory.update');
+    Route::patch('/orders/{order}/assign-driver', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'assignDriver'])->name('assign_driver');
+    Route::resource('drivers', App\Http\Controllers\SupplyDriverController::class);
+
+    // 👑 Master HQ Routes
+    Route::get('/hq/overview', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'hqOverview'])->name('hq.overview');
+    Route::get('/hq/catalog', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'hqCatalog'])->name('hq.catalog');
+    Route::get('/hq/telemetry', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'hqTelemetry'])->name('hq.telemetry');
+    Route::post('/hq/replenish', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'replenishStock'])->name('hq.replenish');
+
+    // Global Catalog CRUD (HQ Only)
+    Route::get('/branch-inventory/{id}', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'branchInventory'])->name('branch_inventory');
+    Route::post('/global-catalog', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'storeGlobalProduct'])->name('catalog.store');
+    Route::put('/global-catalog/{id}', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'updateGlobalProduct'])->name('catalog.update');
+    Route::delete('/global-catalog/{id}', [App\Http\Controllers\SupplyCompanyDashboardController::class, 'destroyGlobalProduct'])->name('catalog.destroy');
 });
 
 // --- [5] TRANSPORT COMPANY ---

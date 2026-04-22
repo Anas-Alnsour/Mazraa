@@ -83,9 +83,6 @@ class CentralSupplyController extends Controller
     public function destroy($id)
     {
         $supply = Supply::findOrFail($id);
-        if ($supply->image) {
-            Storage::disk('public')->delete($supply->image);
-        }
         $supply->delete();
         return back()->with('success', 'Global Product removed.');
     }

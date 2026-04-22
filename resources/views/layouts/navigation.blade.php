@@ -41,7 +41,7 @@
                         <x-slot name="content">
                             <x-dropdown-link :href="route('login')" class="font-bold">Customer Login</x-dropdown-link>
                             <div class="border-t border-gray-100 my-1"></div>
-                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-[#1d5c42]">Admin / Owner</x-dropdown-link>
+                            <x-dropdown-link :href="route('portal.login')" class="text-xs font-bold text-[#1d5c42]">Owner</x-dropdown-link>
                             <x-dropdown-link :href="route('supply-company.login')" class="text-xs font-bold">Supply Company</x-dropdown-link>
                             <x-dropdown-link :href="route('transport-company.login')" class="text-xs font-bold">Transport Company</x-dropdown-link>
                         </x-slot>

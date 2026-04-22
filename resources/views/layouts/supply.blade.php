@@ -95,17 +95,34 @@
             <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar relative z-10">
                 <p class="px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-5">Command Console</p>
 
-                <a href="{{ route('supplies.dashboard') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.dashboard') ? 'sidebar-link-active' : '' }}">
-                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Overview & Dispatch
-                </a>
+                @if(Auth::user() && Auth::user()->is_hq)
+                    {{-- MASTER HQ NAVIGATION --}}
+                    <a href="{{ route('supplies.hq.overview') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.hq.overview') ? 'sidebar-link-active' : '' }}">
+                        <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        Nodes Overview
+                    </a>
 
-                {{-- 🚨 تم حذف رابط Inventory القديم من هنا 🚨 --}}
+                    <a href="{{ route('supplies.hq.catalog') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.hq.catalog') ? 'sidebar-link-active' : '' }}">
+                        <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m-9-4h.01M9 16h.01"></path></svg>
+                        Global Catalog
+                    </a>
 
-                <a href="{{ route('supplies.drivers.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.drivers.*') ? 'sidebar-link-active' : '' }}">
-                    <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    Supply Fleet
-                </a>
+                    <a href="{{ route('supplies.hq.telemetry') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.hq.telemetry') ? 'sidebar-link-active' : '' }}">
+                        <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Stock Telemetry
+                    </a>
+                @else
+                    {{-- REGIONAL BRANCH NAVIGATION --}}
+                    <a href="{{ route('supplies.dashboard') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.dashboard') ? 'sidebar-link-active' : '' }}">
+                        <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        Overview & Dispatch
+                    </a>
+
+                    <a href="{{ route('supplies.drivers.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('supplies.drivers.*') ? 'sidebar-link-active' : '' }}">
+                        <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        Supply Fleet
+                    </a>
+                @endif
             </nav>
 
             {{-- Logout Button --}}
