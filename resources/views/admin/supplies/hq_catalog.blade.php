@@ -121,7 +121,7 @@
                         </div>
 
                         <div class="mt-6 pt-5 border-t border-slate-800/50 flex items-center justify-end gap-2 relative z-10">
-                            <button @click="editData = {{ \Illuminate\Support\Js::from($supply) }}; editUrl = '{{ route('supplies.catalog.update', $supply->id) }}'; editMode = true" class="p-2.5 bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-600/10 text-slate-400 hover:text-indigo-400 rounded-xl transition-all active:scale-95 shadow-inner">
+                            <button @click="editData = {{ \Illuminate\Support\Js::from($supply) }}; editUrl = '{{ route('supplies.catalog.update', $supply->id) }}'; editMode = true" class="p-2 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-lg transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <form action="{{ route('supplies.catalog.destroy', $supply->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this global product?');">
