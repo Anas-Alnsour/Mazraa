@@ -38,10 +38,10 @@ class NewSupplyOrderNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'id' => $this->order->id,
+            // تعديل المفتاح إلى url ليتوافق مع الـ Dropdown الجديد
             'title' => 'New Supply Order',
             'message' => 'Action Required: You have been assigned to deliver supply order #' . $this->order->order_id . '.',
-            'action_url' => route('supply.driver.dashboard')
+            'url' => route('supply.driver.dashboard')
         ];
     }
 }

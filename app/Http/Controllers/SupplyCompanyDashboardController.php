@@ -136,7 +136,23 @@ class SupplyCompanyDashboardController extends Controller
                 ->increment('orders_count');
 
             DB::commit();
-            $driver->notify(new SupplyDriverAssignedNotification($invoiceId));
+
+            // =========================================================
+            // 🚀 إطلاق الإشعارات (للسائق وللعميل)
+            // =========================================================
+            try {
+                // إشعار للسائق
+                $driver->notify(new SupplyDriverAssignedNotification($invoiceId));
+
+                // إشعار للعميل صاحب الطلب
+                if ($order->user) {
+                    $order->user->notify(new SupplyDriverAssignedNotification($invoiceId));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Notification Error (Supply Assign): ' . $e->getMessage());
+            }
+            // =========================================================
+
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to assign driver: ' . $e->getMessage());

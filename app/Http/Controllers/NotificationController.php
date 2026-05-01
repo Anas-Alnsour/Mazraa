@@ -8,26 +8,35 @@ use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
     /**
-     * Mark a specific notification as read and redirect to its action_url.
+     * عرض صفحة صندوق الإشعارات بالكامل مع الترقيم (15 في كل صفحة)
      */
-    public function markAsRead($id)
+    public function index()
     {
-        $notification = Auth::user()->notifications()->find($id);
-
-        if ($notification) {
-            $notification->markAsRead();
-            
-            // If action_url exists in the data payload, redirect to it.
-            if (isset($notification->data['action_url']) && !empty($notification->data['action_url'])) {
-                return redirect($notification->data['action_url']);
-            }
-        }
-
-        return back();
+        $notifications = Auth::user()->notifications()->paginate(15);
+        return view('notifications.index', compact('notifications'));
     }
 
     /**
-     * Mark all unread notifications as read.
+     * تحديد إشعار معين كمقروء وتوجيه المستخدم للرابط المطلوب
+     */
+    public function markAsReadAndRedirect($id)
+    {
+        $notification = Auth::user()->notifications()->findOrFail($id);
+
+        // تحديد كـ مقروء
+        $notification->markAsRead();
+        
+        // 💡 صمام أمان مطور: بيبحث في كل المفاتيح الممكنة لضمان التوجيه الصحيح
+        $url = $notification->data['url'] 
+               ?? $notification->data['action_url'] 
+               ?? $notification->data['target_url'] 
+               ?? route('dashboard'); // إذا ما لقى شي بيرجعه للداشبورد الأساسي
+        
+        return redirect($url);
+    }
+
+    /**
+     * تحديد جميع الإشعارات كمقروءة (زر Clear All)
      */
     public function markAllAsRead()
     {

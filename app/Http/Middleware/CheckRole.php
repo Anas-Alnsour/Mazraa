@@ -16,7 +16,7 @@ class CheckRole
 
         $user = auth()->user();
 
-        // ✅ تم حل مشكلة الـ Loop، بدلاً من رمي خطأ أو توجيهه للرئيسية يتم تحويله للوحته الصحيحة
+        // فحص الصلاحية وتوجيه المستخدم بناءً على دوره إذا حاول الدخول لمكان غير مسموح له
         if (!in_array($user->role, $roles)) {
             $errorMessage = 'Unauthorized Access. You have been redirected to your dashboard.';
 
@@ -25,8 +25,11 @@ class CheckRole
                 'farm_owner'        => redirect()->route('owner.dashboard')->with('error', $errorMessage),
                 'transport_company' => redirect()->route('transport.dashboard')->with('error', $errorMessage),
                 'supply_company'    => redirect()->route('supplies.dashboard')->with('error', $errorMessage),
-                'transport_driver'  => redirect()->route('driver.transport.dashboard')->with('error', $errorMessage),
-                'supply_driver'     => redirect()->route('driver.supply.dashboard')->with('error', $errorMessage),
+                
+                // ✅ التصحيح: مطابقة الأسماء مع ملف web.php
+                'transport_driver'  => redirect()->route('transport.driver.dashboard')->with('error', $errorMessage),
+                'supply_driver'     => redirect()->route('supply.driver.dashboard')->with('error', $errorMessage),
+                
                 default             => redirect()->route('home')->with('error', $errorMessage)
             };
         }

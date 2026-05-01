@@ -75,6 +75,12 @@ class TransportDriverDashboardController extends Controller
             return redirect()->route('transport.driver.dashboard')
                 ->with('success', 'This trip is already marked as completed.');
         }
+        // 🛡️ يمنع السائق من بدء الرحلة إذا كان متبقي أكثر من 8 ساعات لموعد الوصول
+        if ($newStatus === 'in_progress' && $trip->Farm_Arrival_Time) {
+            if (now()->addHours(8)->lessThan($trip->Farm_Arrival_Time)) {
+                return back()->with('error', 'You cannot start this trip yet. Trips can only be started within 8 hours of the scheduled arrival time.');
+            }
+        }
 
         DB::beginTransaction();
 

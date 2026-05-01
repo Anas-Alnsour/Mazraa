@@ -147,11 +147,11 @@
                     <div class="relative group">
                         <select name="filter" onchange="this.form.submit()"
                                 class="bg-slate-950 border border-slate-800 text-slate-300 text-[10px] font-black uppercase tracking-widest rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-6 pr-12 py-4 appearance-none cursor-pointer transition-all hover:border-slate-700 shadow-inner">
-                            <option value="all" {{ ($filter ?? 'all') == 'all' ? 'selected' : '' }}>Filter: All Time</option>
-                            <option value="daily" {{ ($filter ?? '') == 'daily' ? 'selected' : '' }}>Filter: Today</option>
-                            <option value="weekly" {{ ($filter ?? '') == 'weekly' ? 'selected' : '' }}>Filter: This Week</option>
-                            <option value="monthly" {{ ($filter ?? '') == 'monthly' ? 'selected' : '' }}>Filter: This Month</option>
-                            <option value="yearly" {{ ($filter ?? '') == 'yearly' ? 'selected' : '' }}>Filter: This Year</option>
+                            <option value="all" {{ ($filter ?? 'all') == 'all' ? 'selected' : '' }}>All Time</option>
+                            <option value="daily" {{ ($filter ?? '') == 'daily' ? 'selected' : '' }}>Today</option>
+                            <option value="weekly" {{ ($filter ?? '') == 'weekly' ? 'selected' : '' }}>This Week</option>
+                            <option value="monthly" {{ ($filter ?? '') == 'monthly' ? 'selected' : '' }}>This Month</option>
+                            <option value="yearly" {{ ($filter ?? '') == 'yearly' ? 'selected' : '' }}>This Year</option>
                         </select>
                         {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-slate-500 group-hover:text-emerald-500 transition-colors">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" /></svg>
@@ -183,7 +183,7 @@
                     @forelse($recentTransactions as $tx)
                         <tr class="hover:bg-slate-800/40 transition-all group">
                             <td class="px-10 py-6 whitespace-nowrap">
-                                <p class="text-xs font-black text-slate-400 group-hover:text-emerald-400 transition-colors">{{ $tx->created_at->format('M d, H:i') }}</p>
+                                <p class="text-xs font-black text-slate-400 group-hover:text-emerald-400 transition-colors">{{ $tx->created_at->format('M d,y H:i') }}</p>
                             </td>
                             <td class="px-10 py-6 whitespace-nowrap">
                                 <div class="flex items-center gap-4">

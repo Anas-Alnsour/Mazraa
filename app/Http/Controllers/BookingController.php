@@ -160,6 +160,19 @@ class BookingController extends Controller
                 if (class_exists('\App\Services\TransportDispatchAction')) {
                     \App\Services\TransportDispatchAction::dispatchDriver($transport);
                 }
+
+                // =========================================================
+                // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات
+                // =========================================================
+                try {
+                    $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
+                    if ($transportCompanies->isNotEmpty()) {
+                        \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Transport Notification Error: ' . $e->getMessage());
+                }
+                // =========================================================
             }
 
             // Create supply orders (if any)
@@ -188,6 +201,22 @@ class BookingController extends Controller
             }
 
             DB::commit();
+
+            // =========================================================
+            // 🚀 إطلاق الإشعارات (الحجز الجديد) بعد نجاح الحفظ
+            // =========================================================
+            try {
+                // إشعار لصاحب المزرعة
+                if ($farm->user) {
+                    $farm->user->notify(new \App\Notifications\NewBookingReceivedNotification($booking));
+                }
+                // إشعار للعميل
+                $user->notify(new \App\Notifications\BookingConfirmedNotification($booking));
+            } catch (\Exception $e) {
+                \Log::error('Notification Error (Store Booking): ' . $e->getMessage());
+            }
+            // =========================================================
+
             return redirect()->route('payment.select', ['booking' => $booking->id]);
 
         } catch (\Exception $e) {
@@ -305,17 +334,34 @@ class BookingController extends Controller
                     return back()->with('error', 'Refund failed: ' . $e->getMessage());
                 }
             }
-
-            $booking->update(['status' => 'cancelled']);
-            $booking->delete();
-
-            return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled and refund processed successfully.');
         }
 
         $booking->update(['status' => 'cancelled']);
         $booking->delete();
 
-        return redirect()->route('bookings.my_bookings')->with('success', 'Booking cancelled successfully.');
+        // =========================================================
+        // 🚀 إطلاق الإشعارات (إلغاء الحجز) 
+        // =========================================================
+        try {
+            if ($booking->farm->user) {
+                $booking->farm->user->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid(),
+                    'type' => 'BookingCancelled',
+                    'data' => [
+                        'title' => 'Booking Cancelled',
+                        'message' => 'A booking for ' . ($booking->farm->name ?? 'your farm') . ' was cancelled by the user.',
+                        'url' => route('owner.bookings.index')
+                    ],
+                    'read_at' => null,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Notification Error (Cancel Booking): ' . $e->getMessage());
+        }
+        // =========================================================
+
+        $message = $booking->payment_status === 'paid' ? 'Booking cancelled and refund processed successfully.' : 'Booking cancelled successfully.';
+        return redirect()->route('bookings.my_bookings')->with('success', $message);
     }
 
     /**
@@ -500,6 +546,19 @@ class BookingController extends Controller
                     'commission_amount' => $transportCost * 0.10, 'net_company_amount' => $transportCost * 0.90
                 ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($transport);
+
+                // =========================================================
+                // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات عند إضافة توصيل بتعديل الحجز
+                // =========================================================
+                try {
+                    $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
+                    if ($transportCompanies->isNotEmpty()) {
+                        \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Transport Notification Error: ' . $e->getMessage());
+                }
+                // =========================================================
             }
         }
 
@@ -510,6 +569,40 @@ class BookingController extends Controller
             'transport_cost' => $transportCost, 'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
             'pickup_lng' => $requiresTransportFlag ? $request->pickup_lng : null,
         ]);
+
+        // =========================================================
+        // 🚀 إطلاق الإشعارات (تعديل الحجز)
+        // =========================================================
+        try {
+            // إشعار للعميل
+            $booking->user->notifications()->create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'type' => 'BookingUpdated',
+                'data' => [
+                    'title' => 'Booking Updated',
+                    'message' => 'Your booking for ' . ($farm->name ?? 'the farm') . ' has been updated successfully.',
+                    'url' => route('bookings.show', $booking->id)
+                ],
+                'read_at' => null,
+            ]);
+
+            // إشعار لصاحب المزرعة
+            if ($farm->user) {
+                $farm->user->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid(),
+                    'type' => 'BookingUpdated',
+                    'data' => [
+                        'title' => 'Booking Modified',
+                        'message' => 'Booking details for ' . ($farm->name ?? 'your farm') . ' have been modified by the customer.',
+                        'url' => route('owner.bookings.show', $booking->id)
+                    ],
+                    'read_at' => null,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Notification Error (Update Booking): ' . $e->getMessage());
+        }
+        // =========================================================
 
         $message = $difference < 0
             ? 'Booking updated successfully! A partial refund of ' . abs(round($difference, 2)) . ' JOD has been issued.'
@@ -567,6 +660,19 @@ class BookingController extends Controller
                         'commission_amount' => $session->metadata->transport_cost * 0.10, 'net_company_amount' => $session->metadata->transport_cost * 0.90
                     ]);
                     \App\Services\TransportDispatchAction::dispatchDriver($transport);
+
+                    // =========================================================
+                    // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات عند الدفع والترقية
+                    // =========================================================
+                    try {
+                        $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
+                        if ($transportCompanies->isNotEmpty()) {
+                            \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Transport Notification Error: ' . $e->getMessage());
+                    }
+                    // =========================================================
                 } else {
                     $existingTransport->update([
                         'Farm_Arrival_Time' => Carbon::parse($session->metadata->new_start_time),

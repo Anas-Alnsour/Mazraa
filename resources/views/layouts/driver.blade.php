@@ -66,9 +66,9 @@
 
             <div class="absolute inset-0 bg-gradient-to-b {{ $isSupply ? 'from-teal-500/5' : 'from-amber-500/5' }} to-transparent pointer-events-none"></div>
 
-            {{-- Logo Header --}}
+{{-- Logo Header --}}
             <div class="flex items-center justify-center h-24 border-b border-slate-800/60 relative z-10 shrink-0">
-                <a href="{{ url('/') }}" class="flex items-center gap-4 group px-6 w-full">
+                <div class="flex items-center gap-4 group px-6 w-full cursor-default">
                     <div class="w-11 h-11 rounded-2xl bg-gradient-to-br {{ $isSupply ? 'from-teal-600 to-emerald-800 border-teal-500/30 shadow-[0_0_20px_rgba(20,184,166,0.3)]' : 'from-amber-600 to-orange-800 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.3)]' }} flex items-center justify-center group-hover:scale-105 group-hover:rotate-6 transition-all duration-500 border">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     </div>
@@ -76,10 +76,9 @@
                         <span class="text-2xl font-black tracking-widest text-white uppercase leading-none {{ $isSupply ? 'group-hover:text-teal-400' : 'group-hover:text-amber-400' }} transition-colors">Mazraa</span>
                         <span class="text-[9px] font-black {{ $isSupply ? 'text-teal-500' : 'text-amber-500' }} tracking-[0.4em] mt-1.5 uppercase">Driver Terminal</span>
                     </div>
-                </a>
-            </div>
+                </div> </div>
 
-            {{-- Navigation Menu (Uses your exact links) --}}
+            {{-- Navigation Menu --}}
             <nav class="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scrollbar relative z-10">
                 @if($userRole === 'supply_driver')
                     <p class="px-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-5">Supply Operations</p>
@@ -162,8 +161,12 @@
                         <span class="text-sm font-black text-white uppercase tracking-[0.4em] opacity-90 drop-shadow-md">@yield('title', 'Driver Node')</span>
                     </div>
 
-                    {{-- Right side: Profile --}}
+                    {{-- Right side: Profile & Notifications --}}
                     <div class="flex items-center gap-5 lg:gap-8">
+                        
+                        {{-- 🔔 Notification Bell --}}
+                        <x-notification-bell />
+
                         <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
 
                         {{-- User Dropdown --}}

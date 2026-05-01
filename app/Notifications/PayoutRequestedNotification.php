@@ -32,7 +32,7 @@ class PayoutRequestedNotification extends Notification implements ShouldQueue
             'vendor_id' => $this->owner->id,
             'title' => 'Payout Requested',
             'message' => 'Vendor ' . $this->owner->name . ' has requested a payout of ' . number_format($this->amount, 2) . ' JOD.',
-            'action_url' => route('admin.payouts')
+            'url' => route('admin.payouts') // تم التعديل إلى url
         ];
     }
 }

@@ -6,91 +6,81 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\FinancialTransaction;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class FinancialController extends Controller
 {
     public function index(Request $request)
     {
         $adminId = Auth::id();
-        $filter = $request->query('filter', 'all');
-        $startDate = null;
+        $filter = $request->input('filter', 'all');
 
-        switch ($filter) {
-            case 'daily':
-                $startDate = now()->startOfDay();
-                break;
-            case 'weekly':
-                $startDate = now()->startOfWeek();
-                break;
-            case 'monthly':
-                $startDate = now()->startOfMonth();
-                break;
-            case 'yearly':
-                $startDate = now()->startOfYear();
-                break;
-        }
+        // 1. دالة ذكية لتطبيق الفلتر بشكل صارم حسب نوعه
+        $applyDateFilter = function ($query) use ($filter) {
+    switch ($filter) {
+        case 'daily':
+            $query->whereDate('created_at', today());
+            break;
 
-        // 1. Mazraa Net Profit (Admin's Credits)
-        $adminCreditsQuery = FinancialTransaction::where('user_id', $adminId)
-            ->where('transaction_type', 'credit');
-        if ($startDate) {
-            $adminCreditsQuery->where('created_at', '>=', $startDate);
-        }
-        $netProfit = $adminCreditsQuery->sum('amount');
+        case 'weekly':
+            // تعديل البداية لتكون السبت والنهاية الجمعة
+            $start = now()->startOfWeek(Carbon::SATURDAY);
+            $end = now()->endOfWeek(Carbon::FRIDAY);
+            
+            $query->whereBetween('created_at', [$start, $end]);
+            break;
 
-        // 2. Owner Share (Credits to Farm Owners)
-        $ownerShareQuery = FinancialTransaction::whereHas('user', function($q) {
-                $q->where('role', 'farm_owner');
-            })
-            ->where('transaction_type', 'credit');
-        if ($startDate) {
-            $ownerShareQuery->where('created_at', '>=', $startDate);
-        }
-        $ownerShare = $ownerShareQuery->sum('amount');
+        case 'monthly':
+            $query->whereMonth('created_at', now()->month)
+                  ->whereYear('created_at', now()->year);
+            break;
 
-        // 3. Provider Share (Credits to Supply and Transport Companies)
-        $providerShareQuery = FinancialTransaction::whereHas('user', function($q) {
-                $q->whereIn('role', ['supply_company', 'transport_company']);
-            })
-            ->where('transaction_type', 'credit');
-        if ($startDate) {
-            $providerShareQuery->where('created_at', '>=', $startDate);
-        }
-        $providerShare = $providerShareQuery->sum('amount');
+        case 'yearly':
+            $query->whereYear('created_at', now()->year);
+            break;
+    }
+};
 
-        // 4. Total Revenue (The sum of all payouts and platform fees)
+        // 2. تطبيق الفلتر على الأرباح الكلية
+        $netProfit = FinancialTransaction::where('user_id', $adminId)
+            ->where('transaction_type', 'credit')
+            ->tap($applyDateFilter)->sum('amount');
+
+        $ownerShare = FinancialTransaction::whereHas('user', fn($q) => $q->where('role', 'farm_owner'))
+            ->where('transaction_type', 'credit')
+            ->tap($applyDateFilter)->sum('amount');
+
+        $providerShare = FinancialTransaction::whereHas('user', fn($q) => $q->whereIn('role', ['supply_company', 'transport_company']))
+            ->where('transaction_type', 'credit')
+            ->tap($applyDateFilter)->sum('amount');
+
         $totalRevenue = $netProfit + $ownerShare + $providerShare;
 
-        // Breakdowns for the legacy variables (to avoid breaking the view)
+        // 3. تطبيق الفلتر على التفاصيل الجانبية
         $farmProfit = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
             ->whereIn('reference_type', ['farm_booking', 'booking'])
-            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-            ->sum('amount');
+            ->tap($applyDateFilter)->sum('amount');
 
         $transportProfit = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
             ->where('reference_type', 'transport')
-            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-            ->sum('amount');
+            ->tap($applyDateFilter)->sum('amount');
 
         $supplyProfit = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
             ->where('reference_type', 'supply_order')
-            ->when($startDate, fn($q) => $q->where('created_at', '>=', $startDate))
-            ->sum('amount');
+            ->tap($applyDateFilter)->sum('amount');
 
-        // Query for transaction stream
-        $txQuery = FinancialTransaction::with('user');
-        if ($startDate) {
-            $txQuery->where('created_at', '>=', $startDate);
-        }
+        // 4. تطبيق الفلتر على جدول العمليات
+        $txQuery = FinancialTransaction::with('user')->tap($applyDateFilter);
 
-        // Handle CSV Export
-        if ($request->query('export') === 'csv') {
+        // تصدير ملف الإكسل
+        if ($request->input('export') === 'csv') {
             return $this->exportToCsv($txQuery->orderBy('created_at', 'desc')->get());
         }
 
+        // جلب البيانات للجدول
         $recentTransactions = $txQuery->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
@@ -107,7 +97,6 @@ class FinancialController extends Controller
             'filter'
         ));
     }
-
     private function exportToCsv($transactions)
     {
         $fileName = 'financial_report_' . now()->format('Y-m-d_H-i') . '.csv';

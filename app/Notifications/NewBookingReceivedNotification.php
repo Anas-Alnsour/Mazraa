@@ -27,7 +27,7 @@ class NewBookingReceivedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject('New Booking Received: ' . $this->booking->farm->name)
+                    ->subject('New Booking Request: ' . ($this->booking->farm->name ?? 'Your Farm'))
                     ->view('mail.new-booking-received', [
                         'booking' => $this->booking,
                         'notifiable' => $notifiable
@@ -37,10 +37,10 @@ class NewBookingReceivedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'id' => $this->booking->id,
-            'title' => 'New Booking Received',
-            'message' => 'You have received a new booking for ' . ($this->booking->farm->name ?? 'your farm') . '.',
-            'action_url' => route('owner.bookings.show', $this->booking->id)
+            // توحيد شكل البيانات
+            'title' => 'New Booking Request',
+            'message' => 'A new booking request for ' . ($this->booking->farm->name ?? 'your farm') . ' needs your approval.',
+            'url' => route('owner.bookings.show', $this->booking->id)
         ];
     }
 }

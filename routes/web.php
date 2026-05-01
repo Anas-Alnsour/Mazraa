@@ -103,9 +103,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/success/{booking}', [\App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
     Route::get('/payment/cancel/{booking}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 
-    // 🔔 Notifications
-    Route::get('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+    // 🔔 Notifications (UPDATED)
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.clear');
+    Route::get('/notifications/{id}/redirect', [\App\Http\Controllers\NotificationController::class, 'markAsReadAndRedirect'])->name('notifications.redirect');
 
     Route::get('/debug-bell', function () {
         $user = auth()->user();
@@ -117,7 +118,7 @@ Route::middleware('auth')->group(function () {
             'data' => [
                 'title' => 'System Debug Test',
                 'message' => 'If you can see this, the bell UI and database are working perfectly!',
-                'action_url' => '#'
+                'url' => '#'
             ],
             'read_at' => null,
         ]);
@@ -346,7 +347,7 @@ Route::get('/test-my-bell', function () {
         'data' => [
             'title' => 'Test Success: ' . strtoupper($user->role),
             'message' => 'The dynamic bell is working for ' . $user->name . ' on the ' . $user->role . ' dashboard!',
-            'action_url' => '#'
+            'url' => '#'
         ],
         'read_at' => null,
     ]);

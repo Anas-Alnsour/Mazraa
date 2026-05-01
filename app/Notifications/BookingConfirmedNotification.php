@@ -26,7 +26,7 @@ class BookingConfirmedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->subject('Booking Confirmed: ' . $this->booking->farm->name)
+                    ->subject('Booking Confirmed: ' . ($this->booking->farm->name ?? 'Farm'))
                     ->view('mail.booking-confirmed', [
                         'booking' => $this->booking,
                         'notifiable' => $notifiable
@@ -36,10 +36,10 @@ class BookingConfirmedNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'id' => $this->booking->id,
+            // توحيد المفاتيح حسب النظام الجديد
             'title' => 'Booking Confirmed',
-            'message' => 'Reservation for ' . ($this->booking->farm->name ?? 'Farm') . ' has been successfully confirmed.',
-            'action_url' => $notifiable->role === 'farm_owner' 
+            'message' => 'The reservation for ' . ($this->booking->farm->name ?? 'the farm') . ' has been successfully confirmed.',
+            'url' => $notifiable->role === 'farm_owner' 
                 ? route('owner.bookings.show', $this->booking->id) 
                 : route('bookings.show', $this->booking->id)
         ];

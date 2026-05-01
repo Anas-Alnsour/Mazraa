@@ -37,10 +37,10 @@ class PayoutProcessedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'id' => $this->transaction->id,
+            // تم التعديل إلى url
             'title' => 'Payout Processed',
             'message' => 'Your payout of ' . number_format($this->transaction->amount ?? 0, 2) . ' JOD has been successfully processed.',
-            'action_url' => match($notifiable->role) {
+            'url' => match($notifiable->role) {
                 'farm_owner' => route('owner.financials'),
                 'supply_company' => route('supplies.dashboard'),
                 'transport_company' => route('transport.dashboard'),
