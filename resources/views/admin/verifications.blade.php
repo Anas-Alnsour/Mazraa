@@ -116,10 +116,10 @@
 
                             <div class="w-full lg:w-1/3">
                                 <div class="flex items-center gap-4 mb-3">
-                                    <div class="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-lg shadow-inner">{{ substr($booking->user->name ?? 'G', 0, 1) }}</div>
+                                    <div class="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-lg shadow-inner">{{ substr($booking->user?->name ?? 'G', 0, 1) }}</div>
                                     <div>
-                                        <p class="text-base font-black text-white leading-tight mb-0.5">{{ $booking->user->name ?? 'Guest' }}</p>
-                                        <p class="text-[10px] font-mono text-slate-400 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>{{ $booking->user->phone ?? 'No phone' }}</p>
+                                        <p class="text-base font-black text-white leading-tight mb-0.5">{{ $booking->user?->name ?? 'Guest' }}</p>
+                                        <p class="text-[10px] font-mono text-slate-400 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>{{ $booking->user?->phone ?? 'No phone' }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-block text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 uppercase tracking-[0.2em]">ID: #FB-{{ $booking->id }}</span>
@@ -127,7 +127,7 @@
 
                             <div class="w-full lg:w-1/3 bg-slate-900 rounded-xl p-5 border border-slate-800">
                                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5">Asset & Schedule</p>
-                                <p class="text-base font-bold text-white truncate mb-1">{{ $booking->farm->name }}</p>
+                                <p class="text-base font-bold text-white truncate mb-1">{{ $booking->farm?->name }}</p>
                                 <div class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                     <span class="bg-slate-800 px-2 py-1 rounded">{{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}</span>
                                     <span>•</span>
@@ -143,6 +143,7 @@
                             <div class="w-full lg:w-auto flex items-center justify-end gap-3 mt-4 lg:mt-0">
                                 <form action="{{ route('admin.verifications.handle', ['id' => $booking->id, 'type' => 'farm_booking']) }}" method="POST" class="flex gap-3 w-full">
                                     @csrf
+                                    @method('Patch')
                                     <button type="submit" name="action" value="reject" class="flex-1 px-6 py-4 bg-slate-900 border border-rose-500/30 text-rose-400 hover:bg-rose-600 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2" onclick="return confirm('Reject and cancel this booking?');">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
@@ -185,10 +186,10 @@
 
                             <div class="w-full lg:w-1/3">
                                 <div class="flex items-center gap-4 mb-3">
-                                    <div class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 font-black text-lg shadow-inner">{{ substr($order->user->name ?? 'G', 0, 1) }}</div>
+                                    <div class="w-12 h-12 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 font-black text-lg shadow-inner">{{ substr($order->user?->name ?? 'G', 0, 1) }}</div>
                                     <div>
-                                        <p class="text-base font-black text-white leading-tight mb-0.5">{{ $order->user->name ?? 'Guest' }}</p>
-                                        <p class="text-[10px] font-mono text-slate-400 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>{{ $order->user->phone ?? 'No phone' }}</p>
+                                        <p class="text-base font-black text-white leading-tight mb-0.5">{{ $order->user?->name ?? 'Guest' }}</p>
+                                        <p class="text-[10px] font-mono text-slate-400 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>{{ $order->user?->phone ?? 'No phone' }}</p>
                                     </div>
                                 </div>
                                 <span class="inline-block text-[10px] font-black text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-lg border border-rose-500/20 uppercase tracking-[0.2em]">INV: {{ $order->order_id }}</span>
@@ -208,6 +209,7 @@
                             <div class="w-full lg:w-auto flex items-center justify-end gap-3 mt-4 lg:mt-0">
                                 <form action="{{ route('admin.verifications.handle', ['id' => $order->id, 'type' => 'supply_order']) }}" method="POST" class="flex gap-3 w-full">
                                     @csrf
+                                    @method('Patch')
                                     <button type="submit" name="action" value="reject" class="flex-1 px-6 py-4 bg-slate-900 border border-slate-700 text-slate-400 hover:bg-rose-600 hover:text-white hover:border-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2" onclick="return confirm('Reject and cancel this order?');">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>

@@ -216,18 +216,36 @@
                     </div>
 
                     {{-- Passwords --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-400 transform"
-                        :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <x-password-toggle id="password" name="password" type="signup" color="gray"
-                            hide-internal-eye>
-                            Password
-                        </x-password-toggle>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-[400ms] transform"
+    :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
+    
+    <div>
+        <x-password-toggle id="password" name="password" type="signup" color="green" required hide-internal-eye>
+            Password
+        </x-password-toggle>
 
-                        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup"
-                            color="gray" hide-internal-eye>
-                            Confirm Password
-                        </x-password-toggle>
-                    </div>
+        @error('password')
+            <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
+        @enderror
+    </div>
+
+    <div>
+        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup" color="green" required hide-internal-eye>
+            Confirm Password
+        </x-password-toggle>
+
+        @error('password_confirmation')
+            <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
+        @enderror
+    </div>
+
+    
+        <p class="text-xs text-gray-500">At least 8 characters</p>
+        <p class="text-xs text-gray-500">Must contain letters</p>
+        <p class="text-xs text-gray-500">At least one Capital letter</p>
+        <p class="text-xs text-gray-500">Must include numbers & special characters</p>
+    
+</div>
                     {{-- Partner Type Selection --}}
                     <div class="group transition-all duration-700 delay-[450ms] transform"
                         :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">

@@ -264,7 +264,7 @@
                             <span
                                 class="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform translate-y-1 group-hover:translate-y-0 transition-transform"></span>
                             <span class="relative flex items-center gap-2">
-                                Sign In to Portal
+                                Log In to Portal
                                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"

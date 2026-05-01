@@ -28,10 +28,10 @@
                     <div class="mt-10 flex flex-wrap gap-4 justify-center lg:justify-start">
                         <a href="{{ route('owner.farms.create') }}" class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#c2a265] to-[#b09053] hover:to-[#9a7b42] text-[#020617] text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_10px_25px_rgba(194,162,101,0.3)] transform hover:-translate-y-1 active:scale-95">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                            Deploy New Farm
+                            Add New Farm
                         </a>
                         <a href="{{ route('owner.bookings.index') }}" class="inline-flex items-center gap-3 px-8 py-4 bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl backdrop-blur-md transition-all shadow-lg hover:border-[#c2a265]/50 transform hover:-translate-y-1 active:scale-95">
-                            View Full Ledger
+                            View Booking List
                         </a>
                     </div>
                 </div>
@@ -126,7 +126,7 @@
                         <p class="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-[0.2em] ml-1">Action needed on latest reservations</p>
                     </div>
                     <a href="{{ route('owner.bookings.index') }}" class="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#c2a265] bg-[#c2a265]/10 hover:bg-[#c2a265]/20 border border-[#c2a265]/30 px-6 py-3 rounded-2xl transition-all shadow-sm">
-                        View Ledger
+                        View list
                         <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                     </a>
                 </div>
@@ -181,8 +181,9 @@
                         <div class="w-24 h-24 bg-slate-950 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-slate-800 shadow-inner">
                             <svg class="w-12 h-12 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                         </div>
-                        <h3 class="text-xl font-black text-white tracking-tight mb-2">Ledger Empty</h3>
-                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">No active requests found in the pipeline.</p>
+                        <h3 class="text-xl font-black text-white tracking-tight mb-2">
+                            list is  Empty</h3>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">No active requests found.</p>
                     </div>
                 @endif
             </div>
@@ -204,7 +205,7 @@
                             </div>
                             <div>
                                 <h4 class="text-base font-black text-white tracking-tight">Publish Listing</h4>
-                                <p class="text-[9px] font-black tracking-[0.2em] uppercase text-slate-500 mt-1.5">Deploy new asset</p>
+                                <p class="text-[9px] font-black tracking-[0.2em] uppercase text-slate-500 mt-1.5">Add new farm</p>
                             </div>
                         </a>
 
@@ -213,8 +214,8 @@
                                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             </div>
                             <div>
-                                <h4 class="text-base font-black text-white tracking-tight">Account Security</h4>
-                                <p class="text-[9px] font-black tracking-[0.2em] uppercase text-slate-500 mt-1.5">Manage protocols</p>
+                                <h4 class="text-base font-black text-white tracking-tight">Account Settings</h4>
+                                <p class="text-[9px] font-black tracking-[0.2em] uppercase text-slate-500 mt-1.5">Manage your account</p>
                             </div>
                         </a>
                     </div>

@@ -137,7 +137,7 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="text-2xl font-black tracking-widest text-white uppercase leading-none group-hover:text-[#c2a265] transition-colors">Mazraa</span>
-                        <span class="text-[9px] font-black text-emerald-500 tracking-[0.4em] mt-1.5 uppercase">Owner Hub</span>
+                        <span class="text-[9px] font-black text-emerald-500 tracking-[0.4em] mt-1.5 uppercase">Owner </span>
                     </div>
                 </a>
             </div>
@@ -150,8 +150,8 @@
                     $navItems = [
                         ['route' => 'owner.dashboard', 'icon' => 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z', 'label' => 'Dashboard'],
                         ['route' => 'owner.farms.index', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', 'label' => 'My Properties'],
-                        ['route' => 'owner.bookings.index', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'label' => 'Booking Ledger'],
-                        ['route' => 'owner.financials', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'label' => 'Financial Flows'],
+                        ['route' => 'owner.bookings.index', 'icon' => 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'label' => 'Bookings'],
+                        ['route' => 'owner.financials', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'label' => 'Payments'],
                     ];
                 @endphp
 
@@ -166,7 +166,7 @@
 
                 <a href="{{ route('owner.profile.edit') }}" class="sidebar-link flex items-center gap-4 px-4 py-4 rounded-xl {{ request()->routeIs('owner.profile.*') ? 'active-nav-item' : '' }}">
                     <svg class="w-5 h-5 {{ request()->routeIs('owner.profile.*') ? 'text-emerald-400' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span class="text-[11px] font-bold uppercase tracking-widest">Security Hub</span>
+                    <span class="text-[11px] font-bold uppercase tracking-widest">Account settings</span>
                 </a>
             </nav>
 
@@ -176,7 +176,7 @@
                     @csrf
                     <button class="w-full flex items-center justify-center gap-3 px-4 py-4 bg-rose-500/10 text-rose-500 hover:text-white hover:bg-rose-600 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest border border-rose-500/20 active:scale-95 group shadow-sm hover:shadow-[0_0_20px_rgba(244,63,94,0.4)]">
                         <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Secure Logout
+                         Logout
                     </button>
                 </form>
             </div>

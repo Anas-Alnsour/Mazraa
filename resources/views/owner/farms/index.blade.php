@@ -28,14 +28,14 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Network Assets
                     </div>
                     <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">My <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Properties</span></h1>
-                    <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Manage, update, and deploy luxury estates.</p>
+                    <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Manage, update, and Add luxury estates.</p>
                 </div>
             </div>
 
             <div class="relative z-10 w-full md:w-auto mt-6 md:mt-0 flex justify-center md:justify-end">
                 <a href="{{ route('owner.farms.create') }}" class="w-full md:w-auto px-8 py-5 bg-gradient-to-tr from-emerald-600 to-emerald-400 hover:to-emerald-300 text-slate-950 font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_30px_rgba(16,185,129,0.3)] transform hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
-                    Deploy New Asset
+                    Add New Farm
                 </a>
             </div>
         </div>

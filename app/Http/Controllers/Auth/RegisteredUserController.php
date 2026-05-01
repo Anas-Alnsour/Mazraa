@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -37,9 +38,25 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required','regex:/^(?:((078|077|079)[0-9]{7})|(06[0-9]{7}))$/'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'phone' => ['required', 'regex:/^\+962(7[7-9][0-9]{7}|6[0-9]{7})$/', 'unique:users,phone'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+            ],
+        ], [
+            'password.required' => 'Password is required.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.mixed' => 'Password must include uppercase and lowercase letters.',
+            'password.numbers' => 'Password must include at least one number.',
+            'password.symbols' => 'Password must include at least one special character.',
         ]);
 
         $user = User::create([
@@ -73,15 +90,31 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             // الـ Validation هون رجعته يقبل أي رقم عشان ما يعقد صاحب المزرعة، بتقدر تغيره لـ regex إذا بدك
-            'phone' => ['required', 'string', 'max:20'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'phone' => ['required', 'regex:/^\+962(7[7-9][0-9]{7}|6[0-9]{7})$/', 'unique:users,phone'],
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)
+                    ->letters()
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+            ],
 
             // بيانات البنك
             'bank_name' => ['nullable', 'string', 'max:255'],
             'account_holder_name' => ['nullable', 'string', 'max:255'],
             'iban' => ['nullable', 'string', 'max:255'],
+        ], [
+            'password.required' => 'Password is required.',
+            'password.confirmed' => 'Password confirmation does not match.',
+            'password.min' => 'Password must be at least 8 characters.',
+            'password.mixed' => 'Password must include uppercase and lowercase letters.',
+            'password.numbers' => 'Password must include at least one number.',
+            'password.symbols' => 'Password must include at least one special character.',
         ]);
 
         $user = User::create([

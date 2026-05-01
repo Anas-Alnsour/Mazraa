@@ -57,13 +57,13 @@
                                     <td class="px-10 py-6 whitespace-nowrap">
                                         <div class="flex items-center gap-5">
                                             <div class="w-14 h-14 rounded-[1.2rem] bg-slate-950 border border-slate-700 flex items-center justify-center text-white font-black text-lg shadow-inner group-hover:border-[#c2a265]/50 group-hover:text-[#c2a265] transition-all shrink-0 uppercase">
-                                                {{ substr($booking->user->name ?? 'G', 0, 1) }}
+                                                {{ substr($booking->user?->name ?? 'G', 0, 1) }}
                                             </div>
                                             <div class="min-w-0">
-                                                <p class="text-base font-black text-white group-hover:text-[#c2a265] transition-colors truncate tracking-tight mb-0.5">{{ $booking->user->name ?? 'Guest User' }}</p>
+                                                <p class="text-base font-black text-white group-hover:text-[#c2a265] transition-colors truncate tracking-tight mb-0.5">{{ $booking->user?->name ?? 'Guest User' }}</p>
                                                 <p class="text-[11px] font-mono text-slate-500 flex items-center gap-1.5 truncate">
                                                     <svg class="w-3 h-3 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                                    {{ $booking->user->email ?? 'No Contact' }}
+                                                    {{ $booking->user?->email ?? 'No Contact' }}
                                                 </p>
                                             </div>
                                         </div>
@@ -71,7 +71,7 @@
 
                                     {{-- Asset / Schedule --}}
                                     <td class="px-10 py-6 whitespace-nowrap">
-                                        <p class="text-sm font-black text-slate-200 mb-2 truncate max-w-[200px] group-hover:text-white transition-colors">{{ $booking->farm->name ?? 'Luxury Estate' }}</p>
+                                        <p class="text-sm font-black text-slate-200 mb-2 truncate max-w-[200px] group-hover:text-white transition-colors">{{ $booking->farm?->name ?? 'Luxury Estate' }}</p>
                                         <div class="flex items-center gap-2">
                                             <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg shadow-inner">
                                                 {{ \Carbon\Carbon::parse($booking->start_time)->format('M d, Y') }}

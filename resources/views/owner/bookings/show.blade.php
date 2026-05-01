@@ -83,13 +83,13 @@
 
                     <div class="flex items-center gap-5 mb-6 relative z-10">
                         <div class="w-16 h-16 rounded-2xl bg-slate-950 flex items-center justify-center text-xl font-black text-white border border-slate-700 shadow-inner group-hover:text-blue-400 group-hover:border-blue-500/30 transition-colors uppercase shrink-0">
-                            {{ substr($booking->user->name ?? 'G', 0, 2) }}
+                            {{ substr($booking->user?->name ?? 'G', 0, 2) }}
                         </div>
                         <div class="min-w-0">
-                            <p class="font-black text-white text-lg truncate group-hover:text-blue-400 transition-colors">{{ $booking->user->name ?? 'Unknown Guest' }}</p>
+                            <p class="font-black text-white text-lg truncate group-hover:text-blue-400 transition-colors">{{ $booking->user?->name ?? 'Unknown Guest' }}</p>
                             <p class="text-[11px] font-mono text-slate-500 truncate mt-1 flex items-center gap-1.5">
                                 <svg class="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                {{ $booking->user->email ?? 'N/A' }}
+                                {{ $booking->user?->email ?? 'N/A' }}
                             </p>
                         </div>
                     </div>
@@ -110,7 +110,7 @@
                             <img src="{{ $booking->farm->main_image ? asset('storage/' . $booking->farm->main_image) : 'https://via.placeholder.com/150' }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Property">
                         </div>
                         <div class="min-w-0">
-                            <p class="font-black text-white text-lg truncate group-hover:text-[#c2a265] transition-colors">{{ $booking->farm->name ?? 'N/A' }}</p>
+                            <p class="font-black text-white text-lg truncate group-hover:text-[#c2a265] transition-colors">{{ $booking->farm?->name ?? 'N/A' }}</p>
                             <span class="inline-block mt-2 px-3 py-1 bg-slate-950 text-slate-400 border border-slate-700 text-[9px] font-black rounded-lg uppercase tracking-widest shadow-inner">
                                 {{ str_replace('_', ' ', $booking->event_type ?? 'Stay') }}
                             </span>
@@ -119,7 +119,7 @@
 
                     <div class="p-5 bg-slate-950 rounded-[1.5rem] border border-slate-800 flex items-center justify-between shadow-inner relative z-10">
                         <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Region</span>
-                        <span class="text-sm font-black text-[#c2a265]">{{ $booking->farm->governorate ?? 'N/A' }}</span>
+                        <span class="text-sm font-black text-[#c2a265]">{{ $booking->farm?->governorate ?? 'N/A' }}</span>
                     </div>
                 </div>
             </div>
