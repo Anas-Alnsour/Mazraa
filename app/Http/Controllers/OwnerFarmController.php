@@ -60,6 +60,10 @@ class OwnerFarmController extends Controller
             'governorate'               => $validated['governorate'],
             'location'                  => $validated['location'],
             'location_link'             => $validated['location_link'] ?? null,
+            // --- الإضافة هنا ---
+            'latitude'                => $validated['latitude'] ?? $request->latitude,
+            'longitude'               => $validated['longitude'] ?? $request->longitude,
+            // ------------------
             'capacity'                  => $validated['capacity'],
             'price_per_morning_shift'   => $validated['price_per_morning_shift'],
             'price_per_evening_shift'   => $validated['price_per_evening_shift'],
@@ -116,6 +120,8 @@ class OwnerFarmController extends Controller
             'description'               => 'required|string',
             'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
             'location_link'             => 'nullable|url|max:255',
+            'latitude'                  => 'nullable|numeric',
+            'longitude'                 => 'nullable|numeric',
             'capacity'                  => 'required|integer|min:1',
             'price_per_morning_shift'   => 'required|numeric|min:0',
             'price_per_evening_shift'   => 'required|numeric|min:0',
@@ -132,7 +138,11 @@ class OwnerFarmController extends Controller
             }
             $validated['main_image'] = $request->file('main_image')->store('farms/covers', 'public');
         }
-        $farm->update($validated);
+        $dataToUpdate = collect($validated)->except(['delete_images','gallery'])->toArray();
+        // إضافة الإحداثيات للمصفوفة إذا لم تكن موجودة في $validated
+        $dataToUpdate['latitude'] = $request->latitude;
+        $dataToUpdate['longitude'] = $request->longitude;
+        $farm->update($dataToUpdate);
 
         // 2. حذف الصور المختارة من المعرض
         if ($request->has('delete_images')) {

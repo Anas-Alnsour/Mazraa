@@ -880,7 +880,7 @@
                 .then(data => {
                     if(data.routes && data.routes.length > 0) {
                         let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
-                        transportCost = parseFloat((25 + (distanceKm * 0.5)).toFixed(2));
+                        transportCost = parseFloat((10 + (distanceKm * 0.5)).toFixed(2));
                         document.getElementById('distance_input').value = distanceKm;
                         document.getElementById('distVal').innerText = distanceKm;
                         document.getElementById('costVal').innerText = transportCost;

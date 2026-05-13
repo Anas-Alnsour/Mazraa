@@ -14,13 +14,13 @@ return new class extends Migration
             }
             if (!Schema::hasColumn('transports', 'origin_governorate')) {
                 $table->enum('origin_governorate', [
-                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Balqa', 'Karak',
+                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Salt', 'Karak',
                     'Jerash', 'Madaba', 'Maan', 'Ajloun', 'Aqaba', 'Tafilah'
                 ])->nullable();
             }
             if (!Schema::hasColumn('transports', 'destination_governorate')) {
                 $table->enum('destination_governorate', [
-                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Balqa', 'Karak',
+                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Salt', 'Karak',
                     'Jerash', 'Madaba', 'Maan', 'Ajloun', 'Aqaba', 'Tafilah'
                 ])->nullable();
             }

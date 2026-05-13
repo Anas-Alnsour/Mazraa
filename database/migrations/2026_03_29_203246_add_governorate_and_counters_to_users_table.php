@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'governorate')) {
                 $table->enum('governorate', [
-                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Balqa', 'Karak',
+                    'Amman', 'Irbid', 'Zarqa', 'Mafraq', 'Salt', 'Karak',
                     'Jerash', 'Madaba', 'Maan', 'Ajloun', 'Aqaba', 'Tafilah'
                 ])->nullable();
             }

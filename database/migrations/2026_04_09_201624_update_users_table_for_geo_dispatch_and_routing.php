@@ -25,7 +25,7 @@ return new class extends Migration
             // Standardize governorate ENUM if it exists
             $table->enum('governorate', [
                 'Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 
-                'Ajloun', 'Balqa', 'Madaba', 'Karak', 'Tafilah', 'Maan'
+                'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Maan'
             ])->nullable()->change();
         });
     }

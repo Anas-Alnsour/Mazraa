@@ -19,15 +19,15 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        User::updateOrCreate(['email' => 'owner@mazraa.com'], [
-            'name' => 'أحمد القرالة',
-            'phone' => '0799999902',
-            'role' => 'farm_owner',
-            'password' => $password,
-            'bank_name' => 'Arab Bank',
-            'account_holder_name' => 'Ahmad Al-Karala',
-            'iban' => 'JO00 ARAB 0000 0000 0000 0000 0000 00',
-        ]);
+        // User::updateOrCreate(['email' => 'owner@mazraa.com'], [
+        //     'name' => 'أحمد القرالة',
+        //     'phone' => '0799999902',
+        //     'role' => 'farm_owner',
+        //     'password' => $password,
+        //     'bank_name' => 'Arab Bank',
+        //     'account_holder_name' => 'Ahmad Al-Karala',
+        //     'iban' => 'JO00 ARAB 0000 0000 0000 0000 0000 00',
+        // ]);
 
         // 3. Exactly 12 Supply Companies (One per Governorate)
         $governorates = [
@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
             'Mafraq'  => ['lat' => 32.3326, 'lng' => 36.2045, 'ar' => 'المفرق'],
             'Jerash'  => ['lat' => 32.2723, 'lng' => 35.8914, 'ar' => 'جرش'],
             'Ajloun'  => ['lat' => 32.3326, 'lng' => 35.7517, 'ar' => 'عجلون'],
-            'Balqa'   => ['lat' => 32.0401, 'lng' => 35.7148, 'ar' => 'البلقاء'],
+            'Salt'   => ['lat' => 32.0401, 'lng' => 35.7148, 'ar' => 'السلط'],
             'Madaba'  => ['lat' => 31.7176, 'lng' => 35.7939, 'ar' => 'مأدبا'],
             'Karak'   => ['lat' => 31.1853, 'lng' => 35.7048, 'ar' => 'الكرك'],
             'Tafilah' => ['lat' => 30.8358, 'lng' => 35.6122, 'ar' => 'الطفيلة'],
@@ -58,33 +58,33 @@ class UserSeeder extends Seeder
             ]);
 
             // B. Supply Drivers (Localized & Shift-Based)
-            $shifts = ['morning', 'evening'];
-            foreach ($shifts as $shift) {
-                User::updateOrCreate(['email' => "driver.s." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
-                    'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . ")",
-                    'phone' => '078' . rand(1000000, 9999999),
-                    'role' => 'supply_driver',
-                    'password' => $password,
-                    'governorate' => $gov,
-                    'shift' => $shift,
-                    'latitude' => $data['lat'], // Matches branch coordinates (Standby Point)
-                    'longitude' => $data['lng'],
-                ]);
-            }
+            // $shifts = ['morning', 'evening'];
+            // foreach ($shifts as $shift) {
+            //     User::updateOrCreate(['email' => "driver.s." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
+            //         'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . ")",
+            //         'phone' => '078' . rand(1000000, 9999999),
+            //         'role' => 'supply_driver',
+            //         'password' => $password,
+            //         'governorate' => $gov,
+            //         'shift' => $shift,
+            //         'latitude' => $data['lat'], // Matches branch coordinates (Standby Point)
+            //         'longitude' => $data['lng'],
+            //     ]);
+            // }
 
             // C. Transport Drivers (Localized & Shift-Based)
-            foreach ($shifts as $shift) {
-                User::updateOrCreate(['email' => "driver.t." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
-                    'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . ")",
-                    'phone' => '077' . rand(1000000, 9999999),
-                    'role' => 'transport_driver',
-                    'password' => $password,
-                    'governorate' => $gov,
-                    'shift' => $shift,
-                    'latitude' => $data['lat'], // Matches regional base
-                    'longitude' => $data['lng'],
-                ]);
-            }
+            // foreach ($shifts as $shift) {
+            //     User::updateOrCreate(['email' => "driver.t." . strtolower($gov) . "." . $shift . "@mazraa.com"], [
+            //         'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . ")",
+            //         'phone' => '077' . rand(1000000, 9999999),
+            //         'role' => 'transport_driver',
+            //         'password' => $password,
+            //         'governorate' => $gov,
+            //         'shift' => $shift,
+            //         'latitude' => $data['lat'], // Matches regional base
+            //         'longitude' => $data['lng'],
+            //     ]);
+            // }
         }
 
         User::updateOrCreate(['email' => 'transport@mazraa.com'], [
@@ -94,16 +94,26 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        User::updateOrCreate(['email' => 'user@mazraa.com'], [
-            'name' => 'عمر النسور',
-            'phone' => '0799999907',
-            'role' => 'user',
-            'password' => $password,
+        User::create([
+            'name'     => 'شركة التوريد الرئيسية ', // يمكنك تغيير الاسم كما تحب
+            'email'    => 'hq@mazraa.com',
+            'password' => Hash::make('Hq@pass22'),
+            // أضف أي حقول أخرى مطلوبة في جدولك، مثلاً:
+            'phone' => '0780000011',
+            'role' => 'supply_company', // أو أي دور آخر يناسب هذا المستخدم 
+            'is_hq' => true, // حقل لتحديد إذا كان هذا المستخدم هو المقر الرئيسي    
         ]);
 
+        // User::updateOrCreate(['email' => 'user@mazraa.com'], [
+        //     'name' => 'عمر النسور',
+        //     'phone' => '0799999907',
+        //     'role' => 'user',
+        //     'password' => $password,
+        // ]);
+
         // 8. Generate 50 additional random users to make the platform look busy
-        User::factory(50)->create([
-            'password' => $password,
-        ]);
+        // User::factory(50)->create([
+        //     'password' => $password,
+        // ]);
     }
 }

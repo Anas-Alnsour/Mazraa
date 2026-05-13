@@ -64,7 +64,7 @@ class FarmFactory extends Factory
             'price_per_morning_shift' => $this->faker->numberBetween(50, 250),
             'price_per_evening_shift' => $this->faker->numberBetween(60, 300),
             'price_per_full_day' => $this->faker->numberBetween(100, 600),
-            'governorate' => $this->faker->randomElement(['Amman', 'Jerash', 'Irbid', 'Zarqa', 'Dead Sea', 'Balqa']),
+            'governorate' => $this->faker->randomElement(['Amman', 'Jerash', 'Irbid', 'Zarqa', 'Dead Sea', 'Salt']),
             'rating' => $this->faker->randomFloat(1, 3.5, 5),
             'main_image' => $mainImage,
             'owner_id' => User::where('role', 'farm_owner')->first()->id ?? User::factory()->create(['role' => 'farm_owner'])->id,

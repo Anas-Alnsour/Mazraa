@@ -149,29 +149,71 @@
             @method('PUT')
 
             <div class="mb-10">
-                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Assign Driver <span class="text-slate-500 font-medium normal-case tracking-normal">&mdash; Vehicle is automatically linked</span></label>
-                @if($drivers->count() > 0)
-                    <div class="relative">
-                        <select name="driver_id" required class="w-full dark-select px-6 py-5 font-bold text-sm">
-                            <option value="" disabled>Select a driver from the roster...</option>
-                            @foreach($drivers as $driver)
-                                @php
-                                    $vehicleLabel = $driver->transportVehicle
-                                        ? ' — ' . $driver->transportVehicle->type . ' (' . $driver->transportVehicle->license_plate . ')'
-                                        : ' — ⚠️ No Vehicle Linked';
-                                @endphp
-                                <option value="{{ $driver->id }}" {{ old('driver_id', $job->driver_id) == $driver->id ? 'selected' : '' }}>
-                                    {{ $driver->name }}{{ $vehicleLabel }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                @else
-                    <div class="px-6 py-5 bg-rose-500/10 text-rose-400 rounded-[1.5rem] text-xs font-bold border border-rose-500/30 shadow-inner text-center">
-                        No active drivers found. Please <a href="{{ route('transport.drivers.create') }}" class="underline hover:text-white">add drivers</a> to your fleet first.
-                    </div>
-                @endif
-            </div>
+    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">
+        Assign Driver 
+        <span class="text-slate-500 font-medium normal-case tracking-normal">
+            &mdash; (Trip Passengers: {{ $job->passengers }} seats required)
+        </span>
+    </label>
+    
+    @if($drivers->count() > 0)
+        <div class="relative">
+            {{-- إضافة ID للـ select لاستخدامه في الجافاسكريبت --}}
+            <select name="driver_id" id="driver_select" required class="w-full dark-select px-6 py-5 font-bold text-sm">
+                <option value="" disabled selected>Select a driver from the roster...</option>
+                @foreach($drivers as $driver)
+                    @php
+                        $vehicle = $driver->transportVehicle;
+                        // إضافة السعة للعنوان
+                        $vehicleLabel = $vehicle 
+                            ? " — {$vehicle->type} ({$vehicle->license_plate}) [Capacity: {$vehicle->capacity} Seats]"
+                            : ' — ⚠️ No Vehicle Linked';
+                        
+                        // تعطيل السائق إذا كانت سيارته أصغر من العدد المطلوب (اختياري كحماية إضافية في الواجهة)
+                        $isDisabled = ($vehicle && $vehicle->capacity < $job->passengers) ? 'disabled' : '';
+                    @endphp
+                    
+                    <option value="{{ $driver->id }}" 
+                            data-vehicle-id="{{ $vehicle?->id }}" 
+                            {{ old('driver_id', $job->driver_id) == $driver->id ? 'selected' : '' }}
+                            {{ $isDisabled }}>
+                        {{ $driver->name }}{{ $vehicleLabel }} 
+                        @if($isDisabled) (Insufficient Capacity) @endif
+                    </option>
+                @endforeach
+            </select>
+
+            {{-- حقل مخفي لإرسال vehicle_id كما يتطلب الـ Controller --}}
+            <input type="hidden" name="vehicle_id" id="vehicle_id_input" value="{{ old('vehicle_id', $job->vehicle_id) }}">
+        </div>
+
+        {{-- جافاسكريبت لتحديث الـ vehicle_id تلقائياً عند تغيير السائق --}}
+       <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const driverSelect = document.getElementById('driver_select');
+        const vehicleInput = document.getElementById('vehicle_id_input');
+
+        function updateVehicleId() {
+            const selectedOption = driverSelect.options[driverSelect.selectedIndex];
+            if (selectedOption) {
+                const vehicleId = selectedOption.getAttribute('data-vehicle-id');
+                vehicleInput.value = vehicleId || ''; // إذا لم يوجد مركبة نضع قيمة فارغة
+            }
+        }
+
+        // 1. تشغيل الدالة فور تحميل الصفحة (عشان الـ Old Input أو الـ Selected)
+        updateVehicleId();
+
+        // 2. تشغيل الدالة عند كل تغيير في الاختيار
+        driverSelect.addEventListener('change', updateVehicleId);
+    });
+</script>
+    @else
+        <div class="px-6 py-5 bg-rose-500/10 text-rose-400 rounded-[1.5rem] text-xs font-bold border border-rose-500/30 shadow-inner text-center">
+            No active drivers found. Please <a href="{{ route('transport.drivers.create') }}" class="underline hover:text-white">add drivers</a> to your fleet first.
+        </div>
+    @endif
+</div>
 
             <div class="mb-10">
                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Update Job Status</label>

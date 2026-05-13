@@ -27,7 +27,7 @@ class SupplyOrderFactory extends Factory
             'driver_id' => null, // To be filled by seeder for active orders
             'commission_amount' => $this->faker->numberBetween(1, 20),
             'net_company_amount' => $this->faker->numberBetween(8, 180),
-            'destination_governorate' => $this->faker->randomElement(['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Balqa']),
+            'destination_governorate' => $this->faker->randomElement(['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Salt']),
             'created_at' => $this->faker->dateTimeBetween('-6 months', '+1 week'),
         ];
     }

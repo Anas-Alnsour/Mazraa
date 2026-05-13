@@ -22,7 +22,7 @@ class SupplyDriverController extends Controller
         }
 
         // Group the driver's orders by Invoice ID to simplify their delivery route
-        $orders = SupplyOrder::with(['supply.company', 'user', 'booking.farm'])
+        $orders = SupplyOrder::with(['supply', 'user', 'booking.farm'])
             ->where('driver_id', Auth::id())
             ->whereNotIn('status', ['cart', 'pending_payment', 'pending_verification'])
             ->orderBy('updated_at', 'desc')
@@ -49,8 +49,9 @@ class SupplyDriverController extends Controller
             'status' => 'required|in:waiting_driver,in_way,delivered'
         ]);
 
-        // Fetch all items under this Invoice ID assigned to this driver
-        $orders = SupplyOrder::where('order_id', $order_id)
+        // التعديل هنا: أضفنا مع (supply) لضمان تحميل البيانات مسبقاً
+        $orders = SupplyOrder::with('supply')
+            ->where('order_id', $order_id)
             ->where('driver_id', Auth::id())
             ->get();
 
@@ -77,25 +78,28 @@ class SupplyDriverController extends Controller
                     ->decrement('orders_count');
 
                 // --- 💰 ESCROW PAYOUT TRIGGER 💰 ---
-                // Trigger financials for ALL orders in this invoice
                 $adminId = User::where('role', 'admin')->value('id');
 
                 foreach ($orders as $order) {
-                    // Admin commission
-                    FinancialTransaction::create([
-                        'user_id'          => $adminId,
-                        'reference_type'   => 'supply_order',
-                        'reference_id'     => $order->id,
-                        'amount'           => $order->commission_amount,
-                        'transaction_type' => 'credit',
-                        'description'      => "Platform commission — Delivered Supply Order #{$order->id}",
-                    ]);
-
-                    // Supply company net
-                    $companyId = $order->supply->company_id ?? $order->supply->user_id;
-                    if ($companyId) {
+                    // 1. عمولة الإدمن (Admin commission)
+                    if ($adminId) {
                         FinancialTransaction::create([
-                            'user_id'          => $companyId,
+                            'user_id'          => $adminId,
+                            'reference_type'   => 'supply_order',
+                            'reference_id'     => $order->id,
+                            'amount'           => $order->commission_amount,
+                            'transaction_type' => 'credit',
+                            'description'      => "Platform commission — Delivered Supply Order #{$order->id}",
+                        ]);
+                    }
+
+                    // 2. صافي ربح الشركة/المورد (Supply company net)
+                    // التعديل هنا: نستخدم user_id الموجود في جدول supplies مباشرة
+                    $ownerId = $order->supply->user_id ?? null;
+
+                    if ($ownerId) {
+                        FinancialTransaction::create([
+                            'user_id'          => $ownerId,
                             'reference_type'   => 'supply_order',
                             'reference_id'     => $order->id,
                             'amount'           => $order->net_company_amount,
@@ -108,10 +112,11 @@ class SupplyDriverController extends Controller
 
             DB::commit();
             return back()->with('success', 'Delivery status updated to: ' . strtoupper(str_replace('_', ' ', $request->status)));
-
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to update delivery status.');
+            // return back()->with('error', 'Failed to update delivery status.');
+            // عدل السطر اللي تحت عشان يظهر لك شو المشكلة بالضبط
+            return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -124,7 +129,7 @@ class SupplyDriverController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $history = SupplyOrder::with(['supply.company', 'user', 'booking.farm'])
+        $history = SupplyOrder::with(['supply', 'user', 'booking.farm'])
             ->where('driver_id', Auth::id())
             ->where('status', 'delivered')
             ->orderBy('updated_at', 'desc')

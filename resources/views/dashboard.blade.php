@@ -54,8 +54,8 @@
 <div class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen pb-24 font-sans pt-32 selection:bg-[#1d5c42] selection:text-white relative overflow-hidden">
 
     {{-- Ambient Light Orbs --}}
-    <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1d5c42]/5 rounded-full blur-[120px] pointer-events-none -z-10 mix-blend-multiply"></div>
-    <div class="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none -z-10 mix-blend-multiply"></div>
+    <div class="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1d5c42]/5 rounded-full blur-[120px] pointer-events-none z-10 mix-blend-multiply"></div>
+    <div class="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-amber-500/5 rounded-full blur-[100px] pointer-events-none z-10 mix-blend-multiply"></div>
 
     {{-- Alert --}}
     <div x-data="{ show: true }" x-show="show" x-transition.opacity.duration.500ms

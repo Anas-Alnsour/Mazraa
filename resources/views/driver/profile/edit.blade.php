@@ -140,20 +140,20 @@
 
                 <div class="space-y-8">
                     <div class="space-y-3">
-                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Current Security Key</label>
+                        <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Current Password</label>
                         <input type="password" name="current_password" class="w-full driver-input px-5 py-4 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 tracking-widest">
                         @error('current_password', 'updatePassword') <p class="text-[9px] font-black uppercase tracking-widest text-rose-500 ml-2 mt-2">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-3">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">New Key</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">New password</label>
                             <input type="password" name="password" class="w-full driver-input px-5 py-4 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 tracking-widest">
                             @error('password', 'updatePassword') <p class="text-[9px] font-black uppercase tracking-widest text-rose-500 ml-2 mt-2">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="space-y-3">
-                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Verify New Key</label>
+                            <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] ml-2">Verify New Password</label>
                             <input type="password" name="password_confirmation" class="w-full driver-input px-5 py-4 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 tracking-widest">
                         </div>
                     </div>
@@ -161,7 +161,7 @@
 
                 <div class="pt-4 border-t border-slate-800 flex items-center gap-6">
                     <button type="submit" class="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-xl transition-all active:scale-95 border border-slate-700">
-                        Rotate Keys
+                        Rotate Password
                     </button>
                     @if (session('status') === 'password-updated')
                         <p x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

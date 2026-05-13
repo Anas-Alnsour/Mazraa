@@ -175,7 +175,7 @@
                                     </div>
                                     <select name="governorate" class="w-full dark-select pl-12 font-bold text-sm" required>
                                         <option value="" disabled selected>Select Region...</option>
-                                        @foreach(['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Balqa', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
+                                        @foreach(['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
                                             <option value="{{ $gov }}" {{ old('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                                         @endforeach
                                     </select>

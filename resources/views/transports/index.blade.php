@@ -164,7 +164,7 @@
                                 <img src="{{ optional($transport->farm)->main_image ? asset('storage/' . $transport->farm->main_image) : asset('backgrounds/home.JPG') }}"
                                      onerror="this.onerror=null;this.src='{{ asset('backgrounds/home.JPG') }}';"
                                      alt="Farm Image"
-                                     class="image-zoom w-full h-full object-cover text-transparent relative -z-10">
+                                     class="image-zoom w-full h-full object-cover text-transparent relative z-10">
 
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
 

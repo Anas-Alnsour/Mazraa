@@ -58,8 +58,8 @@ class BookingController extends Controller
             // SECURITY FIX: Calculate transport cost server-side
             // Base price: 25 JOD + 0.5 JOD per km (Enforced server-side)
             $distance = (float) $request->input('distance', 0);
-            $serverCalculatedCost = 25 + ($distance * 0.5);
-            $transportCost   = max(25.00, $serverCalculatedCost);
+            $serverCalculatedCost = 10 + ($distance * 0.5);
+            $transportCost   = max(15.00, $serverCalculatedCost);
 
             $pickupLocation  = $request->input('pickup_location', 'Custom User Location');
             $destGovernorate = $request->input('destination_governorate', $user->governorate ?? 'Amman');
@@ -430,8 +430,8 @@ class BookingController extends Controller
         if ($requiresTransportFlag) {
             // SECURITY FIX: Calculate transport cost server-side
             $distance = (float) $request->input('distance', 0);
-            $serverCalculatedCost = 25 + ($distance * 0.5);
-            $transportCost   = max(25.00, $serverCalculatedCost);
+            $serverCalculatedCost = 10 + ($distance * 0.5);
+            $transportCost   = max(15.00, $serverCalculatedCost);
 
             $pickupLocation = $request->input('pickup_location', 'Custom User Location');
             $destGovernorate = $request->input('destination_governorate', Auth::user()->governorate ?? 'Amman');

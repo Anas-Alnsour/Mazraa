@@ -84,68 +84,74 @@ class TransportCompanyDashboardController extends Controller
     /**
      * Assign a driver and vehicle to a specific trip.
      */
-    public function assignDriver(Request $request, Transport $trip)
-    {
-        $user = Auth::user();
+   public function assignDriver(Request $request, Transport $trip)
+{
+    $user = Auth::user();
 
-        if ($user->role !== 'transport_company') {
-            abort(403, 'Unauthorized access.');
-        }
+    if ($user->role !== 'transport_company') {
+        abort(403, 'Unauthorized access.');
+    }
 
-        if ($trip->company_id !== null && $trip->company_id !== $user->id) {
-            return back()->with('error', 'This job has already been accepted by another company.');
-        }
+    if ($trip->company_id !== null && $trip->company_id !== $user->id) {
+        return back()->with('error', 'This job has already been accepted by another company.');
+    }
 
-        $request->validate([
-            'driver_id'  => 'required|exists:users,id',
-            'vehicle_id' => 'required|exists:vehicles,id',
+    $request->validate([
+        'driver_id'  => 'required|exists:users,id',
+        'vehicle_id' => 'required|exists:vehicles,id',
+    ]);
+
+    $driver  = User::findOrFail($request->driver_id);
+    $vehicle = Vehicle::findOrFail($request->vehicle_id);
+
+    if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
+        return back()->with('error', 'Invalid driver selection.');
+    }
+
+    if ($vehicle->company_id !== $user->id) {
+        return back()->with('error', 'Invalid vehicle selection.');
+    }
+
+    // ---------- الإضافة الجديدة: التحقق من سعة المركبة ----------
+    if ($vehicle->capacity < $trip->passengers) {
+        return back()->with('error', "عذراً، سعة هذه المركبة ({$vehicle->capacity} ركاب) لا تكفي لعدد الركاب المطلوب للرحلة ({$trip->passengers} ركاب).");
+    }
+    // -------------------------------------------------------------
+
+    DB::beginTransaction();
+    try {
+        // تحديث الرحلة: الحالة assigned لتظهر في لوحة تحكم السائق كما طلبت
+        $trip->update([
+            'company_id' => $user->id,
+            'driver_id'  => $driver->id,
+            'vehicle_id' => $vehicle->id,
+            'status'     => 'assigned', 
         ]);
 
-        $driver  = User::findOrFail($request->driver_id);
-        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        $vehicle->update(['status' => 'in_use']);
 
-        if ($driver->company_id !== $user->id || $driver->role !== 'transport_driver') {
-            return back()->with('error', 'Invalid driver selection.');
-        }
+        DB::table('users')->where('id', $driver->id)->increment('trips_count');
 
-        if ($vehicle->company_id !== $user->id) {
-            return back()->with('error', 'Invalid vehicle selection.');
-        }
+        DB::commit();
 
-        DB::beginTransaction();
+        // إرسال الإشعارات الفورية
         try {
-            // تحديث الرحلة: الحالة assigned لتظهر في لوحة تحكم السائق كما طلبت
-            $trip->update([
-                'company_id' => $user->id,
-                'driver_id'  => $driver->id,
-                'vehicle_id' => $vehicle->id,
-                'status'     => 'assigned', 
-            ]);
-
-            $vehicle->update(['status' => 'in_use']);
-
-            DB::table('users')->where('id', $driver->id)->increment('trips_count');
-
-            DB::commit();
-
-            // إرسال الإشعارات الفورية
-            try {
-                // إشعار للسائق
-                $driver->notify(new DriverAssignedNotification($trip));
-                
-                // إشعار للعميل (المستخدم)
-                if ($trip->user) {
-                    $trip->user->notify(new DriverAssignedNotification($trip));
-                }
-            } catch (\Exception $e) {
-                \Log::error('Notification Error (Transport Assign): ' . $e->getMessage());
+            // إشعار للسائق
+            $driver->notify(new DriverAssignedNotification($trip));
+            
+            // إشعار للعميل (المستخدم)
+            if ($trip->user) {
+                $trip->user->notify(new DriverAssignedNotification($trip));
             }
-
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Assignment failed: ' . $e->getMessage());
+            \Log::error('Notification Error (Transport Assign): ' . $e->getMessage());
         }
 
-        return back()->with('success', "Job #TRP-{$trip->id} accepted! Status set to assigned.");
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Assignment failed: ' . $e->getMessage());
     }
+
+    return back()->with('success', "Job #TRP-{$trip->id} accepted! Status set to assigned.");
+}
 }
