@@ -340,7 +340,7 @@ class BookingController extends Controller
         $booking->delete();
 
         // =========================================================
-        // 🚀 إطلاق الإشعارات (إلغاء الحجز) 
+        // 🚀 إطلاق الإشعارات (إلغاء الحجز)
         // =========================================================
         try {
             if ($booking->farm->user) {
@@ -530,7 +530,6 @@ class BookingController extends Controller
                     'price' => $transportCost,
                     'commission_amount' => $transportCost * 0.10,
                     'net_company_amount' => $transportCost * 0.90,
-                    'pickup_location' => $pickupLocation,
                     'pickup_lat' => $request->pickup_lat,
                     'pickup_lng' => $request->pickup_lng,
                 ]);

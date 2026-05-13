@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transport extends Model
 {
-    use HasFactory, SoftDeletes; // 👈 تم تفعيل الـ SoftDeletes هنا
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -26,6 +26,7 @@ class Transport extends Model
         'Farm_Departure_Time',
         'notes',
         'status',
+        'pickup_location',
         'pickup_lat',
         'pickup_lng',
         'commission_amount',
