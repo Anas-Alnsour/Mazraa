@@ -22,3 +22,9 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# تجاهل كل شيء في مجلد البابلك ستورج
+/public/storage
+
+# استثناء مجلد المستلزمات (Supplies) لكي يتم رفعه
+!storage/app/public/supplies/
+!storage/app/public/supplies/*
