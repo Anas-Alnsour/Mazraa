@@ -11,13 +11,12 @@ class Vehicle extends Model
     use HasFactory;
 
     protected $fillable = [
-        'company_id',
         'driver_id', // ضفنا السائق هون
+        'company_id',
         'type',
         'license_plate',
         'capacity',
         'status',
-        'company_id',
     ];
 
     public function company(): BelongsTo

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('farms', function (Blueprint $table) {
-            $table->decimal('price_per_night', 8, 2)->default(50.00)->after('capacity');
+            // $table->decimal('price_per_night', 8, 2)->default(50.00)->after('capacity');
         });
     }
 

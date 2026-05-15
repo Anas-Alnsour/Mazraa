@@ -92,7 +92,7 @@
                                     <div class="flex items-center gap-5">
                                         <div class="h-16 w-16 rounded-[1.2rem] bg-slate-950 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center shadow-inner group-hover:border-emerald-500/50 transition-colors relative">
                                             @if($item->image)
-                                                <img src="{{ Storage::url($item->image) }}" alt="{{ $item->name }}" class="h-full w-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500">
+                                                <img src="{{ asset('storage/supplies/' . $item->image) }}" alt="{{ $item->name }}" class="h-full w-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500">
                                             @else
                                                 <svg class="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                             @endif

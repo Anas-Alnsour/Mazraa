@@ -130,7 +130,7 @@
                                 <div class="flex gap-4 items-center mb-6">
                                     <div class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden shrink-0">
                                         @if($item->image)
-                                            <img src="{{ asset('storage/' . $item->image) }}" class="w-full h-full object-cover">
+                                            <img src="{{ asset('storage/supplies/' . $item->image) }}" class="w-full h-full object-cover">
                                         @else
                                             <div class="w-full h-full flex justify-center items-center text-[8px] font-black text-slate-600">N/A</div>
                                         @endif

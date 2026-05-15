@@ -207,7 +207,7 @@
                             {{-- 📷 Image Section --}}
                             <div class="p-3 pb-0">
                                 <div class="relative h-60 overflow-hidden rounded-[1.8rem] bg-gray-50 shadow-inner border border-gray-100">
-                                    <img src="{{ $supply->image ? Storage::url($supply->image) : 'https://images.unsplash.com/photo-1589923188900-85dae523342b?q=80&w=2070' }}"
+                                    <img src="{{ asset('storage/supplies/' . $supply->image) }}"
                                          alt="{{ $supply->name }}"
                                          class="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110">
 

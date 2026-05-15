@@ -104,7 +104,7 @@
                             <div class="flex justify-between items-start mb-5">
                                 <div class="w-16 h-16 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shrink-0 shadow-inner">
                                     @if($supply->image)
-                                        <img src="{{ asset('storage/' . $supply->image) }}" class="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500">
+                                        <img src="{{ asset('storage/supplies/' . $supply->image) }}" class="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500">
                                     @else
                                         <div class="w-full h-full flex justify-center items-center text-[9px] text-slate-600 font-black uppercase">No Img</div>
                                     @endif

@@ -16,11 +16,31 @@ use Illuminate\Support\Facades\DB;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
-    {
+    {   
+        $this->call([
+            // 1. أولاً الأساس: المستخدمين (أدمن، زبائن، أصحاب مزارع، شركات)
+            // (بفترض عندك UserSeeder من قبل)
+            UserSeeder::class, 
+
+            // 2. المزارع تعتمد على أصحاب المزارع
+            FarmSeeder::class,
+
+            // 3. المنتجات تعتمد على شركات التوريد
+            SupplySeeder::class,
+
+            // 4. الحجوزات تعتمد على المزارع والزبائن
+            FarmBookingSeeder::class,
+
+            // 5. الطلبات تعتمد على المنتجات والحجوزات والزبائن
+            SupplyOrderSeeder::class,
+
+            // 6. العمليات المالية (الأخير دائماً) تعتمد على الحجوزات والطلبات
+            FinancialTransactionSeeder::class,
+        ]);
         // 1. Fundamental Seeders
-        $this->call(UserSeeder::class);
-        $this->call(SupplySeeder::class);
-        $this->call(TransportSeeder::class);
+        // $this->call(UserSeeder::class);
+        // $this->call(SupplySeeder::class);
+        // $this->call(TransportSeeder::class);
 
         // 2. Core Accounts
         $admin     = User::where('email', 'admin@mazraa.com')->first();
@@ -186,6 +206,6 @@ class DatabaseSeeder extends Seeder
         //     }
         // }
 
-        // $this->command->info('OMNI-SEEDER COMPLETE 🟢 - 100% database coverage achieved!');
+        $this->command->info('OMNI-SEEDER COMPLETE 🟢 - 100% database coverage achieved!');
     }
 }

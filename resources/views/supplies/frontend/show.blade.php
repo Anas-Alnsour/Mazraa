@@ -73,7 +73,7 @@
                 {{-- Image Section --}}
                 <div class="md:w-1/2 bg-gray-50/50 p-8 lg:p-12 flex items-center justify-center relative border-b md:border-b-0 md:border-r border-gray-100">
                     @if($supply->image)
-                        <img src="{{ Storage::url($supply->image) }}" alt="{{ $supply->name }}" class="w-full h-auto rounded-[2rem] shadow-lg object-cover transform hover:scale-105 transition-transform duration-700 ease-out">
+                        <img src="{{ asset('storage/supplies/' . $supply->image) }}" alt="{{ $supply->name }}" class="w-full h-auto rounded-[2rem] shadow-lg object-cover transform hover:scale-105 transition-transform duration-700 ease-out">
                     @else
                         <div class="h-64 w-64 bg-white rounded-full flex items-center justify-center text-gray-300 shadow-inner border border-gray-100">
                             <svg class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

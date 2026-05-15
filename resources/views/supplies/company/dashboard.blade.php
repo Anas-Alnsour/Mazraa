@@ -120,7 +120,7 @@
                                 <div class="flex items-center gap-5">
                                     <div class="w-14 h-14 rounded-[1rem] bg-slate-950 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center shadow-inner relative group-hover:border-emerald-500/30 transition-colors">
                                         @if($item->supply->image)
-                                            <img src="{{ Storage::url($item->supply->image) }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                                            <img src="{{ asset('storage/supplies/' . $item->supply->image) }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                                         @else
                                             <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                         @endif

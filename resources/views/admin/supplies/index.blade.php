@@ -50,7 +50,7 @@
                         {{-- Product Image & Overlays --}}
                         <div class="relative h-60 overflow-hidden bg-slate-950 p-2 shrink-0">
                             <div class="relative h-full w-full rounded-[1.5rem] overflow-hidden border border-slate-800/50 shadow-inner">
-                                <img src="{{ $supply->image ? Storage::url($supply->image) : 'https://via.placeholder.com/800x600?text=Premium+Supply' }}"
+                                <img src="{{ $supply->image ? asset('storage/supplies/' . $supply->image) :  asset('storage/supplies/' . $supply->image) }}"
                                      class="h-full w-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-700">
                                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent opacity-90"></div>
 

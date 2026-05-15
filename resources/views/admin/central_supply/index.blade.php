@@ -68,7 +68,7 @@
                     <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     <div class="w-full h-40 bg-slate-900 rounded-xl mb-4 overflow-hidden border border-slate-800 relative z-10">
                         @if($item->image)
-                            <img src="{{ asset('storage/' . $item->image) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            <img src="{{ asset('storage/supplies/' . $item->image) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         @else
                             <div class="w-full h-full flex items-center justify-center text-slate-700 text-xs font-black uppercase">No Image</div>
                         @endif

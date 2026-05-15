@@ -153,7 +153,7 @@
 
                         <div class="relative z-10 w-full mb-4">
                             @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" class="w-full h-32 object-cover rounded-xl border border-slate-800 shadow-md">
+                                <img src="{{ asset('storage/supplies/' . $product->image) }}" class="w-full h-32 object-cover rounded-xl border border-slate-800 shadow-md">
                             @else
                                 <div class="w-full h-32 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-center text-[10px] font-black text-slate-600 uppercase shadow-md">No Img</div>
                             @endif

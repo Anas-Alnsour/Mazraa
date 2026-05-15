@@ -10,18 +10,19 @@ class SupplyOrder extends Model
 {
     use HasFactory, SoftDeletes;
 
-protected $fillable = [
+    protected $fillable = [
         'user_id',
         'supply_id',
+        'booking_id',
         'quantity',
         'total_price',
         'status',
         'order_id',
-        'booking_id',
-        'driver_id',
-        'commission_amount',
-        'net_company_amount',
+        'latitude',
+        'longitude',
+        'delivery_address',
         'destination_governorate',
+        'driver_id'
     ];
 
     public function user()
@@ -52,5 +53,4 @@ protected $fillable = [
     {
         return $this->created_at->diffInMinutes(\Carbon\Carbon::now()) <= 10;
     }
-    
 }

@@ -201,7 +201,7 @@
                                 <span class="text-[8px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded-md">Active</span>
                             </label>
                             <div class="relative h-64 rounded-3xl overflow-hidden group border-2 border-slate-700 bg-[#020617] shadow-inner cursor-pointer">
-                                <img src="{{ $supply->image ? asset('storage/'.$supply->image) : 'https://via.placeholder.com/400' }}" class="w-full h-full object-cover group-hover:scale-110 group-hover:blur-sm transition-all duration-500">
+                                <img src="{{ asset('storage/supplies/' . $supply->image) }}" class="w-full h-full object-cover group-hover:scale-110 group-hover:blur-sm transition-all duration-500">
                                 <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center p-4 backdrop-blur-sm">
                                     <input type="file" name="image" class="absolute inset-0 opacity-0 cursor-pointer z-10">
                                     <div class="flex flex-col items-center transform translate-y-4 group-hover:translate-y-0 transition-all">

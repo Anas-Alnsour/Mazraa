@@ -32,6 +32,8 @@ class User extends Authenticatable
         'company_id',           // 👈 مهم جداً لربط السواقين بالشركات
         'transport_vehicle_id', // 👈 1-to-1 permanent vehicle link for transport drivers
         'shift',                // [Geo-Dispatch] morning or evening
+        'trips_count',
+        'orders_count',
         'latitude',             // [Geo-Dispatch] standby location
         'longitude',            // [Geo-Dispatch] standby location
     ];
