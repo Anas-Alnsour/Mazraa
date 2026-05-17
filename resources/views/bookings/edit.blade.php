@@ -11,43 +11,70 @@
 
     <style>
         .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        .fade-in-up-stagger { animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
         @keyframes fadeInUp {
             0% { opacity: 0; transform: translateY(20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .ticket-dashed-border {
-            background-image: linear-gradient(to bottom, #e5e7eb 50%, transparent 50%);
-            background-size: 2px 20px;
-            background-repeat: repeat-y;
-            width: 2px;
+
+        .booking-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
         }
+
         /* 🌟 UX: Custom Flatpickr Styles */
+        /* الشفت الصباحي محجوز */
         .flatpickr-day.booked-morning:not(.flatpickr-disabled, .selected, .startRange, .endRange, .inRange) {
             background: linear-gradient(135deg, #ffedd5 50%, #ffffff 50%) !important;
-            border-color: #fdba74 !important; color: #1e293b !important; font-weight: 900;
+            border-color: #fdba74 !important;
+            color: #1e293b !important;
+            font-weight: 900;
         }
+        /* الشفت المسائي محجوز */
         .flatpickr-day.booked-evening:not(.flatpickr-disabled, .selected, .startRange, .endRange, .inRange) {
             background: linear-gradient(135deg, #ffffff 50%, #e0e7ff 50%) !important;
-            border-color: #a5b4fc !important; color: #1e293b !important; font-weight: 900;
+            border-color: #a5b4fc !important;
+            color: #1e293b !important;
+            font-weight: 900;
+        }
+        /* اليوم كامل محجوز (مدمج شحطة) */
+        .flatpickr-day.booked-full {
+            background: linear-gradient(135deg, #ffedd5 50%, #e0e7ff 50%) !important;
+            text-decoration: line-through !important;
+            color: #94a3b8 !important;
+            border-color: #cbd5e1 !important;
         }
         .flatpickr-day.flatpickr-disabled {
-            background: #f1f5f9 !important; color: #94a3b8 !important; text-decoration: line-through;
+            background: #f1f5f9 !important;
+            color: #94a3b8 !important;
+            text-decoration: line-through;
         }
-        .image-gradient-overlay {
-            background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.4) 50%, rgba(15, 23, 42, 0) 100%);
-        }
-        .d-none { display: none !important; }
 
         /* Fullscreen Map Styles */
         .map-fullscreen {
-            position: fixed !important; top: 5% !important; left: 5% !important; width: 90% !important; height: 90% !important;
-            z-index: 9999 !important; border-radius: 2rem !important; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-            border: 4px solid #1d5c42 !important;
+            position: fixed !important;
+            top: 5% !important;
+            left: 5% !important;
+            width: 90% !important;
+            height: 90% !important;
+            z-index: 9999 !important;
+            border-radius: 2rem !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
         }
         #mapBackdrop {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9998;
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 9998;
         }
         #mapBackdrop.active { display: block; }
+
+        .d-none { display: none !important; }
     </style>
 
     @php
@@ -56,20 +83,27 @@
         $diffDays = $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay());
         $startHour = $startDate->format('H');
 
-        // حساب الشفت الأصلي بناءً على الأوقات المعتمدة في النظام
         $isMultiDay = false;
         $initialShift = 'full_day';
 
-        if ($diffDays > 1) {
+        // استنتاج الشفت بناءً على المعطيات المحفوظة
+        if ($booking->event_type === 'morning' || ($startHour == '08' || ($startHour == '10' && $endDate->format('H') == '17'))) {
+            $initialShift = 'morning';
+        } elseif ($booking->event_type === 'evening' || $startHour == '19' || $startHour == '22') {
+            $initialShift = 'evening';
+        } elseif ($diffDays > 1 && $booking->event_type !== 'full_day') {
             $isMultiDay = true;
             $initialShift = 'multi_day';
-        } elseif ($startHour == '08' || $startHour == '10' && $endDate->format('H') == '17') {
-            $initialShift = 'morning';
-        } elseif ($startHour == '19' || $startHour == '22') {
-            $initialShift = 'evening';
         }
 
         $farm = $booking->farm;
+
+        // استرجاع بيانات المواصلات إن وجدت
+        $transport = \App\Models\Transport::where('farm_booking_id', $booking->id)->first();
+        $initialDistance = $transport ? $transport->distance : 0;
+        $initialTransportCost = $booking->transport_cost ?? 0;
+        $initialRequiresTransport = $booking->requires_transport ? '1' : '0';
+        $initialPassengers = $transport ? $transport->passengers : 1;
     @endphp
 
     <div class="bg-[#f8fafc] min-h-screen pb-24 font-sans pt-36 selection:bg-[#1d5c42] selection:text-white">
@@ -110,7 +144,7 @@
                     <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('backgrounds/home.JPG') }}"
                          onerror="this.onerror=null;this.src='{{ asset('backgrounds/home.JPG') }}';"
                          class="w-full h-full object-cover text-transparent">
-                    <div class="image-gradient-overlay absolute inset-0"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
                     <div class="absolute top-6 left-6 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl text-xs font-black text-gray-900 shadow-lg flex items-center gap-1.5 z-10 border border-white/50">
                         <svg class="w-3.5 h-3.5 text-[#c2a265]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                         {{ number_format($farm->average_rating ?? 0, 1) }}
@@ -124,12 +158,6 @@
                     </div>
                 </div>
 
-                <div class="hidden md:flex flex-col justify-between items-center py-10 bg-gray-50/30">
-                    <div class="w-8 h-8 rounded-full bg-[#f8fafc] -mt-14 shadow-inner"></div>
-                    <div class="ticket-dashed-border h-full mx-4 opacity-50"></div>
-                    <div class="w-8 h-8 rounded-full bg-[#f8fafc] -mb-14 shadow-inner"></div>
-                </div>
-
                 {{-- RIGHT: Edit Form --}}
                 <div class="p-8 md:p-12 w-full md:w-[60%] flex flex-col justify-between" x-data="{ bookingMode: '{{ $isMultiDay ? 'multi' : 'single' }}' }">
                     <form action="{{ route('bookings.update', $booking->id) }}" method="POST" id="editBookingForm" class="space-y-8">
@@ -141,10 +169,10 @@
                         <input type="hidden" name="shift" id="shift_input" value="{{ $initialShift }}">
                         <input type="hidden" name="start_time" id="start_time" value="{{ $booking->start_time }}">
                         <input type="hidden" name="end_time" id="end_time" value="{{ $booking->end_time }}">
-                        <input type="hidden" name="distance" id="distance_input" value="0">
+                        <input type="hidden" name="distance" id="distance_input" value="{{ $initialDistance }}">
 
-                        <input type="hidden" name="requires_transport" id="requires_transport" value="{{ $booking->requires_transport ? '1' : '0' }}">
-                        <input type="hidden" name="transport_cost" id="transport_cost" value="{{ $booking->transport_cost ?? 0 }}">
+                        <input type="hidden" name="requires_transport" id="requires_transport" value="{{ $initialRequiresTransport }}">
+                        <input type="hidden" name="transport_cost" id="transport_cost" value="{{ $initialTransportCost }}">
                         <input type="hidden" name="pickup_lat" id="pickup_lat" value="{{ $booking->pickup_lat }}">
                         <input type="hidden" name="pickup_lng" id="pickup_lng" value="{{ $booking->pickup_lng }}">
 
@@ -197,7 +225,7 @@
                             <div id="transportSection" class="{{ $booking->requires_transport ? '' : 'd-none' }} mt-4 space-y-4 animate-fade-in">
                                 <div>
                                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Number of Passengers</label>
-                                    <input type="number" name="passengers" id="transport_passengers" min="1" max="{{ $farm->capacity }}" value="{{ \App\Models\Transport::where('farm_booking_id', $booking->id)->value('passengers') ?? 1 }}"
+                                    <input type="number" name="passengers" id="transport_passengers" min="1" max="{{ $farm->capacity }}" value="{{ $initialPassengers }}"
                                         class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] outline-none shadow-sm transition-all">
                                 </div>
 
@@ -211,6 +239,7 @@
                                 <p class="text-[10px] text-gray-500 font-bold text-center">Click or drag on the map to set exact pickup point</p>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 h-64 md:h-[300px]" id="originalPickupMapContainer">
+                                    {{-- خريطة المزرعة --}}
                                     <div class="relative rounded-[2rem] overflow-hidden border-2 border-gray-200 shadow-sm">
                                         <div class="absolute top-4 left-4 z-[400] bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-black text-[#1d5c42] border border-gray-200 shadow-sm uppercase tracking-widest">
                                             Farm Location
@@ -218,6 +247,7 @@
                                         <div id="farm-map" class="w-full h-full z-10"></div>
                                     </div>
 
+                                    {{-- خريطة نقطة الانطلاق (Pickup) --}}
                                     <div class="relative rounded-[2rem] overflow-hidden border-2 border-[#1d5c42] shadow-md ring-4 ring-[#1d5c42]/10 transition-all duration-300" id="pickup-map-wrapper">
                                         <div class="absolute top-4 left-4 z-[400] bg-[#1d5c42]/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-black text-white border border-[#1d5c42] shadow-sm uppercase tracking-widest flex items-center gap-1.5">
                                             <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> Pickup Point
@@ -233,20 +263,30 @@
                                 <div id="transportCalc" class="d-none bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex justify-between items-center animate-fade-in">
                                     <div class="text-emerald-900">
                                         <span class="block text-[10px] font-black uppercase tracking-widest opacity-70">Distance</span>
-                                        <span class="text-sm font-bold"><span id="distVal">0</span> km</span>
+                                        <span class="text-sm font-bold"><span id="distVal">{{ $initialDistance }}</span> km</span>
                                     </div>
                                     <div class="text-emerald-900 text-right">
                                         <span class="block text-[10px] font-black uppercase tracking-widest opacity-70">Transport Fee</span>
-                                        <span class="text-lg font-black"><span id="costVal">{{ $booking->transport_cost ?? 0 }}</span> JOD</span>
+                                        <span class="text-lg font-black"><span id="costVal">{{ $initialTransportCost }}</span> JOD</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         @endif
 
+                        {{-- 💡 Availability Guide / Legend for Edit Mode --}}
+                        <div class="mt-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 border-b border-slate-200 pb-1">Availability Guide:</p>
+                            <div class="flex items-center gap-3 text-[10px] font-bold text-slate-600 flex-wrap">
+                                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-orange-300 bg-orange-100"></span> Morning Booked</div>
+                                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-indigo-300 bg-indigo-100"></span> Evening Booked</div>
+                                <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-slate-300 bg-slate-200"></span> Fully Booked</div>
+                            </div>
+                        </div>
+
                         {{-- MODE 1: SINGLE DAY --}}
                         <div x-show="bookingMode === 'single'" class="animate-fade-in">
-                            <div class="mb-4 relative mt-6">
+                            <div class="mb-4 relative mt-4">
                                 <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Select Date</label>
                                 <input type="text" id="booking_date_flatpickr" placeholder="Select your check-in date"
                                     class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 cursor-pointer focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all">
@@ -276,7 +316,7 @@
 
                         {{-- MODE 2: MULTI DAY --}}
                         <div x-show="bookingMode === 'multi'" x-cloak class="animate-fade-in">
-                            <div class="grid grid-cols-2 gap-4 mt-6">
+                            <div class="grid grid-cols-2 gap-4 mt-4">
                                 <div>
                                     <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Check-in</label>
                                     <input type="text" id="multi_start_date" placeholder="Select Date" class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-4 text-sm font-bold cursor-pointer focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
@@ -329,7 +369,7 @@
                         {{-- Action Buttons --}}
                         <div class="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
                             <button type="button" onclick="window.location='{{ route('bookings.show', $booking->id) }}'" class="w-full sm:w-1/3 py-4 bg-white border-2 border-gray-200 text-gray-600 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-gray-50 transition-colors">Cancel</button>
-                            <button type="submit" id="confirmBookingBtn" disabled class="w-full sm:w-2/3 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl bg-yellow-500 hover:bg-yellow-600 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all">
+                            <button type="submit" id="confirmBookingBtn" disabled class="w-full sm:w-2/3 py-4 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl bg-emerald-600 hover:bg-emerald-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                                 <span id="btnText">Save Changes</span>
                             </button>
@@ -349,15 +389,48 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps" async defer></script>
 
+    {{-- ✅ البلوك المهم اللي بيسحب الداتا الخاصة بالحجوزات من الداتابيس لتتفاعل مع الكاليندر --}}
+    <?php
+        $bookingsData = [];
+        if(isset($farm->bookings) && $farm->bookings) {
+            foreach($farm->bookings as $b) {
+                // استثناء الحجوزات الملغية أو المكتملة
+                if($b->start_time && !in_array($b->status, ['cancelled', 'completed'])) {
+                    $bookingsData[] = [
+                        'id' => $b->id,
+                        'date' => \Carbon\Carbon::parse($b->start_time)->toDateString(),
+                        'shift' => $b->shift ?? $b->event_type
+                    ];
+                }
+            }
+        }
+        $blockedData = [];
+        if(isset($farm->blockedDates) && $farm->blockedDates) {
+            foreach($farm->blockedDates as $bd) {
+                if($bd->date) {
+                    $blockedData[] = [
+                        'date' => \Carbon\Carbon::parse($bd->date)->toDateString(),
+                        'shift' => $bd->shift
+                    ];
+                }
+            }
+        }
+    ?>
+
     <script>
         // --- CONSTANTS FROM DB ---
         const priceMorning = <?php echo floatval($farm->price_per_morning_shift ?? 0); ?>;
         const priceEvening = <?php echo floatval($farm->price_per_evening_shift ?? 0); ?>;
         const priceFullDay = <?php echo floatval($farm->price_per_full_day ?? 0); ?>;
         const originalPrice = <?php echo floatval($booking->total_price ?? 0); ?>;
+        const currentBookingId = <?php echo $booking->id; ?>;
 
-        let transportCost = <?php echo floatval($booking->transport_cost ?? 0); ?>;
-        const initialRequiresTransport = <?php echo $booking->requires_transport ? 'true' : 'false'; ?>;
+        // 💡 منطق المواصلات
+        let initialTransportCost = <?php echo $initialTransportCost; ?>;
+        let initialDistance = <?php echo $initialDistance; ?>;
+        let transportCost = initialTransportCost;
+        let isTransportLocationChanged = false;
+        const initialRequiresTransport = <?php echo $initialRequiresTransport; ?>;
 
         let selectedShift = true;
         let currentShiftType = '{{ $initialShift }}';
@@ -368,13 +441,17 @@
         let eveningBookedDates = [];
         let dateMap = {};
 
+        // جلب البيانات من بلوك ה-PHP
         const existingBookings = <?php echo json_encode($bookingsData ?? []); ?>;
         const blockedDates = <?php echo json_encode($blockedData ?? []); ?>;
 
+        // ✅ فلترة الحجوزات: استبعاد أيام الحجز الحالي لتكون متاحة للعميل لتعديلها
         existingBookings.forEach(b => {
-            if(!dateMap[b.date]) dateMap[b.date] = { morning: false, evening: false };
-            if(b.shift === 'morning' || b.shift === 'full_day') dateMap[b.date].morning = true;
-            if(b.shift === 'evening' || b.shift === 'full_day') dateMap[b.date].evening = true;
+            if (b.id !== currentBookingId) { // استثناء الحجز الحالي!
+                if(!dateMap[b.date]) dateMap[b.date] = { morning: false, evening: false };
+                if(b.shift === 'morning' || b.shift === 'full_day') dateMap[b.date].morning = true;
+                if(b.shift === 'evening' || b.shift === 'full_day') dateMap[b.date].evening = true;
+            }
         });
         blockedDates.forEach(b => {
             if(!dateMap[b.date]) dateMap[b.date] = { morning: false, evening: false };
@@ -394,7 +471,12 @@
             disable: fullyBookedDates,
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 const localDate = new Date(dayElem.dateObj.getTime() - (dayElem.dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                if (morningBookedDates.includes(localDate)) {
+
+                // ✅ إضافة التنسيق على حسب حالة الحجز (بما فيها اليوم الكامل)
+                if (fullyBookedDates.includes(localDate)) {
+                    dayElem.classList.add('booked-full');
+                    dayElem.title = "Fully Booked";
+                } else if (morningBookedDates.includes(localDate)) {
                     dayElem.classList.add('booked-morning');
                     dayElem.title = "Morning Booked (Evening available)";
                 } else if (eveningBookedDates.includes(localDate)) {
@@ -590,8 +672,30 @@
                 label = 'Farm Rental (Evening)';
             }
 
-            let totalBeforeTax = base + transportCost;
-            let tax = totalBeforeTax * 0.10; // ✅ الضريبة الصحيحة 10%
+            // 💡 معالجة المواصلات بذكاء: لا تحتسب التكلفة كاملة مرتين!
+            let activeTransportCost = 0;
+
+            if (document.getElementById('requires_transport').value === "1") {
+                if (initialRequiresTransport == 0) {
+                    activeTransportCost = transportCost;
+                } else if (isTransportLocationChanged) {
+                    let newDistance = parseFloat(document.getElementById('distance_input').value);
+                    if (newDistance > initialDistance) {
+                        activeTransportCost = initialTransportCost + ((newDistance - initialDistance) * 0.5);
+                    } else if (newDistance < initialDistance) {
+                        activeTransportCost = initialTransportCost - ((initialDistance - newDistance) * 0.5);
+                    } else {
+                        activeTransportCost = initialTransportCost;
+                    }
+                } else {
+                    activeTransportCost = initialTransportCost;
+                }
+            } else {
+                activeTransportCost = 0;
+            }
+
+            let totalBeforeTax = base + activeTransportCost;
+            let tax = totalBeforeTax * 0.10; // ✅ الضريبة 10%
             let newTotal = totalBeforeTax + tax;
             let diff = newTotal - originalPrice;
 
@@ -601,10 +705,10 @@
             document.getElementById('newTotalDisplay').innerText = newTotal.toFixed(2);
 
             const invTransport = document.getElementById('invoiceTransport');
-            if(transportCost > 0) {
+            if(activeTransportCost > 0) {
                 invTransport.classList.remove('d-none');
                 invTransport.classList.add('flex');
-                document.getElementById('invoiceTransportCost').innerText = transportCost.toFixed(2) + ' JOD';
+                document.getElementById('invoiceTransportCost').innerText = activeTransportCost.toFixed(2) + ' JOD';
             } else {
                 invTransport.classList.add('d-none');
                 invTransport.classList.remove('flex');
@@ -612,12 +716,12 @@
 
             let diffDisplay = document.getElementById('differenceDisplay'), diffLabel = document.getElementById('differenceLabel'), btnText = document.getElementById('btnText');
 
-            if (diff > 0) {
+            if (diff > 0.01) {
                 diffLabel.innerText = "Amount to Pay (Upgrade)";
                 diffDisplay.innerText = diff.toFixed(2) + ' JOD';
                 diffDisplay.className = "text-2xl font-black text-emerald-400";
                 btnText.innerText = "Pay Difference & Save";
-            } else if (diff < 0) {
+            } else if (diff < -0.01) {
                 diffLabel.innerText = "Amount to Refund";
                 diffDisplay.innerText = Math.abs(diff).toFixed(2) + ' JOD';
                 diffDisplay.className = "text-2xl font-black text-blue-400";
@@ -647,7 +751,7 @@
         window.initAllMaps = function() {
             initCalendars();
 
-            // تهيئة الخيارات المحددة مسبقاً بناء على الداتابيز
+            // إعداد الشفت الافتراضي وعرضه
             if (currentShiftType !== 'multi_day') {
                 checkAvailability('{{ $startDate->format('Y-m-d') }}');
                 selectShift('{{ $initialShift }}');
@@ -666,7 +770,7 @@
                     new google.maps.Marker({ position: farmPos, map: fMap, title: farmNameStr });
                 } else {
                     const lMap = L.map('farm-map').setView([farmLat, farmLng], 13);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(lMap);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(lMap);
                     L.marker([farmLat, farmLng]).addTo(lMap).bindPopup(farmNameStr).openPopup();
                 }
             }
@@ -674,10 +778,13 @@
             const toggle = document.getElementById('toggleTransport');
             const section = document.getElementById('transportSection');
 
-            if(initialRequiresTransport && toggle) {
+            if(initialRequiresTransport == 1 && toggle) {
                 section.classList.remove('d-none');
                 initPickupMap(useGoogleMaps);
-                if(bookingLat && bookingLng) calculateRoute(bookingLat, bookingLng);
+
+                document.getElementById('distVal').innerText = initialDistance;
+                document.getElementById('costVal').innerText = initialTransportCost;
+                document.getElementById('transportCalc').classList.remove('d-none');
             }
 
             if(toggle && section) {
@@ -685,13 +792,14 @@
                     if(this.checked) {
                         section.classList.remove('d-none');
                         document.getElementById('requires_transport').value = "1";
+                        if (initialRequiresTransport == 0) {
+                            isTransportLocationChanged = true;
+                        }
                         if(!pickupMapObj) initPickupMap(useGoogleMaps);
+                        updateInvoice();
                     } else {
                         section.classList.add('d-none');
                         document.getElementById('requires_transport').value = "0";
-                        transportCost = 0;
-                        document.getElementById('transport_cost').value = 0;
-                        document.getElementById('transportCalc').classList.add('d-none');
                         updateInvoice();
                     }
                 });
@@ -710,10 +818,19 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(pickupMapObj);
                 pickupMapObj.on('click', function(e) { setPickupMarkerDual(e.latlng.lat, e.latlng.lng, false); });
             }
-            if(bookingLat && bookingLng) setPickupMarkerDual(startLat, startLng, useGoogleMaps);
+            if(bookingLat && bookingLng) {
+                if (useGoogleMaps) {
+                    pickupMarkerObj = new google.maps.Marker({ position: { lat: startLat, lng: startLng }, map: pickupMapObj, draggable: true });
+                    pickupMarkerObj.addListener('dragend', function() { const pos = pickupMarkerObj.getPosition(); calculateRoute(pos.lat(), pos.lng()); });
+                } else {
+                    pickupMarkerObj = L.marker([startLat, startLng], {draggable: true}).addTo(pickupMapObj);
+                    pickupMarkerObj.on('dragend', function(e) { const pos = e.target.getLatLng(); calculateRoute(pos.lat, pos.lng); });
+                }
+            }
         }
 
         function setPickupMarkerDual(lat, lng, isGoogle) {
+            isTransportLocationChanged = true;
             if (isGoogle) {
                 if(pickupMarkerObj) pickupMarkerObj.setMap(null);
                 pickupMarkerObj = new google.maps.Marker({ position: { lat, lng }, map: pickupMapObj, draggable: true });
@@ -761,7 +878,7 @@
                 .then(data => {
                     if(data.routes && data.routes.length > 0) {
                         let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
-                        transportCost = parseFloat((10 + (distanceKm * 0.5)).toFixed(2)); // ✅ المعادلة الصحيحة + 10 دنانير الأساسية
+                        transportCost = parseFloat((10 + (distanceKm * 0.5)).toFixed(2));
                         document.getElementById('distance_input').value = distanceKm;
                         document.getElementById('distVal').innerText = distanceKm;
                         document.getElementById('costVal').innerText = transportCost;
