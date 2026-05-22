@@ -486,135 +486,132 @@
         </form>
     </div>
 
-    {{-- Leaflet Map Scripts (Fallback Solution) --}}
-    @push('scripts')
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var latInput = document.getElementById('latitude');
-                var lngInput = document.getElementById('longitude');
-                var linkInput = document.querySelector('input[name="location_link"]');
+{{-- Leaflet Map Scripts (Integrated & Fixed Solution) --}}
+@push('scripts')
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. تعريف الحقول
+            var latInput = document.getElementById('latitude');
+            var lngInput = document.getElementById('longitude');
+            var linkInput = document.querySelector('input[name="location_link"]');
 
-                var initialLat = parseFloat(latInput.value) || 31.9522;
-                var initialLng = parseFloat(lngInput.value) || 35.9334;
+            // 2. تحديد الإحداثيات المبدئية (عمان كمثال) أو الحالية إن وجدت
+            var initialLat = (latInput && latInput.value) ? parseFloat(latInput.value) : 31.9522;
+            var initialLng = (lngInput && lngInput.value) ? parseFloat(lngInput.value) : 35.9334;
 
-                var map = L.map('farm-map').setView([initialLat, initialLng], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                var marker = L.marker([initialLat, initialLng], {
-                    draggable: true
-                }).addTo(map);
+            // 3. تهيئة الخريطة (مرة واحدة فقط)
+            var map = L.map('farm-map', {
+                center: [initialLat, initialLng],
+                zoom: 12,
+                zoomControl: true
+            });
 
-                // دالة التحديث الفوري
-                function syncMap() {
-                    var lat = parseFloat(latInput.value);
-                    var lng = parseFloat(lngInput.value);
-                    if (!isNaN(lat) && !isNaN(lng)) {
+            // 4. إضافة طبقة الخريطة الليلية (Dark Theme)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            // 5. تصميم الدبوس المخصص (Emerald Marker)
+            var emeraldIcon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color:#10b981;width:20px;height:20px;border-radius:50%;border:3px solid #020617;box-shadow:0 0 15px rgba(16,185,129,0.8);"></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            // 6. إضافة الدبوس على الخريطة
+            var marker = L.marker([initialLat, initialLng], {
+                icon: emeraldIcon,
+                draggable: true // السماح بسحب الدبوس
+            }).addTo(map);
+
+            // دالة مساعدة لتحديث الحقول النصية بالأرقام الدقيقة (8 خانات عشرية لدقة عالية)
+            function updateInputs(lat, lng) {
+                if (latInput) latInput.value = lat.toFixed(8);
+                if (lngInput) lngInput.value = lng.toFixed(8);
+            }
+
+            // تعبئة الحقول كقيمة افتراضية عند تحميل الصفحة لأول مرة
+            if (latInput && !latInput.value) {
+                updateInputs(initialLat, initialLng);
+            }
+
+            // 🟢 الحدث الأول: عند الانتهاء من سحب الدبوس وإفلاته
+            marker.on('dragend', function() {
+                var position = marker.getLatLng();
+                updateInputs(position.lat, position.lng);
+                map.panTo(position); // توسيط الخريطة على المكان الجديد
+            });
+
+            // 🟢 الحدث الثاني: عند النقر على أي مكان في الخريطة
+            map.on('click', function(e) {
+                marker.setLatLng(e.latlng); // نقل الدبوس
+                updateInputs(e.latlng.lat, e.latlng.lng); // تحديث الحقول
+                map.panTo(e.latlng); // توسيط الخريطة
+            });
+
+            // 🟢 الحدث الثالث: عند كتابة الإحداثيات يدوياً في الحقول
+            function syncMapFromInputs() {
+                var lat = parseFloat(latInput.value);
+                var lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    marker.setLatLng([lat, lng]);
+                    map.panTo([lat, lng]);
+                }
+            }
+            if (latInput) latInput.addEventListener('input', syncMapFromInputs);
+            if (lngInput) lngInput.addEventListener('input', syncMapFromInputs);
+
+            // 🟢 الحدث الرابع: عند لصق رابط من جوجل ماب
+            if (linkInput) {
+                linkInput.addEventListener('input', function() {
+                    var match = this.value.match(/@?(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    if (match) {
+                        var lat = parseFloat(match[1]);
+                        var lng = parseFloat(match[2]);
+                        updateInputs(lat, lng);
                         marker.setLatLng([lat, lng]);
-                        map.panTo([lat, lng]); // حركة ناعمة للموقع الجديد
+                        map.setView([lat, lng], 16); // تقريب الشاشة (Zoom in)
                     }
-                }
-
-                // 1. عند الكتابة اليدوية في LAT و LNG
-                latInput.addEventListener('input', syncMap);
-                lngInput.addEventListener('input', syncMap);
-
-                // 2. عند لصق الرابط في location_link
-                if (linkInput) {
-                    linkInput.addEventListener('input', function() {
-                        var match = this.value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                        if (match) {
-                            latInput.value = match[1];
-                            lngInput.value = match[2];
-                            syncMap(); // تحديث الخريطة فوراً
-                            map.setZoom(16); // تقريب الخريطة أكثر عند استخدام الرابط
-                        }
-                    });
-                }
-
-                // 3. عند سحب الدبوس بالماوس (تحديث المربعات)
-                marker.on('drag', function() {
-                    var pos = marker.getLatLng();
-                    latInput.value = pos.lat.toFixed(8);
-                    lngInput.value = pos.lng.toFixed(8);
                 });
-            });
-            document.addEventListener('DOMContentLoaded', function() {
-                var latInput = document.getElementById('latitude');
-                var lngInput = document.getElementById('longitude');
+            }
+        });
 
-                // Default Amman Coordinates
-                var initialLat = latInput.value ? parseFloat(latInput.value) : 31.9522;
-                var initialLng = lngInput.value ? parseFloat(lngInput.value) : 35.9334;
+        // ==========================================
+        // سكربتات معاينة النصوص عند رفع الصور
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            var mainImageInput = document.getElementById('main_image');
+            var galleryInput = document.getElementById('gallery');
 
-                // Initialize OpenStreetMap via Leaflet
-                var map = L.map('farm-map', {
-                    center: [initialLat, initialLng],
-                    zoom: 12,
-                    zoomControl: true
-                });
-
-                // Add Dark Tile Layer (CartoDB Dark Matter)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                    subdomains: 'abcd',
-                    maxZoom: 20
-                }).addTo(map);
-
-                // Custom Emerald Marker
-                var emeraldIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color:#10b981;width:20px;height:20px;border-radius:50%;border:3px solid #020617;box-shadow:0 0 15px rgba(16,185,129,0.8);"></div>`,
-                    iconSize: [20, 20],
-                    iconAnchor: [10, 10]
-                });
-
-                var marker = L.marker([initialLat, initialLng], {
-                    icon: emeraldIcon,
-                    draggable: true
-                }).addTo(map);
-
-                function updateInputs(lat, lng) {
-                    latInput.value = lat.toFixed(6);
-                    lngInput.value = lng.toFixed(6);
-                }
-
-                // Drag event
-                marker.on('dragend', function(e) {
-                    var position = marker.getLatLng();
-                    updateInputs(position.lat, position.lng);
-                });
-
-                // Click event
-                map.on('click', function(e) {
-                    marker.setLatLng(e.latlng);
-                    updateInputs(e.latlng.lat, e.latlng.lng);
-                });
-
-                // Initialize default values if empty
-                if (!latInput.value || !lngInput.value) {
-                    updateInputs(initialLat, initialLng);
-                }
-            });
-
-            // File upload text preview scripts
-            document.addEventListener('DOMContentLoaded', function() {
-                document.getElementById('main_image').addEventListener('change', function(e) {
+            if (mainImageInput) {
+                mainImageInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
                         var fileName = e.target.files[0].name;
-                        document.querySelector('.main-image-text').innerHTML =
-                            '<span class="text-emerald-400 font-black">SELECTED: </span> <span class="text-white">' +
-                            fileName + '</span>';
+                        var textDiv = document.querySelector('.main-image-text');
+                        if (textDiv) {
+                            textDiv.innerHTML = '<span class="text-emerald-400 font-black">SELECTED: </span> <span class="text-white">' + fileName + '</span>';
+                        }
                     }
                 });
+            }
 
-                document.getElementById('gallery').addEventListener('change', function(e) {
+            if (galleryInput) {
+                galleryInput.addEventListener('change', function(e) {
                     if (e.target.files.length > 0) {
                         var count = e.target.files.length;
-                        document.querySelector('.gallery-text').innerHTML =
-                            '<span class="text-blue-400 font-black">' + count + ' FILE(S) READY</span>';
+                        var textDiv = document.querySelector('.gallery-text');
+                        if (textDiv) {
+                            textDiv.innerHTML = '<span class="text-blue-400 font-black">' + count + ' FILE(S) READY</span>';
+                        }
                     }
                 });
-            });
-        </script>
-    @endpush
+            }
+        });
+    </script>
+@endpush
 </x-owner-layout>
