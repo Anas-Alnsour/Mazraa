@@ -27,7 +27,7 @@
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 shadow-inner mx-auto md:mx-0">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Network Assets
                     </div>
-                    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">My <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Properties</span></h1>
+                    <h1 class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-1">My <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Farms</span></h1>
                     <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Manage, update, and Add luxury estates.</p>
                 </div>
             </div>
@@ -126,7 +126,7 @@
                             <div class="flex items-center gap-3">
                                 <a href="{{ route('owner.farms.edit', $farm->id) }}" class="flex-1 py-4 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-xl text-center border border-slate-800 shadow-sm active:scale-95 transition-all flex items-center justify-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                    Configure
+                                    Edit
                                 </a>
                                 <form action="{{ route('owner.farms.destroy', $farm->id) }}" method="POST" class="w-auto flex-shrink-0" onsubmit="return confirm('WARNING: This will purge the asset from the ecosystem. Proceed?');">
                                     @csrf @method('DELETE')

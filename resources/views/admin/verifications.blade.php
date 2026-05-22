@@ -52,7 +52,9 @@
                                 </div>
                                 <div>
                                     <h3 class="text-xl font-black text-white leading-tight mb-1">{{ $farm->name }}</h3>
-                                    <p class="text-[11px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 inline-block">{{ number_format($farm->price_per_night, 2) }} JOD/Night</p>
+                                    <p class="text-[11px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 inline-block">{{ number_format($farm->price_per_full_day, 2) }} JOD/Day</p>
+                                    <p class="text-[11px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 inline-block">{{ number_format($farm->price_per_morning_shift, 2) }} JOD/Morning</p>
+                                    <p class="text-[11px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 inline-block">{{ number_format($farm->price_per_evening_shift, 2) }} JOD/Night</p>
                                 </div>
                             </div>
 

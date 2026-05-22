@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div class="relative z-10">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Listed Properties</p>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Listed Farms</p>
                     <div class="flex items-baseline gap-2">
                         <h3 class="text-5xl font-black text-white tracking-tighter">{{ $totalFarms ?? '0' }}</h3>
                         <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Estates</span>

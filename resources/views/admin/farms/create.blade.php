@@ -175,7 +175,7 @@
                                     </div>
                                     <select name="governorate" class="w-full dark-select pl-12 font-bold text-sm" required>
                                         <option value="" disabled selected>Select Region...</option>
-                                        @foreach(['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
+                                        @foreach(['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Maan'] as $gov)
                                             <option value="{{ $gov }}" {{ old('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                                         @endforeach
                                     </select>
@@ -241,7 +241,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
 
                         {{-- Base Price --}}
-                        <div class="md:col-span-2 p-8 bg-[#020617] rounded-[2rem] border border-amber-500/30 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)] group hover:border-amber-500/50 transition-all relative overflow-hidden">
+                        {{-- <div class="md:col-span-2 p-8 bg-[#020617] rounded-[2rem] border border-amber-500/30 shadow-[inset_0_2px_15px_rgba(0,0,0,0.5)] group hover:border-amber-500/50 transition-all relative overflow-hidden">
                             <div class="absolute right-0 top-0 w-32 h-32 bg-amber-500/10 rounded-bl-[4rem] pointer-events-none"></div>
                             <label class="block text-[10px] font-black text-amber-500 mb-4 uppercase tracking-widest flex items-center gap-2">Base Listing Price <span class="text-rose-500">*</span></label>
                             <div class="relative">
@@ -250,7 +250,7 @@
                                 </div>
                                 <input type="number" step="0.01" name="price_per_night" value="{{ old('price_per_night', 50) }}" class="w-full bg-transparent border-none text-white rounded-xl focus:ring-0 pl-16 py-2 text-4xl font-black outline-none" required>
                             </div>
-                        </div>
+                        </div> --}}
 
                         {{-- Full Day --}}
                         <div class="space-y-2">
@@ -259,7 +259,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 group-focus-within:text-amber-400 transition-colors">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                 </div>
-                                <input type="number" step="0.01" name="price_per_full_day" value="{{ old('price_per_full_day', 60) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
+                                <input type="number" step="0.01" name="price_per_full_day" value="{{ old('price_per_full_day', 0) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
                             </div>
                         </div>
 
@@ -270,7 +270,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 group-focus-within:text-amber-400 transition-colors">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                                 </div>
-                                <input type="number" step="0.01" name="price_per_morning_shift" value="{{ old('price_per_morning_shift', 30) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
+                                <input type="number" step="0.01" name="price_per_morning_shift" value="{{ old('price_per_morning_shift', 0) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
                             </div>
                         </div>
 
@@ -281,7 +281,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 group-focus-within:text-indigo-400 transition-colors">
                                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                                 </div>
-                                <input type="number" step="0.01" name="price_per_evening_shift" value="{{ old('price_per_evening_shift', 40) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
+                                <input type="number" step="0.01" name="price_per_evening_shift" value="{{ old('price_per_evening_shift', 0) }}" class="w-full admin-input pl-12 font-bold text-sm" required>
                             </div>
                         </div>
                     </div>

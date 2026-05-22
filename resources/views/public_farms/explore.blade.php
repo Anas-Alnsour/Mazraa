@@ -98,7 +98,7 @@
                         <svg class="w-4 h-4 text-gray-500 group-hover:text-[#c2a265]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                         <select name="governorate" class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 p-0 font-bold text-sm md:text-base outline-none appearance-none cursor-pointer">
                             <option value="" class="text-gray-900">All Regions</option>
-                            @foreach(['Amman', 'Irbid', 'Zarqa', 'Aqaba', 'Jerash', 'Madaba', 'Salt', 'Karak', 'Ajloun', 'Mafraq', 'Tafilah', 'Ma\'an'] as $gov)
+                            @foreach(['Amman', 'Irbid', 'Zarqa', 'Aqaba', 'Jerash', 'Madaba', 'Salt', 'Karak', 'Ajloun', 'Mafraq', 'Tafilah', 'Maan'] as $gov)
                                 <option value="{{ $gov }}" class="text-gray-900" {{ request('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                             @endforeach
                         </select>

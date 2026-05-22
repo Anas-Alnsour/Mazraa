@@ -19,7 +19,7 @@ class Farm extends Model
 
     public function images()
     {
-        return $this->hasMany(FarmImage::class);
+        return $this->hasMany(FarmImage::class, 'farm_id');
     }
 
     public function bookings()

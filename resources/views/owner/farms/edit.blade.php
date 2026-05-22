@@ -240,7 +240,7 @@
                             <span class="text-emerald-500">*</span></label>
                         <select id="governorate" name="governorate"
                             class="w-full dark-select px-5 py-4 font-bold text-sm" required>
-                            @foreach (['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
+                            @foreach (['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Maan'] as $gov)
                                 <option value="{{ $gov }}"
                                     {{ old('governorate', $farm->governorate) == $gov ? 'selected' : '' }}>
                                     {{ $gov }}</option>

@@ -275,7 +275,7 @@
                                     action="{{ route('admin.verifications.handle', ['id' => $farm->id, 'type' => 'farm_approval']) }}"
                                     method="POST">
                                     @csrf @method('PATCH')
-                                    <button type="submit"
+                                    <button type="submit" name="action" value="approve"
                                         class="p-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1rem] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 flex items-center justify-center"
                                         title="Approve Farm">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

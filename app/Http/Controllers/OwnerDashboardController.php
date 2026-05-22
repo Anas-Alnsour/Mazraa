@@ -9,6 +9,7 @@ use App\Models\FarmBlockedDate;
 use App\Models\FinancialTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OwnerDashboardController extends Controller
 {
@@ -23,20 +24,23 @@ class OwnerDashboardController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        // جلب مزارع المالك الحالي
         $farms = Farm::where('owner_id', $user->id)->with(['images', 'owner'])->get();
         $farmIds = $farms->pluck('id');
 
         $totalFarms = $farms->count();
 
+        // عدد الحجوزات النشطة الحالية (مؤكدة أو معلقة)
         $activeBookingsCount = FarmBooking::whereIn('farm_id', $farmIds)
             ->whereIn('status', ['confirmed', 'pending'])
             ->count();
 
+        // عدد الحجوزات بانتظار الموافقة
         $pendingApprovalCount = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'pending')
             ->count();
 
-        // حسابات مالية دقيقة مبنية على الحجوزات المؤكدة فقط
+        // حسابات مالية دقيقة مبنية على الحجوزات المؤكدة الحالية فقط
         $confirmedBookings = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'confirmed')
             ->get();
@@ -53,13 +57,20 @@ class OwnerDashboardController extends Controller
             'net' => $netProfit
         ];
 
+        // 💰 ✅ التعديل الجديد: حساب إجمالي الأرباح مدى الحياة (Lifetime Earnings)
+        // تجمع الحجوزات المكتملة والمدفوعة بنجاح فقط عبر كل مزارع هذا المالك
+        $totalEarnings = FarmBooking::whereIn('farm_id', $farmIds)
+            ->where('status', 'completed')
+            ->where('payment_status', 'paid')
+            ->sum('net_owner_amount');
+
         // جلب الحجوزات للتقويم التفاعلي
         $allBookings = FarmBooking::with(['user', 'farm'])
             ->whereIn('farm_id', $farmIds)
             ->get();
 
         $calendarEvents = $allBookings->map(function ($booking) {
-            $color = match($booking->status) {
+            $color = match ($booking->status) {
                 'confirmed' => '#10b981', // أخضر
                 'pending' => '#f59e0b',   // برتقالي
                 'cancelled' => '#ef4444', // أحمر
@@ -77,7 +88,7 @@ class OwnerDashboardController extends Controller
                     'status' => $booking->status,
                     'customer' => $booking->user->name ?? 'User',
                     'farm' => $booking->farm->name,
-                    'net' => $booking->net_owner_amount // التصحيح هنا ليتوافق مع الداتا بيس
+                    'net' => $booking->net_owner_amount
                 ]
             ];
         });
@@ -120,11 +131,13 @@ class OwnerDashboardController extends Controller
 
         $calendarEvents = $calendarEvents->concat($blockedEvents);
 
+        // إرسال البيانات الكلية بما فيها المتغير الجديد إلى الصفحة
         return view('owner.dashboard', compact(
             'totalFarms',
             'activeBookingsCount',
             'pendingApprovalCount',
             'financials',
+            'totalEarnings', // ✅ تمت إضافته بنجاح هنا
             'calendarEvents',
             'farms'
         ));
@@ -332,7 +345,7 @@ class OwnerDashboardController extends Controller
             "Expires"             => "0"
         ];
 
-        $callback = function() use ($transactions) {
+        $callback = function () use ($transactions) {
             $file = fopen('php://output', 'w');
 
             // Add UTF-8 BOM for Excel compatibility (optional but helpful for Arabic text)
@@ -379,8 +392,8 @@ class OwnerDashboardController extends Controller
             ->exists();
 
         if ($alreadyTransacted) {
-             $booking->update(['status' => 'completed']);
-             return back()->with('success', 'Booking finalized.');
+            $booking->update(['status' => 'completed']);
+            return back()->with('success', 'Booking finalized.');
         }
 
         \Illuminate\Support\Facades\DB::beginTransaction();
@@ -411,7 +424,6 @@ class OwnerDashboardController extends Controller
 
             \Illuminate\Support\Facades\DB::commit();
             return back()->with('success', 'Booking completed and funds cleared to your balance!');
-
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\DB::rollBack();
             return back()->with('error', 'Failed to finalize booking: ' . $e->getMessage());

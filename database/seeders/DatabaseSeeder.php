@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
             // 2. المزارع تعتمد على أصحاب المزارع
             FarmSeeder::class,
 
+            // 2.1 صور المزارع تعتمد على المزارع    
+            FarmImageSeeder::class,
+
             // 3. المنتجات تعتمد على شركات التوريد
             SupplySeeder::class,
 

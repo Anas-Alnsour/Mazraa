@@ -245,7 +245,7 @@
                             class="w-full dark-select px-5 py-4 font-bold text-sm" required>
                             <option value="" disabled {{ old('governorate') ? '' : 'selected' }}>Select
                                 Governorate</option>
-                            @foreach (['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Ma\'an'] as $gov)
+                            @foreach (['Amman', 'Zarqa', 'Irbid', 'Aqaba', 'Mafraq', 'Jerash', 'Ajloun', 'Salt', 'Madaba', 'Karak', 'Tafilah', 'Maan'] as $gov)
                                 <option value="{{ $gov }}" {{ old('governorate') == $gov ? 'selected' : '' }}>
                                     {{ $gov }}</option>
                             @endforeach
