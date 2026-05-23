@@ -111,7 +111,7 @@ class UserSeeder extends Seeder
             'password' => $password,
         ]);
 
-        // 4. الدوران الرئيسي: إنشاء الشركات والسائقين وربط المركبات
+       // 4. الدوران الرئيسي: إنشاء الشركات والسائقين وربط المركبات
         foreach ($governorates as $gov => $data) {
 
             // أ. إنشاء فرع شركة التوريد لكل محافظة
@@ -129,83 +129,88 @@ class UserSeeder extends Seeder
             $shifts = ['morning', 'evening'];
 
             foreach ($shifts as $shift) {
-                // ب. إنشاء سائق التوريد
-                $driverS = User::create([
-                    'email' => "driver.s." . strtolower($gov) . "." . $shift . "@mazraa.com",
-                    'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . ")",
-                    'phone' => '078' . rand(1000000, 9999999),
-                    'role' => 'supply_driver',
-                    'password' => $password,
-                    'governorate' => $gov,
-                    'shift' => $shift,
-                    'latitude' => $data['lat'],
-                    'longitude' => $data['lng'],
-                    'company_id' => $supplyCompany->id, // مربوط بشركة المحافظة
-                    'trips_count' => 0,
-                    'orders_count' => 0,
-                ]);
+                
+                // 💡 التعديل هنا: دوران لإنشاء سائقين (2) لكل شفت بدلاً من واحد
+                for ($i = 1; $i <= 2; $i++) {
+                    
+                    // ب. إنشاء سائق التوريد (تمت إضافة $i للإيميل والاسم لضمان عدم التكرار)
+                    $driverS = User::create([
+                        'email' => "driver.s." . strtolower($gov) . "." . $shift . "." . $i . "@mazraa.com",
+                        'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . " - " . $i . ")",
+                        'phone' => '078' . rand(1000000, 9999999),
+                        'role' => 'supply_driver',
+                        'password' => $password,
+                        'governorate' => $gov,
+                        'shift' => $shift,
+                        'latitude' => $data['lat'],
+                        'longitude' => $data['lng'],
+                        'company_id' => $supplyCompany->id, // مربوط بشركة المحافظة
+                        'trips_count' => 0,
+                        'orders_count' => 0,
+                    ]);
 
-                 $vehicleTypesS = [
-                    ['type' => 'Toyota', 'capacity' => 5],
-                    ['type' => 'Camry', 'capacity' => 5],
-                    ['type' => 'ford', 'capacity' => 5],
-                    ['type' => 'honda', 'capacity' => 5],
-                ];
+                    $vehicleTypesS = [
+                        ['type' => 'Toyota', 'capacity' => 5],
+                        ['type' => 'Camry', 'capacity' => 5],
+                        ['type' => 'ford', 'capacity' => 5],
+                        ['type' => 'honda', 'capacity' => 5],
+                    ];
 
-                // 2. اختيار نوع عشوائي
-                $selectedVehicle = $vehicleTypesS[array_rand($vehicleTypesS)];
+                    // اختيار نوع عشوائي لمركبة التوريد
+                    $selectedVehicleS = $vehicleTypesS[array_rand($vehicleTypesS)];
 
-                // ج. إنشاء مركبة شحن للسائق
-                $vehicleS = Vehicle::create([
-                    'company_id' => $supplyCompany->id,
-                    'driver_id' => $driverS->id,
-                    'type' => $selectedVehicle['type'],
-                    'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
-                    'capacity' => $selectedVehicle['capacity'],
-                    'status' => 'available',
-                ]);
-                $driverS->update(['transport_vehicle_id' => $vehicleS->id]);
+                    // ج. إنشاء مركبة شحن للسائق
+                    $vehicleS = Vehicle::create([
+                        'company_id' => $supplyCompany->id,
+                        'driver_id' => $driverS->id,
+                        'type' => $selectedVehicleS['type'],
+                        'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
+                        'capacity' => $selectedVehicleS['capacity'],
+                        'status' => 'available',
+                    ]);
+                    $driverS->update(['transport_vehicle_id' => $vehicleS->id]);
 
-                // د. إنشاء سائق المواصلات
-                $driverT = User::create([
-                    'email' => "driver.t." . strtolower($gov) . "." . $shift . "@mazraa.com",
-                    'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . ")",
-                    'phone' => '077' . rand(1000000, 9999999),
-                    'role' => 'transport_driver',
-                    'password' => $password,
-                    'governorate' => $gov,
-                    'shift' => $shift,
-                    'latitude' => $data['lat'],
-                    'longitude' => $data['lng'],
-                    'company_id' => $transportCompany->id, // مربوط بالشركة المركزية
-                    'trips_count' => 0,
-                    'orders_count' => 0,
-                ]);
+                    // د. إنشاء سائق المواصلات (تمت إضافة $i للإيميل والاسم)
+                    $driverT = User::create([
+                        'email' => "driver.t." . strtolower($gov) . "." . $shift . "." . $i . "@mazraa.com",
+                        'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . " - " . $i . ")",
+                        'phone' => '077' . rand(1000000, 9999999),
+                        'role' => 'transport_driver',
+                        'password' => $password,
+                        'governorate' => $gov,
+                        'shift' => $shift,
+                        'latitude' => $data['lat'],
+                        'longitude' => $data['lng'],
+                        'company_id' => $transportCompany->id, // مربوط بالشركة المركزية
+                        'trips_count' => 0,
+                        'orders_count' => 0,
+                    ]);
 
-                // هـ. إنشاء مركبة ركاب للسائق
-                // 1. تعريف أنواع المركبات وسعاتها
-                $vehicleTypesT = [
-                    ['type' => 'Small Car', 'capacity' => 5],
-                    ['type' => 'Medium Van', 'capacity' => 12],
-                    ['type' => 'Bus', 'capacity' => 25],
-                    ['type' => 'JETT Bus', 'capacity' => 50],
-                ];
+                    // هـ. إنشاء مركبة ركاب للسائق
+                    $vehicleTypesT = [
+                        ['type' => 'Small Car', 'capacity' => 5],
+                        ['type' => 'Medium Van', 'capacity' => 12],
+                        ['type' => 'Bus', 'capacity' => 25],
+                        ['type' => 'JETT Bus', 'capacity' => 50],
+                    ];
 
-                // 2. اختيار نوع عشوائي
-                $selectedVehicle = $vehicleTypesT[array_rand($vehicleTypesT)];
+                    // اختيار نوع عشوائي لمركبة المواصلات
+                    $selectedVehicleT = $vehicleTypesT[array_rand($vehicleTypesT)];
 
-                // 3. إنشاء المركبة بناءً على الاختيار
-                $vehicleT = Vehicle::create([
-                    'company_id'    => $transportCompany->id,
-                    'driver_id'     => $driverT->id,
-                    'type'          => $selectedVehicle['type'],
-                    'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
-                    'capacity'      => $selectedVehicle['capacity'],
-                    'status'        => 'available',
-                ]);
-                $driverT->update(['transport_vehicle_id' => $vehicleT->id]);
-            }
-        }
+                    // إنشاء المركبة بناءً على الاختيار
+                    $vehicleT = Vehicle::create([
+                        'company_id'    => $transportCompany->id,
+                        'driver_id'     => $driverT->id,
+                        'type'          => $selectedVehicleT['type'],
+                        'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
+                        'capacity'      => $selectedVehicleT['capacity'],
+                        'status'        => 'available',
+                    ]);
+                    $driverT->update(['transport_vehicle_id' => $vehicleT->id]);
+                    
+                } // نهاية لوب السائقين
+            } // نهاية لوب الشفتات
+        } // نهاية لوب المحافظات
 
 
 

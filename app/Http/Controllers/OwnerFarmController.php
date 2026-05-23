@@ -119,7 +119,7 @@ class OwnerFarmController extends Controller
             'name'                      => 'required|string|max:255',
             'description'               => 'required|string',
             'governorate'               => ['required', 'string', Rule::in(config('mazraa.governorates'))],
-            'location_link'             => 'nullable|url|max:255',
+            'location_link'             => 'nullable|url',
             'latitude'                  => 'nullable|numeric',
             'longitude'                 => 'nullable|numeric',
             'capacity'                  => 'required|integer|min:1',

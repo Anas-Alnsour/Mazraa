@@ -219,11 +219,11 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="relative bg-slate-950 rounded-[1.25rem] border border-slate-800 p-3.5 flex items-center shadow-inner">
                                     <span class="px-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest border-r border-slate-800">LAT</span>
-                                    <input type="text" name="latitude" id="lat" value="{{ old('latitude', '31.9522') }}" readonly class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none cursor-not-allowed">
+                                    <input type="text" name="latitude" id="lat" value="{{ old('latitude', '31.9522') }}" class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none ">
                                 </div>
                                 <div class="relative bg-slate-950 rounded-[1.25rem] border border-slate-800 p-3.5 flex items-center shadow-inner">
                                     <span class="px-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest border-r border-slate-800">LNG</span>
-                                    <input type="text" name="longitude" id="lng" value="{{ old('longitude', '35.9334') }}" readonly class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none cursor-not-allowed">
+                                    <input type="text" name="longitude" id="lng" value="{{ old('longitude', '35.9334') }}" class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none ">
                                 </div>
                             </div>
                         </div>
@@ -392,77 +392,101 @@
     </form>
 </div>
 
+{{-- Google Maps API Script (Bulletproof Fixed Solution for Admin Edit) --}}
 @push('scripts')
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAdminMap" async defer></script>
-<script>
-    function initAdminMap() {
-        const latInput = document.getElementById('lat');
-        const lngInput = document.getElementById('lng');
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&callback=initAdminMap"
+        async defer></script>
+    <script>
+        function initAdminMap() {
+            // 1. جلب حقول الإدخال بشكل آمن بجميع الاحتمالات للمعرفات (IDs)
+            const latInput = document.getElementById('latitude') || document.getElementById('lat');
+            const lngInput = document.getElementById('longitude') || document.getElementById('lng');
+            const linkInput = document.querySelector('input[name="location_link"]');
 
-        const initialPos = {
-            lat: parseFloat(latInput.value) || 31.9522,
-            lng: parseFloat(lngInput.value) || 35.9334
-        };
+            // 2. جلب الإحداثيات المبدئية كـ نصوص لتفادي أي خطأ برمي (Syntax Error) إذا كانت فارغة في قاعدة البيانات
+            let rawLat = "{{ old('latitude', $farm->latitude ?? '') }}";
+            let rawLng = "{{ old('longitude', $farm->longitude ?? '') }}";
 
-        const darkStyle = [
-            { "elementType": "geometry", "stylers": [{ "color": "#020617" }] },
-            { "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] },
-            { "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-            { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#94a3b8" }] },
-            { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-            { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-            { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#334155" }] },
-            { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#1e293b" }] },
-            { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-            { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#64748b" }] },
-            { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#334155" }] },
-            { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [{ "color": "#0f172a" }] },
-            { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0f172a" }] },
-            { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#475569" }] },
-            { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#020617" }] }
-        ];
+            const initialPos = {
+                lat: parseFloat(rawLat) || 31.9522,
+                lng: parseFloat(rawLng) || 35.9334
+            };
 
-        const map = new google.maps.Map(document.getElementById('admin-farm-map'), {
-            zoom: 9,
-            center: initialPos,
-            styles: darkStyle,
-            disableDefaultUI: false
-        });
+            // 3. تهيئة الخريطة بوضع القمر الصناعي الهجين (Hybrid) الموضح للشوارع والمزارع بدقة
+            const map = new google.maps.Map(document.getElementById('admin-farm-map'), {
+                zoom: 15,
+                center: initialPos,
+                mapTypeId: 'hybrid', // يدمج التصوير الواقعي مع أسماء الشوارع
+                mapTypeControl: true,
+                streetViewControl: false
+            });
 
-        const markerIcon = {
-            path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z',
-            fillColor: '#10b981', /* Emerald Color */
-            fillOpacity: 1,
-            strokeWeight: 1,
-            strokeColor: '#020617',
-            scale: 1.5,
-            anchor: new google.maps.Point(12, 24),
-        };
+            // 4. إنشاء الدبوس الرسمي والافتراضي لخرائط جوجل لضمان ظهوره 100% بدون مشاكل رسومية
+            const marker = new google.maps.Marker({
+                position: initialPos,
+                map: map,
+                draggable: true, // يتيح سحب الدبوس بالماوس بالكامل
+                animation: google.maps.Animation.DROP
+            });
 
-        const marker = new google.maps.Marker({
-            position: initialPos,
-            map: map,
-            draggable: true,
-            icon: markerIcon,
-            title: "Farm Pin"
-        });
+            // 5. دالة تحديث الحقول بدقة متناهية (8 خانات عشرية للموقع الدقيق)
+            function updateCoords(lat, lng) {
+                if (latInput) latInput.value = lat.toFixed(8);
+                if (lngInput) lngInput.value = lng.toFixed(8);
+            }
 
-        function updateCoords(lat, lng) {
-            latInput.value = lat.toFixed(6);
-            lngInput.value = lng.toFixed(6);
+            // تعبئة الحقول فوراً عند تحميل الصفحة بالإحداثيات الحالية لعدم تركها فارغة
+            updateCoords(initialPos.lat, initialPos.lng);
+
+            // ================= الأحداث (EVENTS) ================= //
+
+            // أ. عند الانتهاء من سحب الدبوس بالماوس وإفلاته (ينقل الإحداثيات فوراً)
+            marker.addListener('dragend', function() {
+                const p = marker.getPosition();
+                updateCoords(p.lat(), p.lng());
+                map.panTo(p); // نقل الكاميرا وتوسيطها بسلاسة لموقع الدبوس الجديد
+            });
+
+            // ب. عند النقر (الكبس) على أي مكان في الخريطة ينتقل الدبوس فوراً للمكان المكبوس ويحدث الحقول
+            map.addListener('click', function(e) {
+                marker.setPosition(e.latLng);
+                updateCoords(e.latLng.lat(), e.latLng.lng());
+                map.panTo(e.latLng); // توسيط الكاميرا تلقائياً على الكبسة الجديدة
+            });
+
+            // ج. عند كتابة الإحداثيات يدوياً داخل الحقول النصية (يتحرك الدبوس تلقائياً على الخريطة)
+            function syncMapFromInputs() {
+                if (!latInput || !lngInput) return;
+                const lat = parseFloat(latInput.value);
+                const lng = parseFloat(lngInput.value);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const newPos = { lat: lat, lng: lng };
+                    marker.setPosition(newPos);
+                    map.panTo(newPos);
+                }
+            }
+            if (latInput) latInput.addEventListener('input', syncMapFromInputs);
+            if (lngInput) lngInput.addEventListener('input', syncMapFromInputs);
+
+            // د. عند لصق رابط خرائط جوجل في حقل الرابط (يستخرج الإحداثيات وينقل الدبوس لها)
+            if (linkInput) {
+                linkInput.addEventListener('input', function() {
+                    const match = this.value.match(/@?(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    if (match) {
+                        const lat = parseFloat(match[1]);
+                        const lng = parseFloat(match[2]);
+                        updateCoords(lat, lng);
+                        
+                        const newPos = { lat: lat, lng: lng };
+                        marker.setPosition(newPos);
+                        map.setZoom(18); // تقريب شديد جداً لرؤية المزرعة بوضوح بعد لصق الرابط
+                        map.panTo(newPos);
+                    }
+                });
+            }
         }
-
-        marker.addListener('dragend', function() {
-            const pos = marker.getPosition();
-            updateCoords(pos.lat(), pos.lng());
-        });
-
-        map.addListener('click', function(e) {
-            marker.setPosition(e.latLng);
-            updateCoords(e.latLng.lat(), e.latLng.lng());
-        });
-    }
-    window.initAdminMap = initAdminMap;
-</script>
+        window.initAdminMap = initAdminMap;
+    </script>
 @endpush
 @endsection
