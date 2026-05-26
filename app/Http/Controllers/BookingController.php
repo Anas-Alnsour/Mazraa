@@ -79,7 +79,7 @@ class BookingController extends Controller
         $taxAmount       = $totalBeforeTax * 0.10;
         $finalTotal      = $totalBeforeTax + $taxAmount;
         $commissionAmount = $farmPrice * ($farm->commission_rate / 100);
-        $netOwnerAmount  = $farmPrice - $commissionAmount;
+        $netOwnerAmount  = $farmPrice;
 
         // ---------------------------------------------------------------
         // 🔒 ATOMIC TRANSACTION — availability check + insert together
@@ -130,7 +130,7 @@ class BookingController extends Controller
                 'net_owner_amount'  => $netOwnerAmount,
                 'payment_status'    => 'pending',
                 'status'            => 'pending_payment',
-                'requires_transport'=> $requiresTransport,
+                'requires_transport' => $requiresTransport,
                 'transport_cost'    => $transportCost,
                 'pickup_lat'        => $requiresTransport ? $validated['pickup_lat'] : null,
                 'pickup_lng'        => $requiresTransport ? $validated['pickup_lng'] : null,
@@ -145,16 +145,16 @@ class BookingController extends Controller
                     'transport_type'         => 'Shuttle',
                     'passengers'             => $validated['passengers'],
                     'start_and_return_point' => $pickupLocation,
-                    'destination_governorate'=> $destGovernorate,
+                    'destination_governorate' => $destGovernorate,
                     'pickup_lat'             => $validated['pickup_lat'],
                     'pickup_lng'             => $validated['pickup_lng'],
                     'price'                  => $transportCost,
-                    'distance'               => 0,
+                    'distance'               => $distance,
                     'Farm_Arrival_Time'      => $startTime,
                     'Farm_Departure_Time'    => $endTime,
                     'status'                 => 'pending',
                     'commission_amount'      => $transportCost * 0.10,
-                    'net_company_amount'     => $transportCost * 0.90,
+                    'net_company_amount'     => $transportCost,
                 ]);
 
                 if (class_exists('\App\Services\TransportDispatchAction')) {
@@ -218,7 +218,6 @@ class BookingController extends Controller
             // =========================================================
 
             return redirect()->route('payment.select', ['booking' => $booking->id]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'An error occurred while processing your booking. Please try again.');
@@ -232,7 +231,9 @@ class BookingController extends Controller
     {
         $query = FarmBooking::where('user_id', Auth::id())
             ->where('end_time', '>=', now())
-            ->with(['farm' => function($q) { $q->withTrashed(); }, 'transport']);
+            ->with(['farm' => function ($q) {
+                $q->withTrashed();
+            }, 'transport']);
 
         if ($request->filled('filter_date')) {
             $query->whereDate('start_time', $request->filter_date);
@@ -274,7 +275,9 @@ class BookingController extends Controller
      */
     public function show(FarmBooking $booking)
     {
-        if ($booking->user_id !== Auth::id()) { abort(403); }
+        if ($booking->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         // Ensure relations are loaded
         $booking->load(['farm', 'transport.driver', 'transport.vehicle', 'supplyOrders.supply']);
@@ -287,7 +290,9 @@ class BookingController extends Controller
      */
     public function edit(FarmBooking $booking)
     {
-        if ($booking->user_id !== Auth::id()) { abort(403); }
+        if ($booking->user_id !== Auth::id()) {
+            abort(403);
+        }
         return view('bookings.edit', compact('booking'));
     }
 
@@ -296,7 +301,9 @@ class BookingController extends Controller
      */
     public function destroy(FarmBooking $booking)
     {
-        if ($booking->user_id !== auth()->id()) { abort(403); }
+        if ($booking->user_id !== auth()->id()) {
+            abort(403);
+        }
 
         if (in_array($booking->status, ['cancelled', 'completed'])) {
             return redirect()->route('bookings.my_bookings')->with('error', 'This booking cannot be cancelled.');
@@ -369,7 +376,9 @@ class BookingController extends Controller
      */
     public function update(Request $request, FarmBooking $booking)
     {
-        if ($booking->user_id !== Auth::id()) { abort(403); }
+        if ($booking->user_id !== Auth::id()) {
+            abort(403);
+        }
 
         $request->validate([
             'booking_date' => 'required|date|after_or_equal:today',
@@ -536,13 +545,23 @@ class BookingController extends Controller
                 \App\Services\TransportDispatchAction::dispatchDriver($existingTransport);
             } elseif ($booking->payment_status !== 'paid') {
                 $transport = \App\Models\Transport::create([
-                    'user_id' => Auth::id(), 'farm_id' => $farm->id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
-                    'passengers' => $request->passengers ?? 1, 'start_and_return_point' => $pickupLocation,
-                    'pickup_location' => $pickupLocation, 'destination_governorate' => $destGovernorate,
-                    'pickup_lat' => $request->pickup_lat, 'pickup_lng' => $request->pickup_lng,
-                    'price' => $transportCost, 'distance' => 0, 'Farm_Arrival_Time' => $startTime,
-                    'Farm_Departure_Time' => $endTime, 'status' => 'pending',
-                    'commission_amount' => $transportCost * 0.10, 'net_company_amount' => $transportCost * 0.90
+                    'user_id' => Auth::id(),
+                    'farm_id' => $farm->id,
+                    'farm_booking_id' => $booking->id,
+                    'transport_type' => 'Shuttle',
+                    'passengers' => $request->passengers ?? 1,
+                    'start_and_return_point' => $pickupLocation,
+                    'pickup_location' => $pickupLocation,
+                    'destination_governorate' => $destGovernorate,
+                    'pickup_lat' => $request->pickup_lat,
+                    'pickup_lng' => $request->pickup_lng,
+                    'price' => $transportCost,
+                    'distance' => $distance,
+                    'Farm_Arrival_Time' => $startTime,
+                    'Farm_Departure_Time' => $endTime,
+                    'status' => 'pending',
+                    'commission_amount' => $transportCost * 0.10,
+                    'net_company_amount' => $transportCost * 0.90
                 ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($transport);
 
@@ -562,10 +581,16 @@ class BookingController extends Controller
         }
 
         $booking->update([
-            'start_time' => $startTime, 'end_time' => $endTime, 'event_type' => $request->shift,
-            'total_price' => $newTotalPrice, 'tax_amount' => $taxAmount, 'commission_amount' => $commissionAmount,
-            'net_owner_amount' => $netOwnerAmount, 'requires_transport' => $requiresTransportFlag,
-            'transport_cost' => $transportCost, 'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'event_type' => $request->shift,
+            'total_price' => $newTotalPrice,
+            'tax_amount' => $taxAmount,
+            'commission_amount' => $commissionAmount,
+            'net_owner_amount' => $netOwnerAmount,
+            'requires_transport' => $requiresTransportFlag,
+            'transport_cost' => $transportCost,
+            'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
             'pickup_lng' => $requiresTransportFlag ? $request->pickup_lng : null,
         ]);
 
@@ -648,15 +673,30 @@ class BookingController extends Controller
                     ->first();
 
                 if (!$existingTransport) {
+
+                    // جلب قيمة موقع التوصيل من الميتاداتا، وفي حال كانت فارغة نضع قيمة افتراضية
+                    $pickupLocationFromMeta = $session->metadata->pickup_location ?? 'Custom User Location';
+
+                    $distance = (float) $request->input('distance', 0);
+
                     $transport = \App\Models\Transport::create([
-                        'user_id' => Auth::id(), 'farm_id' => $booking->farm_id, 'farm_booking_id' => $booking->id, 'transport_type' => 'Shuttle',
-                        'passengers' => $session->metadata->transport_passengers, 'start_and_return_point' => $session->metadata->pickup_location,
-                        'pickup_location' => $session->metadata->pickup_location, 'destination_governorate' => $session->metadata->destination_governorate,
-                        'pickup_lat' => $session->metadata->pickup_lat, 'pickup_lng' => $session->metadata->pickup_lng,
-                        'price' => $session->metadata->transport_cost, 'distance' => 0,
+                        'user_id' => Auth::id(),
+                        'farm_id' => $booking->farm_id,
+                        'farm_booking_id' => $booking->id,
+                        'transport_type' => 'Shuttle',
+                        'passengers' => $session->metadata->transport_passengers,
+                        'start_and_return_point' => $pickupLocationFromMeta, // تعيين القيمة للحقل الصحيح 
+                        'pickup_location' => $session->metadata->pickup_location,
+                        'destination_governorate' => $session->metadata->destination_governorate,
+                        'pickup_lat' => $session->metadata->pickup_lat,
+                        'pickup_lng' => $session->metadata->pickup_lng,
+                        'price' => $session->metadata->transport_cost,
+                        'distance' => $distance,
                         'Farm_Arrival_Time' => Carbon::parse($session->metadata->new_start_time),
-                        'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time), 'status' => 'pending',
-                        'commission_amount' => $session->metadata->transport_cost * 0.10, 'net_company_amount' => $session->metadata->transport_cost * 0.90
+                        'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time),
+                        'status' => 'pending',
+                        'commission_amount' => $session->metadata->transport_cost * 0.10,
+                        'net_company_amount' => $session->metadata->transport_cost * 0.90
                     ]);
                     \App\Services\TransportDispatchAction::dispatchDriver($transport);
 

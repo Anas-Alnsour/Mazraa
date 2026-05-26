@@ -369,7 +369,7 @@
                             </div>
 
                             {{-- Event Type --}}
-                            <div class="space-y-2">
+                            {{-- <div class="space-y-2">
                                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Event Type</label>
                                 <div class="relative">
                                     <select name="event_type" id="eventType" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none appearance-none shadow-sm cursor-pointer" required>
@@ -378,11 +378,8 @@
                                         <option value="Wedding">💍 Wedding / Engagement</option>
                                         <option value="Other">✨ Family Gathering / Other</option>
                                     </select>
-                                    {{-- <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                                    </div> --}}
                                 </div>
-                            </div>
+                            </div> --}}
 
                             {{-- Transport Integration --}}
                             @if($farm->latitude && $farm->longitude)

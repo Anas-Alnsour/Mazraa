@@ -198,7 +198,7 @@
                         </div>
 
                         {{-- Event Type --}}
-                        <div>
+                        {{-- <div>
                             <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Event Type</label>
                             <div class="relative">
                                 <select name="event_type" id="eventType" class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all outline-none appearance-none shadow-sm" required>
@@ -207,7 +207,7 @@
                                     <option value="Other" {{ old('event_type', $booking->event_type) == 'Other' ? 'selected' : '' }}>✨ Family Gathering / Other</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> --}}
 
                         {{-- 🌟 Transport Integration 🌟 --}}
                         @if($farm->latitude && $farm->longitude)
