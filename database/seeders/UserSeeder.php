@@ -130,10 +130,11 @@ class UserSeeder extends Seeder
 
             foreach ($shifts as $shift) {
                 
-                // 💡 التعديل هنا: دوران لإنشاء سائقين (2) لكل شفت بدلاً من واحد
-                for ($i = 1; $i <= 2; $i++) {
+                // ====================================================
+                // أولاً: إنشاء سائقي التوريد (Supply) - [4 سائقين لكل شفت بسيارات عشوائية]
+                // ====================================================
+                for ($i = 1; $i <= 4; $i++) {
                     
-                    // ب. إنشاء سائق التوريد (تمت إضافة $i للإيميل والاسم لضمان عدم التكرار)
                     $driverS = User::create([
                         'email' => "driver.s." . strtolower($gov) . "." . $shift . "." . $i . "@mazraa.com",
                         'name' => "سائق توريد " . $data['ar'] . " (" . ucfirst($shift) . " - " . $i . ")",
@@ -144,7 +145,7 @@ class UserSeeder extends Seeder
                         'shift' => $shift,
                         'latitude' => $data['lat'],
                         'longitude' => $data['lng'],
-                        'company_id' => $supplyCompany->id, // مربوط بشركة المحافظة
+                        'company_id' => $supplyCompany->id,
                         'trips_count' => 0,
                         'orders_count' => 0,
                     ]);
@@ -154,12 +155,13 @@ class UserSeeder extends Seeder
                         ['type' => 'Camry', 'capacity' => 5],
                         ['type' => 'ford', 'capacity' => 5],
                         ['type' => 'honda', 'capacity' => 5],
+                        ['type' => 'nissan', 'capacity' => 5],
+                        ['type' => 'kia', 'capacity' => 5],
+                        ['type' => 'hyundai', 'capacity' => 5],
                     ];
 
-                    // اختيار نوع عشوائي لمركبة التوريد
                     $selectedVehicleS = $vehicleTypesS[array_rand($vehicleTypesS)];
 
-                    // ج. إنشاء مركبة شحن للسائق
                     $vehicleS = Vehicle::create([
                         'company_id' => $supplyCompany->id,
                         'driver_id' => $driverS->id,
@@ -169,11 +171,29 @@ class UserSeeder extends Seeder
                         'status' => 'available',
                     ]);
                     $driverS->update(['transport_vehicle_id' => $vehicleS->id]);
+                }
 
-                    // د. إنشاء سائق المواصلات (تمت إضافة $i للإيميل والاسم)
+
+                // ====================================================
+                // ثانياً: إنشاء سائقي المواصلات (Transport) - [4 سائقين لكل شفت بسيارات محددة]
+                // ====================================================
+                
+                // تعريف أنواع السيارات الأربعة المطلوبة
+                $vehicleTypesT = [
+                    ['type' => 'Small Car', 'capacity' => 5],
+                    ['type' => 'Medium Van', 'capacity' => 12],
+                    ['type' => 'Bus', 'capacity' => 25],
+                    ['type' => 'JETT Bus', 'capacity' => 50],
+                ];
+
+                // نمر بالترتيب على كل سيارة، وننشئ لها سائق مخصص (العداد يبدأ من 1)
+                $driverTIndex = 1;
+                foreach ($vehicleTypesT as $vehicleData) {
+                    
+                    // د. إنشاء سائق المواصلات
                     $driverT = User::create([
-                        'email' => "driver.t." . strtolower($gov) . "." . $shift . "." . $i . "@mazraa.com",
-                        'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . " - " . $i . ")",
+                        'email' => "driver.t." . strtolower($gov) . "." . $shift . "." . $driverTIndex . "@mazraa.com",
+                        'name' => "سائق مواصلات " . $data['ar'] . " (" . ucfirst($shift) . " - " . $vehicleData['type'] . ")",
                         'phone' => '077' . rand(1000000, 9999999),
                         'role' => 'transport_driver',
                         'password' => $password,
@@ -186,32 +206,23 @@ class UserSeeder extends Seeder
                         'orders_count' => 0,
                     ]);
 
-                    // هـ. إنشاء مركبة ركاب للسائق
-                    $vehicleTypesT = [
-                        ['type' => 'Small Car', 'capacity' => 5],
-                        ['type' => 'Medium Van', 'capacity' => 12],
-                        ['type' => 'Bus', 'capacity' => 25],
-                        ['type' => 'JETT Bus', 'capacity' => 50],
-                    ];
-
-                    // اختيار نوع عشوائي لمركبة المواصلات
-                    $selectedVehicleT = $vehicleTypesT[array_rand($vehicleTypesT)];
-
-                    // إنشاء المركبة بناءً على الاختيار
+                    // هـ. إنشاء مركبة ركاب للسائق بناءً على اللفة الحالية (بدون عشوائية)
                     $vehicleT = Vehicle::create([
                         'company_id'    => $transportCompany->id,
                         'driver_id'     => $driverT->id,
-                        'type'          => $selectedVehicleT['type'],
+                        'type'          => $vehicleData['type'],     // يأخذ النوع المحدد حالياً
                         'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
-                        'capacity'      => $selectedVehicleT['capacity'],
+                        'capacity'      => $vehicleData['capacity'], // يأخذ السعة المحددة حالياً
                         'status'        => 'available',
                     ]);
-                    $driverT->update(['transport_vehicle_id' => $vehicleT->id]);
                     
-                } // نهاية لوب السائقين
-            } // نهاية لوب الشفتات
-        } // نهاية لوب المحافظات
+                    $driverT->update(['transport_vehicle_id' => $vehicleT->id]);
 
+                    // زيادة العداد للسائق التالي
+                    $driverTIndex++;
+                }
+            } // نهاية لوب الشفتات
+        } // نهاية لوب المحافظات    
 
 
         // 8. إنشاء 50 مستخدم عشوائي (تعليقك كان مكتوب 50 لكن الكود كان 10، عدلتها لك لتطابق التعليق)
