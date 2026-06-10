@@ -48,7 +48,7 @@
             <div class="text-center md:text-left">
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black uppercase tracking-widest mb-4 shadow-inner text-teal-400 mx-auto md:mx-0">
                     <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_8px_#2dd4bf]"></span>
-                    Logistics Hub
+                    Driver Dashboard
                 </div>
                 <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-2 text-white">Delivery <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">Operations</span></h1>
                 <p class="text-slate-400 font-bold text-xs md:text-sm uppercase tracking-widest max-w-md leading-relaxed mt-3">Manage assigned supply drops, track routes, and confirm deliveries for farm owners.</p>
@@ -98,12 +98,15 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div class="space-y-1">
-                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Destination Node</p>
-                                <p class="text-sm font-bold text-white">{{ $firstItem->booking->farm->name ?? 'N/A' }}</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate line-clamp-1">{{ $firstItem->booking->farm->location ?? 'No location details' }}</p>
+                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Drop-off Location</p>
+                                {{-- التعديل هنا: جعل الاسم واللوكيشن رابط إلى جوجل ماب --}}
+                                <a href="http://maps.google.com/?q={{ $firstItem->booking->farm->latitude ?? '' }},{{ $firstItem->booking->farm->longitude ?? '' }}" target="_blank" class="block group">
+                                    <p class="text-sm font-bold text-white group-hover:text-teal-400 transition-colors underline decoration-teal-500/30 underline-offset-2">{{ $firstItem->booking->farm->name ?? 'N/A' }}</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate line-clamp-1 group-hover:text-teal-500 transition-colors">{{ $firstItem->booking->farm->location ?? 'No location details' }}</p>
+                                </a>
                             </div>
                             <div class="space-y-1">
-                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Client Identity</p>
+                                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Customer Info</p>
                                 <p class="text-sm font-bold text-white">{{ $firstItem->user->name ?? 'Guest' }}</p>
                                 <a href="tel:{{ $firstItem->user->phone }}" class="text-[10px] text-teal-400 font-black uppercase tracking-widest flex items-center gap-1.5 hover:text-teal-300 transition-colors mt-1">
                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
@@ -115,7 +118,7 @@
 
                     {{-- 🌟 Items List --}}
                     <div class="p-6 md:p-8 space-y-4 flex-grow bg-slate-900/20 relative z-10">
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Manifest Payload</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Order Items</p>
                         @foreach($items as $item)
                             <div class="flex justify-between items-center bg-slate-950 p-4 rounded-[1.25rem] border border-slate-800 shadow-inner">
                                 <div class="flex items-center gap-4">
@@ -134,7 +137,7 @@
                                 @csrf @method('PATCH')
 
                                 <div class="relative group">
-                                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-2">Execution Protocol</p>
+                                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-2">Order Status</p>
                                     <select name="status" class="w-full rounded-[1.25rem] px-5 py-4 text-[11px] font-black uppercase tracking-widest dark-select cursor-pointer shadow-inner">
                                         <option value="waiting_driver" {{ $firstItem->status == 'waiting_driver' ? 'selected' : '' }}>Picking Up Order</option>
                                         <option value="in_way" {{ $firstItem->status == 'in_way' ? 'selected' : '' }}>On My Way to Farm</option>
@@ -143,7 +146,7 @@
                                 </div>
 
                                 <button type="submit" class="w-full py-4.5 bg-gradient-to-r from-teal-600 to-emerald-500 hover:to-emerald-400 text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-[0_10px_20px_rgba(20,184,166,0.2)] active:scale-[0.98]">
-                                    Update Progression
+                                    Update Status
                                 </button>
                             </form>
                         @else

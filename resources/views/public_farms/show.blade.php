@@ -125,7 +125,7 @@
 
             {{-- 2. PREMIUM MASONRY IMAGE GALLERY --}}
             <div class="mb-12 fade-in-up" style="animation-delay: 0.1s;">
-                @if ($farm->images->count() > 0)
+                @if ($farm->images->count() > 0 || $farm->main_image)
                     <div x-data="{
                         isOpen: false,
                         current: 0,
@@ -134,25 +134,20 @@
                             @foreach ($farm->images as $image)
                             '{{ asset('storage/' . $image->image_url) }}',
                             @endforeach
-                        ],
-                        open(index) { this.current = index; this.isOpen = true; document.body.style.overflow = 'hidden'; },
-                        close() { this.isOpen = false; document.body.style.overflow = 'auto'; },
-                        next() { this.current = (this.current + 1) % this.images.length; },
-                        prev() { this.current = (this.current - 1 + this.images.length) % this.images.length; }
+                        ]
                     }">
                         <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-3 h-[50vh] md:h-[65vh] min-h-[400px] rounded-[2.5rem] overflow-hidden shadow-lg border border-gray-200/50">
                             @if($farm->main_image || isset($farm->images[0]))
-                            <div class="md:col-span-2 md:row-span-2 relative group cursor-pointer overflow-hidden h-full w-full">
+                            <div class="md:col-span-2 md:row-span-2 relative group cursor-pointer overflow-hidden h-full w-full" @click="current = 0; isOpen = true;">
                                 <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('storage/' . $farm->images[0]->image_url) }}"
-                                     @click="open(0)" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Main Image">
+                                     class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Main Image">
                                 <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
                             </div>
                             @endif
 
                             @foreach($farm->images->take(4) as $index => $image)
-                                <div class="hidden md:block relative group cursor-pointer overflow-hidden h-full w-full">
+                                <div class="hidden md:block relative group cursor-pointer overflow-hidden h-full w-full" @click="current = {{ $farm->main_image ? $loop->index + 1 : $loop->index }}; isOpen = true;">
                                     <img src="{{ asset('storage/' . $image->image_url) }}"
-                                         @click="open({{ $farm->main_image ? $loop->index + 1 : $loop->index }})"
                                          class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="Gallery Image">
                                     <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
                                 </div>
@@ -160,23 +155,37 @@
                         </div>
 
                         {{-- Fullscreen Modal --}}
-                        <div x-show="isOpen" x-transition.opacity.duration.300ms style="display: none;"
-                            class="fixed inset-0 bg-[#020617]/95 flex items-center justify-center z-[200] backdrop-blur-xl"
-                            @keydown.window.escape="close">
-                            <div class="absolute top-0 inset-x-0 p-6 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent">
-                                <span class="text-white font-bold tracking-widest text-xs uppercase" x-text="`${current + 1} / ${images.length}`"></span>
-                                <button @click="close" class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-all">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
+                        <template x-teleport="body">
+                            <div x-show="isOpen"
+                                 class="fixed inset-0 z-[999999] flex flex-col items-center justify-center bg-black/95 backdrop-blur-md h-screen w-screen"
+                                 style="display: none;"
+                                 @keydown.escape.window="isOpen = false"
+                                 @keydown.arrow-right.window="current = (current + 1) % images.length"
+                                 @keydown.arrow-left.window="current = (current - 1 + images.length) % images.length">
+
+                                {{-- زر الإغلاق --}}
+                                <button @click="isOpen = false" class="absolute top-4 right-4 md:top-8 md:right-8 text-white text-4xl md:text-5xl z-[1000000] p-2 md:p-4 hover:bg-white/10 rounded-full transition-all leading-none">&times;</button>
+
+                                {{-- عداد الصور --}}
+                                <div class="absolute top-8 left-8 text-white font-bold tracking-widest text-sm md:text-lg uppercase z-[1000000]">
+                                    <span x-text="`${current + 1} / ${images.length}`"></span>
+                                </div>
+
+                                {{-- حاوية الصورة لتوسيطها --}}
+                                <div class="relative flex items-center justify-center w-full h-[80vh] px-4 md:px-16" @click.away="isOpen = false">
+                                    {{-- زر السابق --}}
+                                    <button @click.stop="current = (current - 1 + images.length) % images.length"
+                                            class="absolute left-2 md:left-8 text-white p-3 md:p-6 bg-white/10 rounded-full hover:bg-white/20 transition-all text-2xl md:text-4xl font-bold z-[1000000] flex items-center justify-center leading-none">❮</button>
+
+                                    {{-- الصورة المعروضة --}}
+                                    <img :src="images[current]" class="max-h-full max-w-full object-contain shadow-2xl transition-all duration-300 pointer-events-none select-none">
+
+                                    {{-- زر التالي --}}
+                                    <button @click.stop="current = (current + 1) % images.length"
+                                            class="absolute right-2 md:right-8 text-white p-3 md:p-6 bg-white/10 rounded-full hover:bg-white/20 transition-all text-2xl md:text-4xl font-bold z-[1000000] flex items-center justify-center leading-none">❯</button>
+                                </div>
                             </div>
-                            <button @click="prev" class="absolute left-4 md:left-10 p-4 rounded-full bg-white/5 text-white hover:bg-white/20 transition-all backdrop-blur-md">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <img :src="images[current]" class="max-h-[85vh] max-w-[90vw] md:max-w-[75vw] rounded-2xl shadow-2xl object-contain transition-transform duration-300">
-                            <button @click="next" class="absolute right-4 md:right-10 p-4 rounded-full bg-white/5 text-white hover:bg-white/20 transition-all backdrop-blur-md">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                        </div>
+                        </template>
                     </div>
                 @else
                     <div class="w-full h-[500px] overflow-hidden rounded-[2.5rem] relative border border-gray-200 bg-slate-50 flex flex-col items-center justify-center p-12">
@@ -268,7 +277,6 @@
                 <div class="lg:w-[40%] xl:w-[35%] relative">
                     <div class="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 sticky top-28 z-20 shadow-2xl shadow-slate-200/50">
 
-                        {{-- ✅ التعديل #1: السعر ديناميكي يبدأ بـ — ويتغير عند اختيار الشفت --}}
                         <div class="flex items-baseline justify-between mb-8 pb-6 border-b border-gray-100">
                             <div>
                                 <span id="displayPrice" class="text-3xl font-black text-slate-900 tracking-tighter">—</span>
@@ -280,7 +288,7 @@
                             </div>
                         </div>
 
-                        {{-- Finalized Form Structure --}}
+                        {{-- Form Structure --}}
                         <form action="{{ route('bookings.store') }}" method="POST" id="bookingForm" class="space-y-6" x-data="{ bookingMode: 'single' }">
                             @csrf
                             <input type="hidden" name="distance" id="distance_input" value="0">
@@ -317,16 +325,6 @@
                                         <input type="text" id="booking_date_flatpickr" placeholder="Select your check-in date..."
                                             class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none cursor-pointer">
                                         <svg class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    </div>
-
-                                    {{-- 💡 Calendar Guide Note --}}
-                                    <div class="mt-3 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
-                                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5 border-b border-slate-200 pb-1">Availability Guide:</p>
-                                        <div class="flex items-center gap-3 text-[10px] font-bold text-slate-600 flex-wrap">
-                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-orange-300 bg-orange-100"></span> Morning Booked</div>
-                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-indigo-300 bg-indigo-100"></span> Evening Booked</div>
-                                            <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full border-2 border-slate-300 bg-slate-200"></span> Fully Booked</div>
-                                        </div>
                                     </div>
                                 </div>
 
@@ -369,7 +367,7 @@
                             </div>
 
                             {{-- Event Type --}}
-                            {{-- <div class="space-y-2">
+                            <div class="space-y-2">
                                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Event Type</label>
                                 <div class="relative">
                                     <select name="event_type" id="eventType" class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 focus:ring-4 focus:ring-emerald-50 focus:border-emerald-600 transition-all outline-none appearance-none shadow-sm cursor-pointer" required>
@@ -379,7 +377,7 @@
                                         <option value="Other">✨ Family Gathering / Other</option>
                                     </select>
                                 </div>
-                            </div> --}}
+                            </div>
 
                             {{-- Transport Integration --}}
                             @if($farm->latitude && $farm->longitude)
@@ -389,7 +387,7 @@
                                         <input type="checkbox" id="toggleTransport" class="w-5 h-5 rounded-lg border-slate-300 text-emerald-600 focus:ring-emerald-500 transition-all cursor-pointer">
                                     </div>
                                     <div class="ml-4 flex-1">
-                                        <span class="block text-sm font-black text-slate-900 group-hover:text-emerald-700 transition-colors">Add Shuttle Transport</span>
+                                        <span class="block text-sm font-black text-slate-900 group-hover:text-emerald-700 transition-colors">Add Transport</span>
                                         <span class="block text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-tighter">Premium pickup & drop-off</span>
                                     </div>
                                 </label>
@@ -411,6 +409,7 @@
                                             <button type="button" onclick="searchPickupLocation()" class="bg-slate-900 text-white px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-colors">Search</button>
                                         </div>
                                     </div>
+                                    <p class="text-[10px] text-gray-500 font-bold text-center">Click or drag on the map to set exact pickup point</p>
 
                                     {{-- Map Display Area --}}
                                     <div class="relative p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm" id="originalMapContainer">
@@ -462,7 +461,7 @@
 
                             <button type="submit" id="confirmBookingBtn" disabled
                                 class="w-full py-5 rounded-2xl bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-600/30 hover:bg-emerald-700 hover:-translate-y-1 transition-all active:translate-y-0 active:scale-95 flex items-center justify-center gap-2 group disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none disabled:transform-none">
-                                Reserve My Spot
+                                Booking and Payment
                                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                             </button>
 
@@ -483,7 +482,8 @@
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=marker&callback=initAllMaps" async defer></script>
 
     <?php
         $bookingsData = [];
@@ -562,7 +562,11 @@
             disable: fullyBookedDates,
             onDayCreate: function(dObj, dStr, fp, dayElem) {
                 const localDate = new Date(dayElem.dateObj.getTime() - (dayElem.dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                if (morningBookedDates.includes(localDate)) {
+
+                if (fullyBookedDates.includes(localDate)) {
+                    dayElem.classList.add('booked-full');
+                    dayElem.title = "Fully Booked";
+                } else if (morningBookedDates.includes(localDate)) {
                     dayElem.classList.add('booked-morning');
                     dayElem.title = "Morning Booked (Evening available)";
                 } else if (eveningBookedDates.includes(localDate)) {
@@ -578,7 +582,6 @@
                 if(dateStr) {
                     document.getElementById('booking_date').value = dateStr;
                     const shiftsContainer = document.getElementById('shiftsContainer');
-                    shiftsContainer.classList.remove('hidden');
                     shiftsContainer.style.display = 'block';
                     checkAvailability(dateStr);
                     resetShiftSelection();
@@ -636,9 +639,6 @@
             document.getElementById('start_time').value = '';
             document.getElementById('end_time').value = '';
 
-            // ✅ التعديل #2: إعادة السعر إلى — عند reset
-            document.getElementById('displayPrice').textContent = '—';
-
             document.querySelectorAll('.shift-btn').forEach(btn => {
                 btn.classList.remove('bg-green-50', 'border-[#1d5c42]', 'bg-indigo-50', 'border-indigo-500', 'bg-amber-50', 'border-[#c2a265]');
                 btn.classList.add('border-gray-200', 'bg-white');
@@ -679,10 +679,6 @@
             resetShiftSelection();
             currentShiftType = type;
             document.getElementById('shift_input').value = type;
-
-            // ✅ التعديل #3: تحديث السعر المعروض حسب الشفت المختار
-            const priceMap = { morning: priceMorning, evening: priceEvening, full_day: priceFullDay };
-            document.getElementById('displayPrice').textContent = priceMap[type].toLocaleString();
 
             if (type === 'morning') {
                 btnMorning.classList.remove('border-gray-200', 'bg-white');
@@ -754,9 +750,6 @@
             document.getElementById('shift_input').value = 'full_day';
             document.getElementById('start_time').value = sDate.toISOString().split('T')[0] + ' 10:00:00';
             document.getElementById('end_time').value = eDate.toISOString().split('T')[0] + ' 08:00:00';
-
-            // ✅ تحديث السعر في وضع multi-day أيضاً
-            document.getElementById('displayPrice').textContent = (priceFullDay * multiDaysCount).toLocaleString();
 
             selectedShift = true;
             currentShiftType = 'multi_day';
@@ -878,7 +871,6 @@
                     if(data.routes && data.routes.length > 0) {
                         let distanceKm = (data.routes[0].distance / 1000).toFixed(1);
                         transportCost = parseFloat((10 + (distanceKm * 0.5)).toFixed(2));
-                        document.getElementById('distance_input').value = distanceKm;
                         document.getElementById('distVal').innerText = distanceKm;
                         document.getElementById('costVal').innerText = transportCost;
                         document.getElementById('transport_cost').value = transportCost;

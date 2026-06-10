@@ -200,7 +200,7 @@
                         <thead class="bg-slate-950/80 border-b border-slate-800">
                             <tr>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Job Identity</th>
-                                <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Route Vector</th>
+                                <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Pickup Location</th>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Time Node</th>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right whitespace-nowrap">Est. Revenue</th>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right whitespace-nowrap">Action</th>

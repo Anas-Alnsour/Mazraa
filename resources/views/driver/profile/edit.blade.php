@@ -107,7 +107,7 @@
 
                 <div class="flex items-center gap-6 pt-4 border-t border-slate-800">
                     <button type="submit" class="px-8 py-4 bg-gradient-to-r {{ $themeGradient }} text-slate-950 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-[0_10px_20px_{{ $themeGlow }}] active:scale-95 transition-all">
-                        Commit Metadata
+                        Save Changes
                     </button>
                     @if (session('status') === 'profile-updated')
                         <p x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"

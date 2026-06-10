@@ -220,7 +220,7 @@
                     <thead class="bg-slate-950/80 border-b border-slate-800">
                         <tr>
                             <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Order Trace</th>
-                            <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Client Identity</th>
+                            <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Customer Info</th>
                             <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Payload (Asset)</th>
                             <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Net Yield</th>
                             <th class="px-8 py-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-center">Status</th>

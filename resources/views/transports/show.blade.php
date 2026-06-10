@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in-up">
-    
+
     {{-- Top Navigation & Title --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
@@ -25,10 +25,10 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
+
         {{-- Left Column: Core Trip Info --}}
         <div class="lg:col-span-2 space-y-10">
-            
+
             {{-- Trip Status Hero --}}
             <div class="bg-white rounded-[3rem] p-10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-10">
                 <div class="flex items-center gap-8">
@@ -55,10 +55,10 @@
             <div class="bg-white rounded-[3rem] p-12 shadow-xl border border-slate-100 flex flex-col md:flex-row gap-12">
                 <div class="flex-1 space-y-12">
                     <h3 class="text-xl font-black text-slate-900 tracking-tight">Logistics Path</h3>
-                    
+
                     <div class="space-y-12 relative">
                         <div class="absolute left-4 top-2 bottom-2 w-0.5 border-l-2 border-slate-100 border-dashed"></div>
-                        
+
                         <div class="flex items-start gap-8 relative z-10 transition-transform hover:translate-x-2">
                             <div class="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white ring-8 ring-white shadow-lg">
                                 <span class="text-[10px] font-black">A</span>
@@ -87,7 +87,7 @@
 
                 <div class="flex-none md:w-64 space-y-8">
                     <h3 class="text-xl font-black text-slate-900 tracking-tight">Timeline</h3>
-                    
+
                     <div class="space-y-6">
                         <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 group hover:border-emerald-200 transition-colors">
                             <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 leading-none group-hover:text-emerald-500 font-bold">Pick up</p>
@@ -111,19 +111,19 @@
 
         {{-- Right Column: Side Details --}}
         <div class="space-y-10">
-            
+
             {{-- Assigned Captain --}}
             <div class="bg-gradient-to-br from-[#020617] to-[#1e293b] rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden group">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[5rem] translate-x-10 -translate-y-10 transition-transform group-hover:scale-125"></div>
-                
-                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-8 leading-none relative z-10 font-bold">Fleet Commander</h4>
-                
+
+                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-8 leading-none relative z-10 font-bold">Driver Dashboard</h4>
+
                 @if($transport->driver)
                     <div class="relative z-10 flex flex-col items-center text-center">
                         <div class="w-24 h-24 rounded-[2rem] bg-white/10 border border-white/10 flex items-center justify-center text-4xl mb-6 shadow-xl ring-8 ring-white/5">👨‍✈️</div>
                         <h5 class="text-2xl font-black tracking-tight leading-none mb-1">{{ $transport->driver->name }}</h5>
                         <p class="text-slate-400 font-bold text-sm">Professional Captain</p>
-                        
+
                         <a href="tel:{{ $transport->driver->phone }}" class="mt-8 w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-3">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                             Direct Line
@@ -152,7 +152,7 @@
                             <p class="text-xs font-black text-slate-900 tracking-tight">{{ $transport->vehicle->name ?? $transport->vehicle->model ?? 'Standard Shuttle' }}</p>
                             <p class="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Commercial Grade Fleet</p>
                         </div>
-                        
+
                         <div class="flex items-center justify-between py-4 border-y border-slate-50">
                              <span class="text-[10px] font-black text-slate-400 uppercase font-bold">License</span>
                              <span class="bg-slate-900 text-white px-3 py-1 rounded-xl text-[10px] font-black tracking-widest">{{ $transport->vehicle->license_plate ?? 'PENDING' }}</span>

@@ -90,7 +90,7 @@
                             <div class="space-y-2">
                                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
                                     <svg class="w-3 h-3 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    Client Identity
+                                    Customer Info
                                 </p>
                                 <p class="text-sm font-bold text-white">{{ $firstItem->user->name ?? 'Guest User' }}</p>
                             </div>
@@ -100,7 +100,7 @@
                         <div class="bg-slate-950 rounded-2xl p-5 border border-slate-800 shadow-inner group-hover:border-teal-500/20 transition-colors">
                             <p class="text-[9px] font-black text-teal-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                Manifest Payload
+                               Order Items
                             </p>
                             <div class="space-y-3">
                                 @foreach($items as $item)

@@ -37,7 +37,7 @@
             <div class="text-center md:text-left">
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-950/50 border border-slate-700 text-[9px] font-black uppercase tracking-widest mb-4 shadow-inner text-amber-500 mx-auto md:mx-0">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse shadow-[0_0_8px_#f59e0b]"></span>
-                    Fleet Commander
+                    Driver Dashboard
                 </div>
                 <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-2 text-white">Trip <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">Management</span></h1>
                 <p class="text-slate-400 font-bold text-xs md:text-sm uppercase tracking-widest max-w-md leading-relaxed mt-3">Oversee assigned routes and navigate to pickups.</p>
@@ -103,7 +103,8 @@
                                 <p class="text-[9px] font-black text-cyan-500 uppercase tracking-[0.3em] mb-1.5">Origin (Pickup)</p>
                                 <p class="text-lg text-white font-black leading-tight">{{ $activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? 'Location Pending' }}</p>
 
-                                <a href="https://maps.google.com/?q={{ urlencode($activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-5 py-3 rounded-xl border border-cyan-500/30 hover:bg-cyan-500/20 transition-all active:scale-95 shadow-sm">
+                                {{-- رابط خرائط جوجل --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-5 py-3 rounded-xl border border-cyan-500/30 hover:bg-cyan-500/20 transition-all active:scale-95 shadow-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Navigate Origin
                                 </a>
@@ -117,7 +118,8 @@
                                 <p class="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-1.5">Destination (Drop-off)</p>
                                 <p class="text-lg text-white font-black leading-tight">{{ $activeTrip->farmBooking->farm->name ?? 'Farm Destination' }}</p>
 
-                                <a href="https://maps.google.com/?q={{ urlencode($activeTrip->farmBooking->farm->name ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-5 py-3 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">
+                                {{-- رابط خرائط جوجل --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->farmBooking->farm->name ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-5 py-3 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Navigate Destination
                                 </a>
@@ -170,7 +172,7 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4 mb-8">
                             <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 shadow-inner">
-                                <span class="block text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5">Dispatch Time</span>
+                                <span class="block text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1.5">Pickup Time</span>
                                 <span class="text-base font-black text-white tracking-tight">{{ optional($trip->Farm_Arrival_Time)->format('M d, H:i') ?? 'N/A' }}</span>
                             </div>
                             <div class="bg-slate-950/50 p-4 rounded-2xl border border-slate-800 shadow-inner">
@@ -179,7 +181,7 @@
                             </div>
                             <div class="md:col-span-2 bg-slate-950 p-5 rounded-2xl border border-slate-700 shadow-inner relative overflow-hidden">
                                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500"></div>
-                                <span class="block text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Route Vector</span>
+                                <span class="block text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Pickup Location</span>
 
                                 <div class="flex items-center text-xs font-bold text-slate-300">
                                     <span class="w-2 h-2 rounded-full bg-cyan-500 mr-3 shrink-0 shadow-[0_0_5px_#06b6d4]"></span>
@@ -199,7 +201,7 @@
                                 <input type="hidden" name="status" value="in_progress">
                                 <button class="w-full flex justify-center items-center py-4.5 px-6 border border-cyan-500/30 rounded-2xl shadow-[0_0_15px_rgba(6,182,212,0.15)] text-[10px] font-black tracking-[0.2em] uppercase text-slate-950 bg-cyan-500 hover:bg-cyan-400 focus:outline-none transition-all active:scale-95">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                                    Initiate Route
+                                    Start Trip
                                 </button>
                             </form>
                         @else

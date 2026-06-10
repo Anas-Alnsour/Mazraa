@@ -55,8 +55,12 @@ class BookingController extends Controller
         $requiresTransport = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
         if ($requiresTransport) {
+            $hoursUntilCheckIn = Carbon::now()->diffInHours($startTime, false);
+            if ($hoursUntilCheckIn < 24) {
+                return back()->with('error', 'Transport must be booked at least 24 hours prior to check-in.');
+            }
+
             // SECURITY FIX: Calculate transport cost server-side
-            // Base price: 10 JOD + 0.5 JOD per km (Enforced server-side)
             $distance = (float) $request->input('distance', 0);
             $serverCalculatedCost = 5 + ($distance * 0.5);
             $transportCost   = max(15.00, $serverCalculatedCost);
@@ -372,7 +376,7 @@ class BookingController extends Controller
     }
 
     /**
-     * 6. تحديث الحجز (معالجة الشفتات والفروقات المالية)
+     * 6. تحديث الحجز (معالجة الشفتات والفروقات المالية ومنع الاحتيال في المواصلات)
      */
     public function update(Request $request, FarmBooking $booking)
     {
@@ -436,7 +440,17 @@ class BookingController extends Controller
         $destGovernorate = Auth::user()->governorate ?? 'Amman';
         $requiresTransportFlag = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
+        // =========================================================
+        // 🔒 حماية المواصلات (يجب أن يكون الحجز بعد أكثر من 24 ساعة)
+        // =========================================================
         if ($requiresTransportFlag) {
+            $hoursUntilCheckIn = Carbon::now()->diffInHours($startTime, false);
+
+            if ($hoursUntilCheckIn < 24 && !$booking->requires_transport) {
+                // المستخدم يحاول إضافة مواصلات جديدة لحجز قريب جداً
+                return back()->with('error', 'Cannot add transport. Transport must be booked at least 24 hours prior to check-in.');
+            }
+
             // SECURITY FIX: Calculate transport cost server-side
             $distance = (float) $request->input('distance', 0);
             $serverCalculatedCost = 5 + ($distance * 0.5);
@@ -565,9 +579,7 @@ class BookingController extends Controller
                 ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($transport);
 
-                // =========================================================
-                // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات عند إضافة توصيل بتعديل الحجز
-                // =========================================================
+                // إطلاق إشعار للمواصلات
                 try {
                     $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
                     if ($transportCompanies->isNotEmpty()) {
@@ -576,8 +588,16 @@ class BookingController extends Controller
                 } catch (\Exception $e) {
                     \Log::error('Transport Notification Error: ' . $e->getMessage());
                 }
-                // =========================================================
             }
+        }
+
+        // =========================================================
+        // 💡 تحديث الحجز مع ضمان أن يبقى confirmed إذا لم تكن هناك ترقية تنتظر الدفع
+        // =========================================================
+
+        $newStatus = $booking->status;
+        if ($booking->payment_status === 'paid' && $difference <= 0) {
+            $newStatus = 'confirmed'; // يحافظ على حالة التأكيد إذا لم يكن هناك فاتورة جديدة للدفع
         }
 
         $booking->update([
@@ -592,13 +612,11 @@ class BookingController extends Controller
             'transport_cost' => $transportCost,
             'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
             'pickup_lng' => $requiresTransportFlag ? $request->pickup_lng : null,
+            'status' => $newStatus, // الحفاظ على حالة الحجز
         ]);
 
-        // =========================================================
-        // 🚀 إطلاق الإشعارات (تعديل الحجز)
-        // =========================================================
+        // إطلاق الإشعارات
         try {
-            // إشعار للعميل
             $booking->user->notifications()->create([
                 'id' => \Illuminate\Support\Str::uuid(),
                 'type' => 'BookingUpdated',
@@ -610,7 +628,6 @@ class BookingController extends Controller
                 'read_at' => null,
             ]);
 
-            // إشعار لصاحب المزرعة
             if ($farm->user) {
                 $farm->user->notifications()->create([
                     'id' => \Illuminate\Support\Str::uuid(),
@@ -626,7 +643,6 @@ class BookingController extends Controller
         } catch (\Exception $e) {
             \Log::error('Notification Error (Update Booking): ' . $e->getMessage());
         }
-        // =========================================================
 
         $message = $difference < 0
             ? 'Booking updated successfully! A partial refund of ' . abs(round($difference, 2)) . ' JOD has been issued.'
@@ -685,7 +701,7 @@ class BookingController extends Controller
                         'farm_booking_id' => $booking->id,
                         'transport_type' => 'Shuttle',
                         'passengers' => $session->metadata->transport_passengers,
-                        'start_and_return_point' => $pickupLocationFromMeta, // تعيين القيمة للحقل الصحيح 
+                        'start_and_return_point' => $pickupLocationFromMeta, // تعيين القيمة للحقل الصحيح
                         'pickup_location' => $session->metadata->pickup_location,
                         'destination_governorate' => $session->metadata->destination_governorate,
                         'pickup_lat' => $session->metadata->pickup_lat,

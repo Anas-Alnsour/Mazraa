@@ -164,7 +164,7 @@
                                 </div>
                                 <div class="hidden lg:block text-left pr-4">
                                     <p class="text-xs font-black text-white uppercase tracking-widest leading-none">{{ Auth::user()->name ?? 'Transporter' }}</p>
-                                    <p class="text-[9px] text-cyan-400 font-bold uppercase tracking-widest mt-1">Fleet Commander</p>
+                                    <p class="text-[9px] text-cyan-400 font-bold uppercase tracking-widest mt-1">Driver Dashboard</p>
                                 </div>
                             </button>
 
