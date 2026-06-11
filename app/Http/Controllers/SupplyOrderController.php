@@ -286,14 +286,15 @@ class SupplyOrderController extends Controller
                         'booking_id'              => $activeBooking->id,
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => $assignedDriverId ? 'pending_payment' : 'pending_assignment',
+                        'status'                  => 'pending', // ✅ جعلت الحالة pending مباشرة بدلاً من pending_payment لتجنب توقف الطلب
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);
                 }
             });
 
-            return redirect()->route('payment.select_supply', ['order_id' => $invoiceId]);
+            // ✅ إعادة التوجيه لصفحة الطلبات الخاصة بالمستخدم كإثبات نجاح، بدلاً من مسار غير محدد للـ Payment
+            return redirect()->route('orders.my_orders')->with('success', 'Your supply order has been placed successfully and is out for dispatch!');
 
         } catch (\Exception $e) {
             return back()->with('error', 'Checkout Error: ' . $e->getMessage());

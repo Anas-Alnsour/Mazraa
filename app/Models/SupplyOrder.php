@@ -22,7 +22,9 @@ class SupplyOrder extends Model
         'longitude',
         'delivery_address',
         'destination_governorate',
-        'driver_id'
+        'driver_id',
+        'commission_amount', // ✅ تمت الإضافة
+        'net_company_amount' // ✅ تمت الإضافة
     ];
 
     public function user()
