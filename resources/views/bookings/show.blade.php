@@ -194,15 +194,15 @@
                                             $pickup_location = $booking->transport->start_and_return_point ?? 'Custom Location';
                                             $lat = $booking->transport->pickup_lat ?? $booking->pickup_lat;
                                             $lng = $booking->transport->pickup_lng ?? $booking->pickup_lng;
-                                            
+
                                             if ($lat && $lng) {
                                                 $mapQuery = $lat . ',' . $lng;
                                             } else {
                                                 $mapQuery = urlencode($pickup_location);
                                             }
                                         @endphp
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ $mapQuery }}" 
-                                           target="_blank" 
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ $mapQuery }}"
+                                           target="_blank"
                                            class="inline-flex items-center gap-1.5 hover:text-cyan-600 transition-colors group">
                                             <span class="truncate max-w-[250px] underline decoration-cyan-500/30 underline-offset-4">{{ $pickup_location }}</span>
                                             <svg class="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
@@ -210,31 +210,76 @@
                                     </dd>
                                 </div>
 
-                                @if($booking->transport->driver)
-                                    <div class="mt-4 bg-slate-900 p-4 rounded-2xl shadow-xl">
-                                        <dt class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center border-b border-slate-700 pb-2">
-                                            <svg class="w-4 h-4 mr-1.5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
-                                            Assigned Captain
+                                {{-- عرض معلومات السائقين (ذهاب وعودة) --}}
+                                <div class="mt-4 space-y-3">
+
+                                    {{-- Outward Trip (رحلة الذهاب) --}}
+                                    <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 relative overflow-hidden">
+                                        <div class="absolute top-0 right-0 w-16 h-16 bg-cyan-500/10 rounded-bl-full"></div>
+                                        <dt class="text-[10px] font-black text-cyan-400 uppercase tracking-widest mb-2 flex items-center border-b border-slate-700/50 pb-2 relative z-10">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                            Outward Journey (الذهاب)
                                         </dt>
-                                        <dd>
-                                            <div class="flex justify-between items-center">
-                                                <div>
-                                                    <div class="font-black text-white text-base mb-0.5">{{ $booking->transport->driver->name }}</div>
-                                                    <a href="tel:{{ $booking->transport->driver->phone }}" class="inline-flex items-center gap-1.5 text-white text-xs font-bold hover:text-cyan-300 transition-colors">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                                        {{ $booking->transport->driver->phone ?? 'N/A' }}
-                                                    </a>
-                                                </div>
-                                                @if($booking->transport->vehicle)
-                                                    <div class="text-right">
-                                                        <div class="text-[10px] font-black uppercase text-slate-400 mb-1">{{ $booking->transport->vehicle->type }}</div>
-                                                        <div class="inline-block bg-white text-slate-900 font-mono font-bold text-xs px-2 py-1 rounded border border-slate-300 shadow-sm">{{ $booking->transport->vehicle->license_plate ?? 'N/A' }}</div>
+                                        <dd class="relative z-10">
+                                            @if($booking->transport->driver)
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <div class="font-black text-white text-base mb-0.5">{{ $booking->transport->driver->name }}</div>
+                                                        <a href="tel:{{ $booking->transport->driver->phone }}" class="inline-flex items-center gap-1.5 text-white/80 text-xs font-bold hover:text-cyan-300 transition-colors">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                                            {{ $booking->transport->driver->phone ?? 'N/A' }}
+                                                        </a>
                                                     </div>
-                                                @endif
-                                            </div>
+                                                    @if($booking->transport->vehicle)
+                                                        <div class="text-right">
+                                                            <div class="text-[10px] font-black uppercase text-slate-400 mb-1">{{ $booking->transport->vehicle->type }}</div>
+                                                            <div class="inline-block bg-white/10 text-white font-mono font-bold text-xs px-2 py-1 rounded border border-white/20 shadow-sm">{{ $booking->transport->vehicle->license_plate ?? 'N/A' }}</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <div class="text-slate-400 text-xs font-bold flex items-center gap-2">
+                                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                                    Pending Assignment...
+                                                </div>
+                                            @endif
                                         </dd>
                                     </div>
-                                @endif
+
+                                    {{-- Return Trip (رحلة العودة) --}}
+                                    <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 relative overflow-hidden">
+                                        <div class="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full"></div>
+                                        <dt class="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center border-b border-slate-700/50 pb-2 relative z-10">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                                            Return Journey (العودة)
+                                        </dt>
+                                        <dd class="relative z-10">
+                                            @if($booking->transport->returnDriver)
+                                                <div class="flex justify-between items-center">
+                                                    <div>
+                                                        <div class="font-black text-white text-base mb-0.5">{{ $booking->transport->returnDriver->name }}</div>
+                                                        <a href="tel:{{ $booking->transport->returnDriver->phone }}" class="inline-flex items-center gap-1.5 text-white/80 text-xs font-bold hover:text-emerald-300 transition-colors">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                                            {{ $booking->transport->returnDriver->phone ?? 'N/A' }}
+                                                        </a>
+                                                    </div>
+                                                    @if($booking->transport->returnVehicle)
+                                                        <div class="text-right">
+                                                            <div class="text-[10px] font-black uppercase text-slate-400 mb-1">{{ $booking->transport->returnVehicle->type }}</div>
+                                                            <div class="inline-block bg-white/10 text-white font-mono font-bold text-xs px-2 py-1 rounded border border-white/20 shadow-sm">{{ $booking->transport->returnVehicle->license_plate ?? 'N/A' }}</div>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <div class="text-slate-400 text-xs font-bold flex items-center gap-2">
+                                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                                    Pending Assignment...
+                                                </div>
+                                            @endif
+                                        </dd>
+                                    </div>
+
+                                </div>
                             </dl>
                         </div>
                     @endif
@@ -274,7 +319,7 @@
                         </form>
                         @else
                         <div class="py-4 bg-gray-50 text-gray-400 font-black text-[10px] uppercase tracking-widest rounded-2xl border-2 border-gray-100 text-center cursor-not-allowed flex items-center justify-center gap-1.5 h-full shadow-inner">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                             Locked
                         </div>
                         @endif

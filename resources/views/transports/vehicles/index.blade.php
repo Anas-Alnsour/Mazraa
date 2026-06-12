@@ -117,10 +117,22 @@
                                     @endif
 
                                     @if($vehicle->driver)
-                                        <p class="text-[9px] font-black text-cyan-400 mt-2 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                            {{ $vehicle->driver->name }}
-                                        </p>
+                                        <div class="flex flex-col items-center justify-center mt-2">
+                                            <p class="text-[9px] font-black text-cyan-400 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                {{ $vehicle->driver->name }}
+                                            </p>
+                                            {{-- إضافة الشفت هنا --}}
+                                            <p class="text-[8px] font-bold uppercase tracking-widest flex items-center gap-1 mt-1 {{ $vehicle->driver->shift === 'morning' ? 'text-amber-400/80' : 'text-indigo-400/80' }}">
+                                                @if($vehicle->driver->shift === 'morning')
+                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                                    Morning Shift
+                                                @else
+                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                                    Evening Shift
+                                                @endif
+                                            </p>
+                                        </div>
                                     @else
                                         <p class="text-[9px] font-black text-rose-500 mt-2 uppercase tracking-widest bg-rose-500/10 border border-rose-500/20 inline-block px-2 py-0.5 rounded">Unassigned</p>
                                     @endif

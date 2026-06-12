@@ -117,7 +117,7 @@ class SuperAdminController extends Controller
         return view('admin.verifications', compact('pendingFarms', 'farmBookings', 'supplyOrders'));
     }
 
-    /**
+   /**
      * Handle approve/reject for farms and CliQ payment verifications.
      */
     public function handleVerification(Request $request, $id, $type = 'farm_approval')
@@ -132,22 +132,25 @@ class SuperAdminController extends Controller
             $farm = Farm::findOrFail($id);
             if ($action === 'approve') {
                 $farm->update(['is_approved' => true]);
-                $farm->owner->notify(new FarmApprovedNotification($farm));
+                if ($farm->owner) {
+                    $farm->owner->notify(new FarmApprovedNotification($farm));
+                }
                 return redirect()->route('admin.verifications')->with('success', 'Farm approved and published!');
             }
+
             $farm->delete();
+            // تم التعديل إلى success لكي يظهر الإشعار الأخضر بأن عملية الرفض تمت بنجاح
             return redirect()->route('admin.verifications')->with('success', 'Farm rejected and removed.');
         }
 
         // ── 2. CliQ for Booking ──────────────────────────────
-        elseif ($type === 'booking') {
-            // ✅ التعديل: جلبنا الـ user مع الـ farm لنستطيع إرسال الإشعار له
+        // ✅ تم التعديل: تغيير 'booking' إلى 'farm_booking' لتتطابق مع الـ View
+        elseif ($type === 'farm_booking') {
             $booking = FarmBooking::with(['farm', 'user'])->findOrFail($id);
 
             if ($action === 'approve') {
                 $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
 
-                // ✅ التعديل الأهم: إرسال الإشعارات عند الموافقة اليدوية على CliQ
                 if ($booking->user) {
                     $booking->user->notify(new BookingConfirmedNotification($booking));
                 }
@@ -163,7 +166,8 @@ class SuperAdminController extends Controller
             }
 
             $booking->update(['payment_status' => 'failed', 'status' => 'cancelled']);
-            return back()->with('error', 'Farm Booking CliQ payment rejected and cancelled.');
+            // ✅ تم التعديل: تغيير error إلى success لتوضيح أن "الإلغاء" تم بنجاح
+            return back()->with('success', 'Farm Booking CliQ payment rejected and cancelled.');
         }
 
         // ── 3. CliQ for Supply Order ──────────────────────────────
@@ -172,17 +176,16 @@ class SuperAdminController extends Controller
 
             if ($action === 'approve') {
                 $order->update(['status' => 'pending']);
-
-                // (اختياري) يمكنك إضافة إشعار هنا لشركة التوريد إذا كان لديك كلاس إشعار مخصص لهم
-
                 return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
             }
 
             $order->update(['status' => 'cancelled']);
-            return back()->with('error', 'Supply Order CliQ payment rejected and cancelled.');
+            // ✅ تم التعديل: تغيير error إلى success
+            return back()->with('success', 'Supply Order CliQ payment rejected and cancelled.');
         }
 
-        return back()->with('error', 'Invalid verification request.');
+        // إشعار خطأ يوضح المشكلة في حال تم إرسال type غير معرف
+        return back()->with('error', 'Invalid verification request type: ' . $type);
     }
 
     /**

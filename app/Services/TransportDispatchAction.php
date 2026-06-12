@@ -3,23 +3,13 @@
 namespace App\Services;
 
 use App\Models\Transport;
-use App\Models\Vehicle;
+use App\Models\User;
 use App\Notifications\DriverAssignedNotification;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class TransportDispatchAction
 {
-    /**
-     * Attempts to automatically dispatch an available driver to a transport request.
-     * Criteria:
-     * - Driver must be 'transport_driver'
-     * - Driver must be in the same governorate as the transport DESTINATION (Farm's Governorate).
-     * - Driver must have an available vehicle with sufficient capacity.
-     * - Fair Dispatch: Least jobs this month first.
-     *
-     * @param Transport $transport
-     * @return bool
-     */
     public static function dispatchDriver(Transport $transport)
     {
         if (!$transport->passengers) {
@@ -27,53 +17,91 @@ class TransportDispatchAction
             return false;
         }
 
-        // Target Governorate: The destination governorate (where the farm is located)
-        // because supply_drivers/transport_drivers are usually based near their service areas.
-        // Actually, for transport (pickup -> farm), they should be in the ORIGIN governorate.
-        // The user specified: "Geographical Binding: Each driver MUST be assigned to one of the 12 Jordanian Governorates."
-        // "Orders must be dispatched to drivers within the SAME governorate."
-        
-        $originGov = $transport->destination_governorate; // This is the governorate of the TRIP origin/destination block
+        $originGov = $transport->destination_governorate;
+        $now = Carbon::now();
 
-        $now = \Carbon\Carbon::now();
+        // 1. تحديد الشفت للذهاب والعودة بناءً على نوع حجز المزرعة
+        $bookingShift = $transport->farmBooking->event_type ?? 'full_day';
 
-        // 1. Find the best driver based on Fair Dispatch logic
-        $bestDriver = \App\Models\User::role('transport_driver')
+        $outwardShift = 'morning';
+        $returnShift  = 'evening';
+
+        if ($bookingShift === 'morning') {
+            $outwardShift = 'morning';
+            $returnShift  = 'evening';
+        } elseif ($bookingShift === 'evening') {
+            $outwardShift = 'evening';
+            $returnShift  = 'morning';
+        } elseif ($bookingShift === 'full_day') {
+            $outwardShift = 'morning';
+            $returnShift  = 'morning'; // لأن المبيت لثاني يوم الصبح
+        }
+
+        // 2. البحث عن السائقين المناسبين (لرحلة الذهاب ورحلة العودة)
+        $outwardDriver = self::findBestDriver($originGov, $transport->passengers, $outwardShift, $now);
+        $returnDriver  = self::findBestDriver($originGov, $transport->passengers, $returnShift, $now);
+
+        $updateData = [];
+
+        // 3. تعيين سائق الذهاب
+        if ($outwardDriver) {
+            $updateData['company_id'] = $outwardDriver->company_id; // يتم إسناد الرحلة لشركة سائق الذهاب
+            $updateData['driver_id']  = $outwardDriver->id;
+            $updateData['vehicle_id'] = $outwardDriver->transport_vehicle_id;
+
+            if ($outwardDriver->transportVehicle) {
+                $outwardDriver->transportVehicle->update(['status' => 'in_use']);
+            }
+            $outwardDriver->notify(new DriverAssignedNotification($transport));
+        }
+
+        // 4. تعيين سائق العودة
+        if ($returnDriver) {
+            $updateData['return_driver_id']  = $returnDriver->id;
+            $updateData['return_vehicle_id'] = $returnDriver->transport_vehicle_id;
+
+            if ($returnDriver->transportVehicle && (!$outwardDriver || $outwardDriver->transport_vehicle_id !== $returnDriver->transport_vehicle_id)) {
+                $returnDriver->transportVehicle->update(['status' => 'in_use']);
+            }
+
+            // إرسال إشعار لسائق العودة إذا كان مختلفاً عن سائق الذهاب
+            if (!$outwardDriver || $outwardDriver->id !== $returnDriver->id) {
+                $returnDriver->notify(new DriverAssignedNotification($transport));
+            }
+        }
+
+        // 5. حفظ البيانات في الداتابيس
+        if (!empty($updateData)) {
+            $updateData['status'] = 'assigned';
+            $transport->update($updateData);
+
+            Log::info("TransportDispatchAction: Drivers Assigned! Outward ({$outwardShift}): " . ($outwardDriver->name ?? 'None') . " | Return ({$returnShift}): " . ($returnDriver->name ?? 'None'));
+            return true;
+        }
+
+        Log::info("TransportDispatchAction: No drivers found in {$originGov} with enough capacity.");
+        return false;
+    }
+
+    /**
+     * دالة مساعدة لجلب أفضل سائق بناءً على السعة والشفت
+     */
+    private static function findBestDriver($originGov, $passengers, $shift, $now)
+    {
+        return User::role('transport_driver')
             ->where('governorate', $originGov)
-            ->whereNotNull('transport_vehicle_id') // Driver must have a link to a permanent vehicle
+            ->where('shift', $shift)
+            ->whereNotNull('transport_vehicle_id')
             ->withCount(['transportDriverJobs' => function($query) use ($now) {
                 $query->whereMonth('created_at', $now->month)
                       ->whereYear('created_at', $now->year);
             }])
-            ->whereHas('transportVehicle', function($query) use ($transport) {
-                $query->where('capacity', '>=', $transport->passengers)
-                      ->where('status', 'available');
+            ->whereHas('transportVehicle', function($query) use ($passengers) {
+                // فلترة السعة: سعة المركبة يجب أن تكون أكبر أو تساوي الركاب
+                $query->where('capacity', '>=', $passengers);
             })
-            ->orderBy('transport_driver_jobs_count', 'asc')
+            ->orderBy('transport_driver_jobs_count', 'asc') // للعدالة في توزيع الطلبات
             ->orderBy('id', 'asc')
             ->first();
-
-        if ($bestDriver) {
-            $vehicle = $bestDriver->transportVehicle;
-
-            $transport->update([
-                'company_id' => $bestDriver->company_id,
-                'vehicle_id' => $vehicle->id,
-                'driver_id'  => $bestDriver->id,
-                'status'     => 'assigned',
-            ]);
-
-            // Mark vehicle as in use
-            $vehicle->update(['status' => 'in_use']);
-
-            // Notify
-            $bestDriver->notify(new DriverAssignedNotification($transport));
-
-            Log::info("TransportDispatchAction: Fair Dispatch Success for Transport #{$transport->id}. Driver: {$bestDriver->name} in {$originGov}.");
-            return true;
-        }
-
-        Log::info("TransportDispatchAction: No available transport_driver found in {$originGov} with sufficient capacity for Transport #{$transport->id}. Left as 'pending'.");
-        return false;
     }
 }

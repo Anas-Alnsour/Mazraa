@@ -74,4 +74,15 @@ class Transport extends Model
     {
         return $this->belongsTo(FarmBooking::class, 'farm_booking_id');
     }
+    // علاقة سائق العودة
+    public function returnDriver()
+    {
+        return $this->belongsTo(User::class, 'return_driver_id');
+    }
+
+    // علاقة مركبة العودة
+    public function returnVehicle()
+    {
+        return $this->belongsTo(Vehicle::class, 'return_vehicle_id');
+    }
 }
