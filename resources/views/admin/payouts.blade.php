@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('title', 'Financial Payouts')
+
 @section('content')
 <style>
     .fade-in-up { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
@@ -7,6 +9,13 @@
     /* Hide number input arrows */
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* ✅ Premium Custom Pagination Styling */
+    .custom-admin-pagination nav { display: flex; justify-content: center; align-items: center; gap: 0.35rem; margin-top: 1.5rem; }
+    .custom-admin-pagination .page-link { background-color: #020617 !important; border: 1px solid #1e293b !important; color: #94a3b8 !important; padding: 0.6rem 1.1rem; border-radius: 1rem; font-size: 11px; font-weight: 800; transition: all 0.3s ease; }
+    .custom-admin-pagination .page-item.active .page-link { background-color: #4f46e5 !important; color: white !important; border-color: #6366f1 !important; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+    .custom-admin-pagination .page-item:not(.active):not(.disabled) .page-link:hover { border-color: #4f46e5 !important; color: white !important; }
+    .custom-admin-pagination .page-item.disabled .page-link { opacity: 0.25; color: #475569 !important; cursor: not-allowed; }
 </style>
 
 <div class="max-w-[96%] xl:max-w-7xl mx-auto py-8 space-y-8 pb-24">
@@ -20,32 +29,41 @@
         </div>
         <div class="relative z-10">
             <div class="px-6 py-4 bg-slate-950/50 border border-slate-800 rounded-2xl shadow-inner text-right">
-                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Liability</p>
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Active Liability</p>
                 <p class="text-3xl font-black text-white flex items-baseline justify-end gap-1">
+                    {{-- تحديث لعرض المجموع الإجمالي للصفحة الحالية كعينة، أو يمكنك تركه ليجلب مجموع كل من لديه رصيد --}}
                     {{ number_format($vendorsOwed->sum('balance'), 2) }} <span class="text-amber-400 text-sm font-bold tracking-widest">JOD</span>
                 </p>
             </div>
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-5 rounded-2xl shadow-sm font-black uppercase tracking-widest text-xs flex items-center gap-4 fade-in-up" style="animation-delay: 0.1s;">
-            <div class="bg-emerald-500/20 p-2 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg></div>
-            {{ session('success') }}
+    @if(session('success') || session('error'))
+        <div class="p-5 rounded-2xl shadow-sm font-black uppercase tracking-widest text-xs flex items-center gap-4 fade-in-up {{ session('success') ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/20 text-rose-400' }}" style="animation-delay: 0.1s;">
+            <div class="{{ session('success') ? 'bg-emerald-500/20' : 'bg-rose-500/20' }} p-2 rounded-full">
+                @if(session('success'))
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                @else
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                @endif
+            </div>
+            {{ session('success') ?? session('error') }}
         </div>
     @endif
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
 
         {{-- 🌟 LEFT COLUMN: Outstanding Balances Table --}}
-        <div class="xl:col-span-2 fade-in-up" style="animation-delay: 0.2s;">
-            <div class="bg-slate-900/60 rounded-[2.5rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl h-full flex flex-col">
+        <div class="xl:col-span-2 space-y-8 fade-in-up" style="animation-delay: 0.2s;">
+
+            {{-- Outstanding Vendors Block --}}
+            <div class="bg-slate-900/60 rounded-[2.5rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl flex flex-col">
                 <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
                     <h2 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
                         <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Outstanding Vendors
                     </h2>
-                    <span class="bg-amber-500/20 border border-amber-500/30 text-amber-400 py-1.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest">{{ $vendorsOwed->count() }} Owed</span>
+                    <span class="bg-amber-500/20 border border-amber-500/30 text-amber-400 py-1.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest">{{ $vendorsOwed->total() }} Entities</span>
                 </div>
 
                 @if($vendorsOwed->count() > 0)
@@ -96,6 +114,10 @@
                             </tbody>
                         </table>
                     </div>
+                    {{-- ✅ أزرار التقسيم المخصصة للمبالغ المستحقة --}}
+                    <div class="custom-admin-pagination pb-6">
+                        {{ $vendorsOwed->appends(request()->except('vendors_page'))->links() }}
+                    </div>
                 @else
                     <div class="p-20 text-center flex-1 flex flex-col justify-center items-center">
                         <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-500/10 mb-6 border border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]">
@@ -106,6 +128,57 @@
                     </div>
                 @endif
             </div>
+
+            {{-- 🌟 Recent Payouts Ledger (History) --}}
+            <div class="bg-slate-900/60 rounded-[2.5rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl flex flex-col">
+                <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
+                    <h2 class="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Recent Transfer Logs
+                    </h2>
+                    <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 py-1.5 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest">{{ $recentPayouts->total() }} Records</span>
+                </div>
+
+                @if($recentPayouts->count() > 0)
+                    <div class="overflow-x-auto p-4 flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800">
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Recipient</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date & Time</th>
+                                    <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Amount Sent</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60">
+                                @foreach($recentPayouts as $payout)
+                                    <tr class="hover:bg-slate-800/40 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <p class="text-sm font-bold text-white">{{ $payout->user->name ?? 'Unknown' }}</p>
+                                            <p class="text-[10px] font-mono text-slate-500 truncate max-w-[200px]">{{ $payout->description }}</p>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <p class="text-xs font-bold text-slate-300">{{ $payout->created_at->format('M d, Y') }}</p>
+                                            <p class="text-[10px] font-mono text-slate-500">{{ $payout->created_at->format('h:i A') }}</p>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <p class="text-sm font-black text-indigo-400">-{{ number_format($payout->amount, 2) }} <span class="text-[9px] text-slate-500 uppercase tracking-widest">JOD</span></p>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    {{-- ✅ أزرار التقسيم المخصصة لجدول العمليات التاريخية --}}
+                    <div class="custom-admin-pagination pb-6">
+                        {{ $recentPayouts->appends(request()->except('payouts_page'))->links() }}
+                    </div>
+                @else
+                    <div class="p-16 text-center">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">No past transfers recorded.</p>
+                    </div>
+                @endif
+            </div>
+
         </div>
 
         {{-- 🌟 RIGHT COLUMN: Payout Form --}}
@@ -130,12 +203,9 @@
                                 <select name="user_id" id="user_id" required class="w-full bg-slate-900 border border-slate-700 text-white rounded-2xl px-5 py-4 focus:ring-2 focus:ring-emerald-500 font-bold text-sm appearance-none outline-none shadow-inner cursor-pointer transition-colors hover:border-slate-600">
                                     <option value="" disabled selected>-- Select Vendor --</option>
                                     @foreach($vendorsOwed as $vendor)
-                                        <option value="{{ $vendor->id }}">{{ $vendor->name }} ({{ number_format($vendor->balance, 2) }} JOD)</option>
+                                        <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
                                     @endforeach
                                 </select>
-                                {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-slate-500">
-                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" /></svg>
-                                </div> --}}
                             </div>
                         </div>
 
@@ -155,33 +225,12 @@
                         </div>
 
                         {{-- Submit --}}
-<button
- type="submit"
- class="w-full mt-6
- bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500
- hover:from-emerald-400 hover:to-emerald-300
- text-slate-900 font-bold
- py-4 px-6 rounded-2xl
- shadow-lg shadow-emerald-500/30
- hover:shadow-xl hover:shadow-emerald-400/40
- transition-all duration-300 ease-out
- active:scale-95 hover:scale-[1.02]
- focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 focus:ring-offset-slate-900
- uppercase tracking-widest text-xs
- flex items-center justify-center gap-2">
-
-
-<span>Commit Record</span>
-
-<svg
-    class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-</svg>
-
-
-</button>
-
+                        <button type="submit" class="w-full mt-6 bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 hover:from-emerald-400 hover:to-emerald-300 text-slate-900 font-bold py-4 px-6 rounded-2xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-400/40 transition-all duration-300 ease-out active:scale-95 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 focus:ring-offset-slate-900 uppercase tracking-widest text-xs flex items-center justify-center gap-2">
+                            <span>Commit Record</span>
+                            <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>
                     </form>
                 </div>
             </div>

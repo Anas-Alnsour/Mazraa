@@ -66,7 +66,7 @@ class SuperAdminController extends Controller
         // ---------------------------------------------------------
         // 4. VERIFICATIONS & ACTION CENTER
         // ---------------------------------------------------------
-        $farmsAwaitingApproval      = Farm::where('is_approved', false)->count();
+        $farmsAwaitingApproval        = Farm::where('is_approved', false)->count();
         $paymentsAwaitingVerification = FarmBooking::where('status', 'pending_verification')->count()
                                       + SupplyOrder::where('status', 'pending_verification')->count();
         $actionRequiredCount = $farmsAwaitingApproval + $paymentsAwaitingVerification;
@@ -76,7 +76,6 @@ class SuperAdminController extends Controller
         // ---------------------------------------------------------
         $verifiedFarms = Farm::where('is_approved', true)->select('id', 'name', 'latitude', 'longitude')->get();
 
-        // ✅ FIX: Eager loaded 'user' to prevent N+1 query issue in the dashboard recent transactions loop
         $recentTransactions = FinancialTransaction::with('user')
             ->orderBy('created_at', 'desc')
             ->take(6)
@@ -96,23 +95,26 @@ class SuperAdminController extends Controller
 
     /**
      * Show pending farm approvals and CliQ payment verifications.
+     * ✅ تم التحديث: تفعيل الـ Isolated Pagination بأسماء متغيرة في الرابط
      */
     public function verifications()
     {
         if (auth()->user()->role !== 'admin') abort(403);
 
-        // ✅ FIX: Added 'user' to owner relationship to ensure N+1 protection if accessing owner details
-        $pendingFarms = Farm::where('is_approved', false)->with('owner')->latest()->get();
+        $pendingFarms = Farm::where('is_approved', false)
+            ->with('owner')
+            ->latest()
+            ->paginate(5, ['*'], 'farms_page'); // 👈 خصصنا الاسم هنا
 
         $farmBookings = FarmBooking::with(['farm', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
-            ->get();
+            ->paginate(5, ['*'], 'bookings_page'); // 👈 وهنا
 
         $supplyOrders = SupplyOrder::with(['supply', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
-            ->get();
+            ->paginate(5, ['*'], 'supplies_page'); // 👈 وهنا
 
         return view('admin.verifications', compact('pendingFarms', 'farmBookings', 'supplyOrders'));
     }
@@ -139,12 +141,10 @@ class SuperAdminController extends Controller
             }
 
             $farm->delete();
-            // تم التعديل إلى success لكي يظهر الإشعار الأخضر بأن عملية الرفض تمت بنجاح
             return redirect()->route('admin.verifications')->with('success', 'Farm rejected and removed.');
         }
 
         // ── 2. CliQ for Booking ──────────────────────────────
-        // ✅ تم التعديل: تغيير 'booking' إلى 'farm_booking' لتتطابق مع الـ View
         elseif ($type === 'farm_booking') {
             $booking = FarmBooking::with(['farm', 'user'])->findOrFail($id);
 
@@ -166,7 +166,6 @@ class SuperAdminController extends Controller
             }
 
             $booking->update(['payment_status' => 'failed', 'status' => 'cancelled']);
-            // ✅ تم التعديل: تغيير error إلى success لتوضيح أن "الإلغاء" تم بنجاح
             return back()->with('success', 'Farm Booking CliQ payment rejected and cancelled.');
         }
 
@@ -180,47 +179,32 @@ class SuperAdminController extends Controller
             }
 
             $order->update(['status' => 'cancelled']);
-            // ✅ تم التعديل: تغيير error إلى success
             return back()->with('success', 'Supply Order CliQ payment rejected and cancelled.');
         }
 
-        // إشعار خطأ يوضح المشكلة في حال تم إرسال type غير معرف
         return back()->with('error', 'Invalid verification request type: ' . $type);
     }
 
     /**
      * Display the Financial Payouts Ledger.
-     * Uses aggregate DB queries — no memory-heavy eager loading.
+     * ✅ تم التحديث: استخدام استعلام قاعدة بيانات مباشر (Subqueries) مع Pagination سريع جداً
      */
     public function payouts()
     {
         $vendorRoles = ['farm_owner', 'supply_company', 'transport_company'];
 
-        $vendors = User::whereIn('role', $vendorRoles)
-            ->with(['financialTransactions' => function ($q) {
-                $q->select('user_id', 'transaction_type', 'amount', 'created_at');
-            }])
-            ->get()
-            ->map(function ($user) {
-                $credits  = $user->financialTransactions->where('transaction_type', 'credit')->sum('amount');
-                $debits   = $user->financialTransactions->where('transaction_type', 'debit')->sum('amount');
-                $user->balance = round($credits - $debits, 2);
-                return $user;
-            })
-            ->filter(fn($user) => $user->balance > 0)
-            ->sortByDesc('balance')
-            ->values();
+        $vendorsOwed = User::whereIn('role', $vendorRoles)
+            ->select('users.*')
+            ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM financial_transactions WHERE user_id = users.id AND transaction_type = "credit") - (SELECT COALESCE(SUM(amount), 0) FROM financial_transactions WHERE user_id = users.id AND transaction_type = "debit") as balance')
+            ->having('balance', '>', 0)
+            ->orderByDesc('balance')
+            ->paginate(10, ['*'], 'vendors_page'); // 👈 صفحة الملاك والشركات المستحقة
 
-        // ✅ FIX: Eager loaded 'user' AND ensured only 'debit' transactions are pulled for payouts history
         $recentPayouts = FinancialTransaction::with('user')
             ->where('reference_type', 'manual_payout')
             ->where('transaction_type', 'debit')
             ->latest()
-            ->take(20)
-            ->get();
-
-        // Alias for view compatibility
-        $vendorsOwed = $vendors;
+            ->paginate(15, ['*'], 'payouts_page'); // 👈 صفحة السجل التاريخي للسحوبات
 
         return view('admin.payouts', compact('vendorsOwed', 'recentPayouts'));
     }

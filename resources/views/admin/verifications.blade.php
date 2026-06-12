@@ -9,6 +9,13 @@
     .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.05); }
     .verify-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     .verify-card:hover { transform: translateY(-4px) scale(1.01); z-index: 10; }
+
+    /* ✅ Premium Custom Pagination Styling */
+    .custom-admin-pagination nav { display: flex; justify-content: center; align-items: center; gap: 0.35rem; margin-top: 1.5rem; }
+    .custom-admin-pagination .page-link { background-color: #020617 !important; border: 1px solid #1e293b !important; color: #94a3b8 !important; padding: 0.6rem 1.1rem; border-radius: 1rem; font-size: 11px; font-weight: 800; transition: all 0.3s ease; }
+    .custom-admin-pagination .page-item.active .page-link { background-color: #4f46e5 !important; color: white !important; border-color: #6366f1 !important; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+    .custom-admin-pagination .page-item:not(.active):not(.disabled) .page-link:hover { border-color: #4f46e5 !important; color: white !important; }
+    .custom-admin-pagination .page-item.disabled .page-link { opacity: 0.25; color: #475569 !important; cursor: not-allowed; }
 </style>
 
 <div class="max-w-[96%] xl:max-w-7xl mx-auto py-8 space-y-12 pb-24">
@@ -33,7 +40,8 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             </div>
             New Farm Approvals
-            <span class="bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ $pendingFarms->count() }} Pending</span>
+            {{-- ✅ تم التعديل لـ total() --}}
+            <span class="bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ $pendingFarms->total() }} Pending</span>
         </h2>
 
         <div class="glass-panel rounded-[3rem] p-6 shadow-2xl">
@@ -88,6 +96,10 @@
                         </div>
                     @endforeach
                 </div>
+                {{-- ✅ أزرار التقسيم المخصصة لجدول المزارع --}}
+                <div class="custom-admin-pagination mt-6">
+                    {{ $pendingFarms->appends(request()->except('farms_page'))->links() }}
+                </div>
             @else
                 <div class="py-24 text-center">
                     <div class="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-emerald-500/10 mb-6 border border-emerald-500/20 shadow-[inset_0_0_30px_rgba(16,185,129,0.15)]">
@@ -107,7 +119,8 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             Booking Payments (CliQ)
-            <span class="bg-indigo-500 text-slate-950 shadow-[0_0_15px_rgba(99,102,241,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ isset($farmBookings) ? $farmBookings->count() : 0 }} Pending</span>
+            {{-- ✅ تم التعديل لـ total() --}}
+            <span class="bg-indigo-500 text-slate-950 shadow-[0_0_15px_rgba(99,102,241,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ isset($farmBookings) ? $farmBookings->total() : 0 }} Pending</span>
         </h2>
 
         <div class="glass-panel rounded-[3rem] p-6 shadow-2xl">
@@ -158,6 +171,10 @@
                         </div>
                     @endforeach
                 </div>
+                {{-- ✅ أزرار التقسيم المخصصة لجدول الحجوزات --}}
+                <div class="custom-admin-pagination mt-6">
+                    {{ $farmBookings->appends(request()->except('bookings_page'))->links() }}
+                </div>
             @else
                 <div class="py-24 text-center">
                     <div class="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-indigo-500/10 mb-6 border border-indigo-500/20 shadow-[inset_0_0_30px_rgba(99,102,241,0.15)]">
@@ -177,7 +194,8 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
             </div>
             Supply Payments (CliQ)
-            <span class="bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ isset($supplyOrders) ? $supplyOrders->count() : 0 }} Pending</span>
+            {{-- ✅ تم التعديل لـ total() --}}
+            <span class="bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] text-xs font-black px-4 py-1.5 rounded-full ml-auto uppercase tracking-widest">{{ isset($supplyOrders) ? $supplyOrders->total() : 0 }} Pending</span>
         </h2>
 
         <div class="glass-panel rounded-[3rem] p-6 shadow-2xl">
@@ -223,6 +241,10 @@
                             </div>
                         </div>
                     @endforeach
+                </div>
+                {{-- ✅ أزرار التقسيم المخصصة لطلبات التوريد --}}
+                <div class="custom-admin-pagination mt-6">
+                    {{ $supplyOrders->appends(request()->except('supplies_page'))->links() }}
                 </div>
             @else
                 <div class="py-24 text-center">
