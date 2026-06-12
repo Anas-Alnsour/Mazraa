@@ -103,8 +103,8 @@
                                 <p class="text-[9px] font-black text-cyan-500 uppercase tracking-[0.3em] mb-1.5">Origin (Pickup)</p>
                                 <p class="text-lg text-white font-black leading-tight">{{ $activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? 'Location Pending' }}</p>
 
-                                {{-- رابط خرائط جوجل --}}
-                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->pickup_location ?? $activeTrip->start_and_return_point ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-5 py-3 rounded-xl border border-cyan-500/30 hover:bg-cyan-500/20 transition-all active:scale-95 shadow-sm">
+                                {{-- ✅ تم التعديل: التوجه بالإحداثيات المباشرة المخزنة للـ Pickup --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $activeTrip->pickup_lat }},{{ $activeTrip->pickup_lng }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 px-5 py-3 rounded-xl border border-cyan-500/30 hover:bg-cyan-500/20 transition-all active:scale-95 shadow-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Navigate Origin
                                 </a>
@@ -118,8 +118,8 @@
                                 <p class="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-1.5">Destination (Drop-off)</p>
                                 <p class="text-lg text-white font-black leading-tight">{{ $activeTrip->farmBooking->farm->name ?? 'Farm Destination' }}</p>
 
-                                {{-- رابط خرائط جوجل --}}
-                                <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($activeTrip->farmBooking->farm->name ?? '') }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-5 py-3 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">
+                                {{-- ✅ تم التعديل: التوجه بالإحداثيات المباشرة المخزنة للمزرعة الفاشلة بالبحث النصي --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $activeTrip->farmBooking->farm->latitude }},{{ $activeTrip->farmBooking->farm->longitude }}" target="_blank" class="inline-flex items-center justify-center mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-5 py-3 rounded-xl border border-emerald-500/30 hover:bg-emerald-500/20 transition-all active:scale-95 shadow-sm">
                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                     Navigate Destination
                                 </a>
@@ -183,15 +183,18 @@
                                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500"></div>
                                 <span class="block text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">Pickup Location</span>
 
-                                <div class="flex items-center text-xs font-bold text-slate-300">
+                                {{-- ✅ تم التعديل: تحويل عنوان العميل لرابط إحداثيات حقيقي ومباشر من الداتابيز مع تأثير الـ Hover --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $trip->pickup_lat }},{{ $trip->pickup_lng }}" target="_blank" class="flex items-center text-xs font-bold text-slate-300 hover:text-cyan-400 transition-colors underline decoration-transparent hover:decoration-cyan-500/30 underline-offset-2 group">
                                     <span class="w-2 h-2 rounded-full bg-cyan-500 mr-3 shrink-0 shadow-[0_0_5px_#06b6d4]"></span>
                                     <span class="truncate">{{ $trip->pickup_location ?? $trip->start_and_return_point }}</span>
-                                </div>
+                                </a>
                                 <div class="w-0.5 h-3 bg-slate-700 ml-[3px] my-1"></div>
-                                <div class="flex items-center text-xs font-bold text-white">
+
+                                {{-- ✅ تم التعديل: تحويل موقع المزرعة لرابط إحداثيات حقيقي ومباشر من الداتابيز مع تأثير الـ Hover --}}
+                                <a href="https://www.google.com/maps/search/?api=1&query={{ $trip->farmBooking->farm->latitude }},{{ $trip->farmBooking->farm->longitude }}" target="_blank" class="flex items-center text-xs font-bold text-white hover:text-emerald-400 transition-colors underline decoration-transparent hover:decoration-emerald-500/30 underline-offset-2 group">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500 mr-3 shrink-0 shadow-[0_0_5px_#10b981]"></span>
                                     <span class="truncate">{{ $trip->farmBooking->farm->name ?? 'Farm Destination' }}</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
 

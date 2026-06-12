@@ -201,7 +201,7 @@
                             <tr>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Job Identity</th>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Pickup Location</th>
-                                <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Time Node</th>
+                                <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">Pickup Time</th> {{-- ✅ تم تغيير الكلمة --}}
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right whitespace-nowrap">Est. Revenue</th>
                                 <th class="px-8 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right whitespace-nowrap">Action</th>
                             </tr>
@@ -222,14 +222,16 @@
                                     </td>
                                     <td class="px-8 py-6 whitespace-nowrap">
                                         <div class="flex flex-col gap-2">
-                                            <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                                            {{-- ✅ العميل: تمت إضافة رابط الخريطة والـ Hover --}}
+                                            <a href="https://www.google.com/maps/search/?api=1&query=...{{ urlencode($job->pickup_location ?? $job->start_and_return_point ?? '') }}" target="_blank" class="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-cyan-400 transition-colors underline decoration-transparent hover:decoration-cyan-500/30 underline-offset-2">
                                                 <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                                 <span class="truncate max-w-[200px]">{{ $job->pickup_location ?? $job->start_and_return_point ?? 'TBD' }}</span>
-                                            </div>
-                                            <div class="flex items-center gap-2 text-xs font-bold text-white">
+                                            </a>
+                                            {{-- ✅ المزرعة: تمت إضافة رابط الخريطة والـ Hover --}}
+                                            <a href="https://www.google.com/maps/search/?api=1&query=...{{ urlencode($job->farmBooking->farm->name ?? '') }}" target="_blank" class="flex items-center gap-2 text-xs font-bold text-white hover:text-emerald-400 transition-colors underline decoration-transparent hover:decoration-emerald-500/30 underline-offset-2">
                                                 <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                                 <span class="truncate max-w-[200px]">{{ $job->farmBooking->farm->name ?? $job->farm->name ?? 'Farm' }}</span>
-                                            </div>
+                                            </a>
                                         </div>
                                     </td>
                                     <td class="px-8 py-6 whitespace-nowrap">
@@ -280,7 +282,7 @@
                                 <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Node ID</th>
                                 <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Client & Route</th>
                                 <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Fleet Assignment</th>
-                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Temporal Log</th>
+                                <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest">Pickup Time</th> {{-- ✅ تم تغيير الكلمة --}}
                                 <th class="px-10 py-7 text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">Status Matrix</th>
                                 <th class="px-10 py-7 text-right text-[9px] font-black text-slate-500 uppercase tracking-widest">Action Gateway</th>
                             </tr>
@@ -293,10 +295,11 @@
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap">
                                         <p class="text-sm font-black text-white mb-1.5 truncate max-w-[200px]">{{ $job->user->name ?? 'Guest User' }}</p>
-                                        <div class="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                                        {{-- ✅ التعديل هنا: جعل العنوان رابط لخريطة جوجل --}}
+                                        <a href="https://www.google.com/maps/search/?api=1&query=...{{ urlencode($job->pickup_location ?? $job->start_and_return_point ?? '') }}" target="_blank" class="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 uppercase tracking-widest hover:text-cyan-400 transition-colors">
                                             <svg class="h-3 w-3 text-slate-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
                                             {{ Str::limit($job->pickup_location ?? $job->start_and_return_point ?? 'TBD', 25) }}
-                                        </div>
+                                        </a>
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap">
                                         @if($job->vehicle_id && $job->driver_id)
@@ -339,7 +342,6 @@
                                         </span>
                                     </td>
                                     <td class="px-10 py-6 whitespace-nowrap text-right">
-                                        {{-- 💡 FIX: Logic to show settings button for active/editable jobs, or lock for completed ones --}}
                                         @if(!in_array(strtolower($job->status), ['completed', 'cancelled']))
                                             <a href="{{ route('transport.dispatch.edit', $job->id) }}" class="inline-flex items-center justify-center p-3.5 bg-slate-950 border border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-indigo-500 transition-colors shadow-inner active:scale-95 opacity-0 group-hover:opacity-100 transform translate-x-4 group-hover:translate-x-0" title="Manage Protocol">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
