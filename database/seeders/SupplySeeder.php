@@ -14,10 +14,10 @@ class SupplySeeder extends Seeder
         // 1. تنظيف الجداول قبل البدء
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         Supply::truncate();
-        DB::table('supply_inventories')->truncate(); // يفضل تنظيف جدول المخزون أيضاً
+        DB::table('supply_inventories')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        // 2. جلب جميع شركات التوريد (الـ 12 شركة)
+        // 2. جلب جميع شركات التوريد (الـ 12 شركة والمقر الرئيسي)
         $companies = User::where('role', 'supply_company')->get();
 
         if ($companies->isEmpty()) {
@@ -66,7 +66,6 @@ class SupplySeeder extends Seeder
                 ['name' => 'باكيت محارم ورقية عائلي 5 حبات', 'price' => 3.50, 'stock' => 100, 'desc' => 'محارم ناعمة وعالية الامتصاص ومتعددة الاستخدامات.', 'image' => 'محارم.webp'],
                 ['name' => 'كيس نفايات برباط (حجم كبير)', 'price' => 1.50, 'stock' => 180, 'desc' => 'أكياس نفايات سميكة وقوية مزودة برباط لسهولة الغلق.', 'image' => 'اكياس_نفايات.webp'],
             ],
-
             'ألعاب وترفيه' => [
                 ['name' => 'كرة قدم نخب أول', 'price' => 3.00, 'stock' => 40, 'desc' => 'كرة قدم جلدية متينة ومناسبة للملاعب العشبية في المزارع.', 'image' => 'كرة_قدم.webp'],
                 ['name' => 'مجموعة ألعاب ورقية (شدة وطاولة)', 'price' => 3.00, 'stock' => 80, 'desc' => 'تتضمن ورق لعب بلوت/تركس عالي الجودة مع نرد.', 'image' => 'العاب_ورقية.webp'],
@@ -89,13 +88,16 @@ class SupplySeeder extends Seeder
                     'image'       => $p['image'],
                 ]);
 
-                // ب) المرور على جميع الشركات الـ 12 وربط هذا المنتج بها
+                // ب) المرور على جميع الشركات وربط هذا المنتج بها بكميات عشوائية
                 $inventories = [];
                 foreach ($companies as $company) {
+                    // جعل المخزون عشوائياً (من نصف الكمية الأصلية إلى ضعفها) ليكون واقعياً
+                    $randomStock = rand(max(1, intval($p['stock'] * 0.5)), intval($p['stock'] * 2));
+
                     $inventories[] = [
-                        'supply_id'  => $supply->id,     // ID المنتج الذي أنشأناه للتو
-                        'company_id' => $company->id,    // ID الشركة الحالية في اللوب
-                        'stock'      => $p['stock'],     // كمية المخزون (أو يمكنك جعلها rand() لتختلف بين الشركات)
+                        'supply_id'  => $supply->id,
+                        'company_id' => $company->id,
+                        'stock'      => $randomStock,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -106,6 +108,6 @@ class SupplySeeder extends Seeder
             }
         }
 
-        $this->command->info("Supply Marketplace populated! " . Supply::count() . " unique products linked across {$companies->count()} branches.");
+        $this->command->info("Supply Marketplace populated! " . Supply::count() . " unique products linked across {$companies->count()} branches with dynamic stock.");
     }
 }

@@ -4,10 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Farm;
-use App\Models\FarmBooking;
-use App\Models\Transport;
 use App\Models\ContactMessage;
 use App\Models\Favorite;
+use App\Models\Review;
 use App\Models\FarmBlockedDate;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -16,199 +15,179 @@ use Illuminate\Support\Facades\DB;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
-    {   
-        $this->call([
-            // 1. أولاً الأساس: المستخدمين (أدمن، زبائن، أصحاب مزارع، شركات)
-            // (بفترض عندك UserSeeder من قبل)
-            UserSeeder::class, 
+    {
+        $this->command->info('بدء عملية بناء قواعد البيانات الشاملة للمزرعة (Omni-Seeding)...');
 
-            // 2. المزارع تعتمد على أصحاب المزارع
+        $this->call([
+            // 1. الأساس: المستخدمين، الملاك، والشركات، والسائقين
+            UserSeeder::class,
+
+            // 2. المزارع الأساسية والمستنسخة
             FarmSeeder::class,
 
-            // 2.1 صور المزارع تعتمد على المزارع    
+            // 2.1 الألبومات والصور
             FarmImageSeeder::class,
 
-            // 3. المنتجات تعتمد على شركات التوريد
+            // 3. المنتجات والكتالوج والمخزون
             SupplySeeder::class,
 
-            // 4. الحجوزات تعتمد على المزارع والزبائن
+            // 4. الحجوزات والمواصلات (تم دمج المواصلات هنا للترابط)
             FarmBookingSeeder::class,
 
-            // 5. الطلبات تعتمد على المنتجات والحجوزات والزبائن
+            // 5. طلبات التوريد بناءً على الحجوزات
             SupplyOrderSeeder::class,
 
-            // 6. العمليات المالية (الأخير دائماً) تعتمد على الحجوزات والطلبات
+            // 6. العمليات المالية وتوزيع الأرباح والعمولات
             FinancialTransactionSeeder::class,
         ]);
-        // 1. Fundamental Seeders
-        // $this->call(UserSeeder::class);
-        // $this->call(SupplySeeder::class);
-        // $this->call(TransportSeeder::class);
 
-        // 2. Core Accounts
-        $admin     = User::where('email', 'admin@mazraa.com')->first();
-        $owner     = User::where('email', 'owner@mazraa.com')->first();
-        $user      = User::where('email', 'user@mazraa.com')->first();
-        $transport = User::where('email', 'transport@mazraa.com')->first();
+        $this->command->info('جاري توليد التفاعلات الجانبية (تقييمات، مفضلات، إشعارات، دعم فني)...');
 
-        // 💡 استخدام إيميل السائق الذكي اللي إنت عملته
-        // $drvT      = User::where('email', 'driver.t.amman.morning@mazraa.com')->first();
+        // جلب الداتا الأساسية
+        $users = User::where('role', 'user')->get();
+        $farms = Farm::all();
 
-        // 💡 جلب جميع شركات وسائقي التوريد وسائقي النقل دفعة واحدة
-        $supplyCompanies  = User::where('role', 'supply_company')->get();
-        // $supplyDrivers    = User::where('role', 'supply_driver')->get();
-        // $transportDrivers = User::where('role', 'transport_driver')->get();
+        // ==========================================
+        // 1. تقييمات واقعية باللغة العربية (Reviews)
+        // ==========================================
+        if ($users->isNotEmpty() && $farms->isNotEmpty()) {
+            $reviewTexts = [
+                'مزرعة بتجنن صراحة، المسبح نظيف جداً والتعامل راقي.',
+                'المكان واسع ومناسب للعائلات، بس يا ريت يوفرو منقل شواء أكبر.',
+                'تجربة رائعة، الهدوء والمناظر الخلابة بتسوى كل قرش.',
+                'ممتازة جداً والمواصلات اللي وفروها كانت عالدقيقة.',
+                'المزرعة حلوة بس كان في شوية نقص بأدوات المطبخ.',
+                'فخامة لا توصف! قضينا ويك إند خرافي شكراً لكم.',
+                'المكان بيعقد، بس سعر الشفت المسائي شوي غالي.',
+                'أنصح فيها بقوة، الأجواء خيالية خصوصاً بالليل.'
+            ];
 
-        // 3. Massive Farm Generation (Core Owner Focus)
-        // $ownerFarms = \App\Models\Farm::factory(25)->create([
-        //     'owner_id' => $owner->id,
-        // ]);
+            $reviewsData = [];
+            foreach ($farms as $farm) {
+                // من 3 إلى 8 تقييمات لكل مزرعة
+                $numReviews = min(rand(3, 8), $users->count());
 
-        // $otherFarms = \App\Models\Farm::factory(15)->create();
-        // $allFarms = $ownerFarms->concat($otherFarms);
+                // اختيار مستخدمين فريدين لهذه المزرعة لتجنب مشكلة Unique Constraint
+                $uniqueUsers = $users->random($numReviews);
 
-        // 4. Massive Booking Generation (Core User Focus)
-        // $userBookings = \App\Models\FarmBooking::factory(120)->create([
-        //     'user_id' => $user->id,
-        //     'farm_id' => fn() => $allFarms->random()->id,
-        // ]);
+                foreach ($uniqueUsers as $user) {
+                    $reviewsData[] = [
+                        'user_id' => $user->id,
+                        'reviewable_id' => $farm->id,
+                        'reviewable_type' => Farm::class,
+                        'rating' => rand(3, 5), // تقييمات إيجابية غالباً
+                        'comment' => $reviewTexts[array_rand($reviewTexts)],
+                        'created_at' => now()->subDays(rand(1, 100)),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
 
-        // $otherBookings = \App\Models\FarmBooking::factory(80)->create([
-        //     'farm_id' => fn() => $allFarms->random()->id,
-        // ]);
+            // استخدام insertOrIgnore لتخطي أي محاولات إدخال متكررة عن طريق الخطأ
+            $chunks = array_chunk($reviewsData, 500);
+            foreach ($chunks as $chunk) {
+                DB::table('reviews')->insertOrIgnore($chunk);
+            }
+        }
 
-        // $allBookings = $userBookings->concat($otherBookings);
+        // ==========================================
+        // 2. المفضلات (Favorites)
+        // ==========================================
+        if ($users->count() > 10 && $farms->count() > 10) {
+            $favoritesData = [];
+            $sampleUsers = $users->random(50); // 50 يوزر عشوائي
+            foreach ($sampleUsers as $u) {
+                $favFarms = $farms->random(rand(2, 6)); // كل يوزر بحب 2 لـ 6 مزارع
+                foreach ($favFarms as $f) {
+                    $favoritesData[] = [
+                        'user_id' => $u->id,
+                        'farm_id' => $f->id,
+                        'created_at' => now()->subDays(rand(1, 30)),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+            // استخدام insertOrIgnore هنا أيضاً كإجراء احترازي
+            DB::table('favorites')->insertOrIgnore($favoritesData);
+        }
 
-        // 5. Supply Orders (Core Supply Co Focus)
-        // $supplies = \App\Models\Supply::all();
-        // \App\Models\SupplyOrder::factory(120)->create([
-        //     'user_id' => $user->id,
-        //     'supply_id' => fn() => $supplies->random()->id,
-        //     'booking_id' => fn() => $allBookings->random()->id,
-        // ]);
+        // ==========================================
+        // 3. رسائل تواصل الدعم الفني (Contact Us)
+        // ==========================================
+        $contactData = [];
+        $subjects = ['استفسار عن حجز', 'مشكلة بالدفع', 'اقتراح تطوير', 'شكوى بخصوص مزرعة', 'طلب الانضمام كشريك'];
+        for ($i = 0; $i < 35; $i++) {
+            $contactData[] = [
+                'name' => 'زائر ' . rand(1, 100),
+                'email' => 'visitor' . rand(1, 100) . '@example.com',
+                'subject' => $subjects[array_rand($subjects)],
+                'message' => 'مرحباً، أود الاستفسار عن خدماتكم وكيف يمكنني الاستفادة من العروض المتاحة. شكراً.',
+                'status' => (rand(1, 100) > 70) ? 'resolved' : 'pending',
+                'created_at' => now()->subDays(rand(1, 60)),
+                'updated_at' => now(),
+            ];
+        }
+        // تصحيح: استخدام اسم الجدول contact_us كما في قاعدة البيانات بدلاً من contact_messages
+        DB::table('contact_us')->insert($contactData);
 
-        // 6. Transport & Logistics (Core Transport Focus)
-        // $vehicles = \App\Models\Vehicle::where('company_id', $transport->id)->get();
+        // ==========================================
+        // 4. تواريخ محجوزة يدوياً (Blocked Dates)
+        // ==========================================
+        $blockedData = [];
+        $premiumFarms = $farms->random(20);
+        foreach ($premiumFarms as $farm) {
+            for ($i = 1; $i <= 3; $i++) {
+                $blockedData[] = [
+                    'farm_id' => $farm->id,
+                    'date' => now()->addDays($i * rand(5, 10))->format('Y-m-d'),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+        DB::table('farm_blocked_dates')->insertOrIgnore($blockedData);
 
-        // حماية إضافية عشان ما يضرب إيرور إذا ما لقى سيارات أو سواق
-        // if ($vehicles->isNotEmpty() && $drvT) {
-        //     \App\Models\Transport::factory(80)->create([
-        //         'company_id' => $transport->id,
-        //         'vehicle_id' => fn() => $vehicles->random()->id,
-        //         'driver_id'  => fn() => $drvT->id,
-        //         'farm_booking_id' => fn() => $allBookings->random()->id,
-        //     ]);
-        // }
+        // ==========================================
+        // 5. إشعارات النظام (Notifications)
+        // ==========================================
+        $allUsers = User::take(100)->get();
+        $notificationData = [];
 
-        // 7. Financial Transactions (Admin & Ledger Focus)
-        // $allBookings->each(function ($booking) use ($admin) {
-        //     if ($booking->payment_status === 'paid') {
-        //         $commission = $booking->total_price * 0.10;
-        //         $net = $booking->total_price - $commission;
+        $notifTypes = [
+            'App\Notifications\BookingConfirmed',
+            'App\Notifications\PaymentReceived',
+            'App\Notifications\OrderDispatched',
+            'App\Notifications\NewReviewPosted',
+        ];
 
-                // Admin Commission
-                // \App\Models\FinancialTransaction::factory()->create([
-                //     'user_id' => $admin->id,
-                //     'reference_type' => 'farm_booking',
-                //     'reference_id' => $booking->id,
-                //     'transaction_type' => 'credit',
-                //     'amount' => $commission,
-                //     'description' => "Booking Commission #{$booking->id}",
-                //     'created_at' => $booking->created_at,
-                // ]);
+        $notifMessages = [
+            ['title' => 'تأكيد الحجز', 'message' => 'تم تأكيد حجزك بنجاح للمزرعة المختارة.'],
+            ['title' => 'تم استلام الدفعة', 'message' => 'لقد تم تسجيل مبلغ مالي جديد في محفظتك.'],
+            ['title' => 'طلب قيد التوصيل', 'message' => 'يرجى العلم أن طلب التوريد الخاص بك قيد التوصيل الآن.'],
+            ['title' => 'تقييم جديد', 'message' => 'قام أحد العملاء بإضافة تقييم جديد لمزرعتك.'],
+        ];
 
-                // Owner Credit
-        //         \App\Models\FinancialTransaction::factory()->create([
-        //             'user_id' => $booking->farm->owner_id,
-        //             'reference_type' => 'farm_booking',
-        //             'reference_id' => $booking->id,
-        //             'transaction_type' => 'credit',
-        //             'amount' => $net,
-        //             'description' => "Net Booking Revenue #{$booking->id}",
-        //             'created_at' => $booking->created_at,
-        //         ]);
-        //     }
-        // });
+        foreach ($allUsers as $account) {
+            for ($i = 0; $i < 3; $i++) {
+                $index = array_rand($notifTypes);
+                $notificationData[] = [
+                    'id' => Str::uuid()->toString(),
+                    'type' => $notifTypes[$index],
+                    'notifiable_type' => User::class,
+                    'notifiable_id' => $account->id,
+                    'data' => json_encode($notifMessages[$index]),
+                    'read_at' => rand(0, 1) ? now() : null,
+                    'created_at' => now()->subDays(rand(1, 30)),
+                    'updated_at' => now(),
+                ];
+            }
+        }
 
-        // 8. Arabic Reviews
-        // $allFarms->each(function ($farm) {
-        //     \App\Models\Review::factory(5)->create([
-        //         'reviewable_id' => $farm->id,
-        //         'reviewable_type' => 'farm',
-        //     ]);
-        // });
+        $chunks = array_chunk($notificationData, 500);
+        foreach ($chunks as $chunk) {
+            DB::table('notifications')->insert($chunk);
+        }
 
-        // 9. System Support
-        // ContactMessage::factory(35)->create();
-
-        // 10. Favorites
-        // $favoriteFarms = $allFarms->random(rand(15, 20));
-        // foreach ($favoriteFarms as $farm) {
-        //     Favorite::create([
-        //         'user_id' => $user->id,
-        //         'farm_id' => $farm->id,
-        //     ]);
-        // }
-
-        // 11. Realism (Blocked Dates)
-        // Block dates for some premium farms safely without unique constraint crashes
-        // $premiumFarms = $allFarms->random(10);
-        // foreach ($premiumFarms as $farm) {
-        //     for ($i = 1; $i <= 5; $i++) {
-        //         try {
-        //             FarmBlockedDate::factory()->create([
-        //                 'farm_id' => $farm->id,
-        //                 // 💡 توليد تواريخ متسلسلة للأمام لمنع التكرار نهائياً
-        //                 'date' => now()->addDays($i * rand(2, 5))->format('Y-m-d'),
-        //             ]);
-        //         } catch (\Exception $e) {
-        //             // Ignore rare accidental duplicates to keep the seeder running
-        //             continue;
-        //         }
-        //     }
-        // }
-
-        // 12. System Activity (Notifications)
-        // $coreAccounts = collect([$admin, $owner, $user, $transport, $drvT])
-        //     ->filter()
-        //     ->merge($supplyCompanies)
-        //     ->merge($supplyDrivers)
-        //     ->merge($transportDrivers);
-
-        // $notificationTypes = [
-        //     'App\Notifications\BookingConfirmed',
-        //     'App\Notifications\PaymentReceived',
-        //     'App\Notifications\OrderDispatched',
-        //     'App\Notifications\NewReviewPosted',
-        //     'App\Notifications\DriverAssigned'
-        // ];
-
-        // $notificationData = [
-        //     ['title' => 'تأكيد الحجز', 'message' => 'تم تأكيد حجزك بنجاح للمزرعة المختارة.'],
-        //     ['title' => 'تم استلام الدفعة', 'message' => 'لقد تم تسجيل مبلغ مالي جديد في محفظتك.'],
-        //     ['title' => 'طلب قيد التوصيل', 'message' => 'يرجى العلم أن طلب التوريد الخاص بك قيد التوصيل الآن.'],
-        //     ['title' => 'تقييم جديد', 'message' => 'قام أحد العملاء بإضافة تقييم جديد لمزرعتك.'],
-        //     ['title' => 'تعيين سائق', 'message' => 'تم تعيين سائق لرحلتك القادمة، يمكنك التواصل معه الآن.']
-        // ];
-
-        // foreach ($coreAccounts as $account) {
-        //     if ($account) {
-        //         for ($i = 0; $i < 5; $i++) {
-        //             $index = array_rand($notificationTypes);
-        //             DB::table('notifications')->insert([
-        //                 'id' => Str::uuid(),
-        //                 'type' => $notificationTypes[$index],
-        //                 'notifiable_type' => 'App\Models\User',
-        //                 'notifiable_id' => $account->id,
-        //                 'data' => json_encode($notificationData[$index]),
-        //                 'read_at' => rand(0, 1) ? now() : null,
-        //                 'created_at' => now()->subDays(rand(1, 30)),
-        //                 'updated_at' => now(),
-        //             ]);
-        //         }
-        //     }
-        // }
-
-        $this->command->info('OMNI-SEEDER COMPLETE 🟢 - 100% database coverage achieved!');
+        $this->command->info('OMNI-SEEDER COMPLETE 🟢 - تم تفجير قاعدة البيانات بنجاح تام! 100% تغطية واقعية.');
     }
 }

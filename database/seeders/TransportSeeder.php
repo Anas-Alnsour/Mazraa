@@ -5,18 +5,20 @@ namespace Database\Seeders;
 use App\Models\Transport;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\FarmBooking;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class TransportSeeder extends Seeder
 {
     public function run()
-    {   
+    {
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         Transport::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        // 1. Get the seeded Transport Company account
+
+        // 1. جلب شركة المواصلات المركزية المعتمدة في الـ UserSeeder
         $company = User::where('email', 'transport@mazraa.com')->first();
 
         if (!$company) {
@@ -24,50 +26,90 @@ class TransportSeeder extends Seeder
             return;
         }
 
-        // 2. Create 20+ vehicles for the transport company
-        $vehicleTypes = [
-            'Hyundai Coaster 2023', 'Mercedes Sprinter VIP', 'GMC Savana Executive',
-            'Toyota Hiace High Roof', 'Ford Transit Custom', 'Volkswagen Crafter'
-        ];
+        // 2. جلب الحجوزات الموجودة بالسيستم لربط المواصلات بها بشكل منطقي
+        // (عشان الشاشات والتقارير تطلع مترابطة 100%)
+        $bookings = FarmBooking::with('farm')->get();
 
-        $vehicles = [];
-        for ($i = 1; $i <= 15; $i++) {
-            $vehicles[] = Vehicle::create([
-                'company_id'    => $company->id,
-                'type'          => $vehicleTypes[array_rand($vehicleTypes)],
-                'license_plate' => rand(10, 99) . "-" . rand(1000, 9999),
-                'capacity'      => rand(7, 30),
-                'status'        => 'available',
-                'driver_id'     => null,
-            ]);
+        // جلب جميع سائقي المواصلات المتوفرين في النظام والذين تم إنشاؤهم مسبقاً
+        $drivers = User::where('role', 'transport_driver')->with('transportVehicle')->get();
+
+        if ($bookings->isEmpty() || $drivers->isEmpty()) {
+            $this->command->warn('تنبيه: يجب أن يحتوي النظام على حجوزات مزارع وسائقين لتوليد حركات المواصلات.');
+            return;
         }
 
-        // 3. Create unique drivers for these vehicles
-        $firstNames = ['سامي', 'خالد', 'إبراهيم', 'محمد', 'يوسف', 'عمر', 'أحمد', 'زيد', 'ليث', 'حمزة'];
-        $lastNames = ['الفايز', 'العبادي', 'الضمور', 'القيسي', 'المجالي', 'العدوان', 'النسور', 'القرالة'];
+        $statuses = ['pending', 'assigned', 'in_progress', 'completed', 'completed', 'completed', 'cancelled'];
+        $points = ['دوار السابع - عمان', 'مجمع رغدان', 'نفق الصحافة', 'دوار الثقافة - إربد', 'الزرقاء الجديدة - شارع 36', 'دوار المحافظة'];
 
-        foreach ($vehicles as $index => $vehicle) {
-            $name = $firstNames[array_rand($firstNames)] . ' ' . $lastNames[array_rand($lastNames)];
-            
-            // Create driver user with permanent vehicle link
-            $driver = User::create([
-                'name'                 => $name,
-                'email'                => "driver{$index}.t@mazraa.com",
-                'phone'                => '079' . rand(1000000, 9999999),
-                'password'             => Hash::make('password123'),
-                'role'                 => 'transport_driver',
-                'company_id'           => $company->id,
-                'transport_vehicle_id' => $vehicle->id,
-                'governorate'          => ['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Salt'][array_rand(['Amman', 'Zarqa', 'Irbid', 'Jerash', 'Salt'])],
+        // 3. الدوران على الحجوزات وتوليد طلبات مواصلات مليانة بيانات (ذهاب وعودة وشفتات)
+        foreach ($bookings as $index => $booking) {
+
+            // فلترة السائقين المتواجدين في نفس محافظة المزرعة المحجوزة ليكون التوزيع منطقي
+            $localDrivers = $drivers->where('governorate', $booking->farm->governorate);
+
+            if ($localDrivers->isEmpty()) {
+                $localDrivers = $drivers; // Fallback في حال عدم توفر سائق في نفس المحافظة
+            }
+
+            // تقسيم السائقين حسب الشفتات لتطبيق منطق الذهاب والعودة (التعديل رقم 9)
+            $morningDrivers = $localDrivers->where('shift', 'morning');
+            $eveningDrivers = $localDrivers->where('shift', 'evening');
+
+            // تأمين سائق للذهاب وسائق للعودة بناءً على الشفت المتوفر
+            $outwardDriver = $morningDrivers->isNotEmpty() ? $morningDrivers->random() : $localDrivers->random();
+            $returnDriver  = $eveningDrivers->isNotEmpty() ? $eveningDrivers->random() : $localDrivers->random();
+
+            // تحديد حالة طلب التوصيل بناءً على حالة الحجز الخاص بالمزرعة
+            if ($booking->status === 'completed') {
+                $status = 'completed';
+            } elseif ($booking->status === 'cancelled') {
+                $status = 'cancelled';
+            } else {
+                $status = $statuses[array_rand($statuses)];
+            }
+
+            // أوقات الرحلة مطابقة تماماً لوقت حجز المزرعة
+            $arrivalTime   = Carbon::parse($booking->start_time);
+            $departureTime = Carbon::parse($booking->end_time);
+
+            // حساب تكلفة المواصلات التقديرية
+            $price = rand(25, 60);
+
+            // إنشاء سجل المواصلات المليء بالبيانات السابقة واللاحقة
+            Transport::create([
+                'user_id'                 => $booking->user_id,
+                'farm_booking_id'         => $booking->id,
+                'farm_id'                 => $booking->farm_id,
+                'company_id'              => $company->id,
+
+                // رحلة الذهاب (Outward)
+                'driver_id'               => $outwardDriver->id,
+                'vehicle_id'              => $outwardDriver->transport_vehicle_id,
+
+                // رحلة العودة (Return) - التعديل رقم 9 الاحترافي
+                'return_driver_id'        => $returnDriver->id,
+                'return_vehicle_id'       => $returnDriver->transport_vehicle_id,
+
+                'start_and_return_point'  => $points[array_rand($points)],
+                'destination_governorate' => $booking->farm->governorate,
+                'passengers'              => rand(2, $outwardDriver->transportVehicle->capacity ?? 10),
+                'price'                   => $price,
+                'status'                  => $status,
+                'Farm_Arrival_Time'       => $arrivalTime,
+                'Farm_Departure_Time'     => $departureTime,
+                'created_at'              => Carbon::parse($booking->created_at),
+                'updated_at'              => $status === 'completed' ? $departureTime : Carbon::parse($booking->updated_at),
             ]);
 
-            // Also set the vehicle's driver_id back-reference
-            $vehicle->update(['driver_id' => $driver->id]);
+            // تحديث عداد الرحلات للسائقين لتبدو الحسابات مليئة بالإحصائيات في واجهات العرض
+            if ($status === 'completed') {
+                $outwardDriver->increment('trips_count');
+                if ($outwardDriver->id !== $returnDriver->id) {
+                    $returnDriver->increment('trips_count');
+                }
+            }
         }
 
-        // 4. Create 20 dummy transport job records
-        // Transport::factory(20)->create();
-
-        $this->command->info('TransportSeeder: Created 15 vehicles + 15 paired drivers for transport@mazraa.com');
+        $this->command->info('TransportSeeder: Successfully generated ' . Transport::count() . ' detailed jobs linked with outward/return drivers and shifts.');
     }
 }

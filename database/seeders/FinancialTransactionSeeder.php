@@ -7,8 +7,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\FarmBooking;
 use App\Models\SupplyOrder;
+use App\Models\Transport;
 use Carbon\Carbon;
-use App\Models\FinancialTransaction;
+use Illuminate\Support\Str;
 
 class FinancialTransactionSeeder extends Seeder
 {
@@ -25,126 +26,151 @@ class FinancialTransactionSeeder extends Seeder
             return;
         }
 
-        $now = Carbon::now();
         $transactions = [];
 
-        // --- الجزء الأول: أرباح حجوزات المزارع (بيانات حقيقية) ---
-        $bookings = FarmBooking::with('farm.owner')->get();
+        // =========================================================
+        // الجزء الأول: أرباح حجوزات المزارع (Farm Bookings)
+        // =========================================================
+        $bookings = FarmBooking::with('farm.owner')->whereIn('status', ['confirmed', 'completed'])->get();
 
-        if ($bookings->isEmpty()) {
-            $this->command->warn("لا يوجد حجوزات حقيقية، سيتم تخطي أرباح المزارع.");
-        } else {
-            foreach ($bookings as $booking) {
-                $owner = $booking->farm->owner;
-                if (!$owner) continue;
+        foreach ($bookings as $booking) {
+            $owner = $booking->farm->owner;
+            if (!$owner) continue;
 
-                $grossAmount = $booking->total_price;
-                // حساب العمولة (من المزرعة أو 10% افتراضي)
-                $commissionRate = ($booking->farm->commission_rate ?? 10) / 100;
-                $commission = $grossAmount * $commissionRate;
-                $netAmount = $grossAmount - $commission;
+            // إيداع عمولة المنصة (Admin Credit)
+            $transactions[] = [
+                'user_id'          => $admin->id,
+                'reference_type'   => 'farm_booking',
+                'reference_id'     => $booking->id,
+                'transaction_type' => 'credit',
+                'amount'           => $booking->commission_amount,
+                'description'      => "عمولة المنصة من حجز مزرعة #{$booking->id}",
+                'created_at'       => $booking->updated_at,
+                'updated_at'       => $booking->updated_at,
+            ];
 
-                // إيداع عمولة المنصة
-                $transactions[] = [
-                    'user_id' => $admin->id,
-                    'reference_type' => 'farm_booking',
-                    'reference_id' => $booking->id,
-                    'transaction_type' => 'credit',
-                    'amount' => $commission,
-                    'description' => "عمولة المنصة من حجز رقم #{$booking->id}",
-                    'created_at' => $booking->created_at,
-                    'updated_at' => $now,
-                ];
-
-                // إيداع صافي الربح لصاحب المزرعة
-                $transactions[] = [
-                    'user_id' => $owner->id,
-                    'reference_type' => 'farm_booking',
-                    'reference_id' => $booking->id,
-                    'transaction_type' => 'credit',
-                    'amount' => $netAmount,
-                    'description' => "صافي أرباح الحجز رقم #{$booking->id}",
-                    'created_at' => $booking->created_at,
-                    'updated_at' => $now,
-                ];
-            }
+            // إيداع صافي الربح لصاحب المزرعة (Owner Credit)
+            $transactions[] = [
+                'user_id'          => $owner->id,
+                'reference_type'   => 'farm_booking',
+                'reference_id'     => $booking->id,
+                'transaction_type' => 'credit',
+                'amount'           => $booking->net_owner_amount,
+                'description'      => "أرباح حجز مزرعة #{$booking->id}",
+                'created_at'       => $booking->updated_at,
+                'updated_at'       => $booking->updated_at,
+            ];
         }
 
-        // --- الجزء الثاني: أرباح طلبات التوريد (بيانات حقيقية) ---
-        // $orders = SupplyOrder::all();
-
-       // شحن العلاقات مع التأكد من جلب الحقول اللازمة
-        $orders = SupplyOrder::with(['supply', 'user'])->get();
-
-        if ($orders->isEmpty()) {
-            $this->command->warn('لا توجد طلبات توريد لإنشاء عمليات مالية.');
-            return;
-        }
+        // =========================================================
+        // الجزء الثاني: أرباح طلبات التوريد (Supply Orders)
+        // =========================================================
+        $orders = SupplyOrder::with('driver')->whereIn('status', ['processing', 'out_for_delivery', 'delivered'])->get();
 
         foreach ($orders as $order) {
-            // 1. عملية دفع من الزبون (المبلغ الكلي)
-            FinancialTransaction::create([
-                'user_id' => $order->user_id,
-                'amount' => $order->total_price,
-                'transaction_type' => 'debit',
-                // 'status' => 'completed',
-                'description' => "دفع قيمة طلب التوريد رقم: {$order->order_id}",
-                'reference_id' => $order->id,
-                'reference_type' => SupplyOrder::class,
-            ]);
+            // استنتاج الشركة الموردة من خلال السائق الذي تم تعيينه للطلب
+            $companyId = $order->driver->company_id ?? null;
+            if (!$companyId) continue;
 
-            // 2. عملية إيداع للمورد (الصافي)
-            // ملاحظة: بما أن company_id حذف من جدول supply، سنفترض وجود مورد افتراضي 
-            // أو يمكنك استبداله بـ $order->supply->supplier_id إذا قمت بتغيير الاسم
-            $supplierId = 1; // معرّف مورد افتراضي (أو HQ) لتجنب توقف الكود
+            // إيداع عمولة المنصة
+            $transactions[] = [
+                'user_id'          => $admin->id,
+                'reference_type'   => 'supply_order',
+                'reference_id'     => $order->id,
+                'transaction_type' => 'credit',
+                'amount'           => $order->commission_amount,
+                'description'      => "عمولة توريد لطلب #{$order->order_id}",
+                'created_at'       => $order->updated_at,
+                'updated_at'       => $order->updated_at,
+            ];
 
+            // إيداع صافي الربح لشركة التوريد
             if ($order->net_company_amount > 0) {
-                FinancialTransaction::create([
-                    'user_id' => $supplierId, 
-                    'amount' => $order->net_company_amount,
+                $transactions[] = [
+                    'user_id'          => $companyId,
+                    'reference_type'   => 'supply_order',
+                    'reference_id'     => $order->id,
                     'transaction_type' => 'credit',
-                    // 'status' => 'completed',
-                    'description' => "صافي أرباح المورد للطلب رقم: {$order->order_id}",
-                    'reference_id' => $order->id,
-                    'reference_type' => SupplyOrder::class,
-                ]);
+                    'amount'           => $order->net_company_amount,
+                    'description'      => "أرباح طلب توريد #{$order->order_id}",
+                    'created_at'       => $order->updated_at,
+                    'updated_at'       => $order->updated_at,
+                ];
             }
         }
 
-        // --- الجزء الثالث: سحب الأرباح (Debit) - من كودك الأول ---
-        // سنأخذ عينة من المستخدمين ونحاكي عملية تحويل بنكي لهم (خصم من رصيدهم في التطبيق)
-        $owners = User::where('role', 'farm_owner')->take(2)->get();
-        foreach ($owners as $owner) {
+        // =========================================================
+        // الجزء الثالث: أرباح رحلات المواصلات (Transports)
+        // =========================================================
+        $transports = Transport::whereIn('status', ['assigned', 'in_progress', 'completed'])->get();
+
+        foreach ($transports as $transport) {
+            if (!$transport->company_id) continue;
+
+            // حساب العمولة (مثلاً 10%) والصافي للشركة
+            $adminComm = $transport->price * 0.10;
+            $companyNet = $transport->price - $adminComm;
+
             $transactions[] = [
-                'user_id' => $owner->id,
-                'reference_type' => 'farm_booking',
-                'reference_id' => rand(100, 999), // رقم مرجعي للتحويل
-                'transaction_type' => 'debit',
-                'amount' => rand(50, 100),
-                'description' => "تحويل بنكي للأرباح - مرجع: TR-" . rand(1000, 9999),
-                'created_at' => $now->copy()->subDays(rand(1, 3)),
-                'updated_at' => $now,
+                'user_id'          => $admin->id,
+                'reference_type'   => 'transport',
+                'reference_id'     => $transport->id,
+                'transaction_type' => 'credit',
+                'amount'           => $adminComm,
+                'description'      => "عمولة مواصلات لحجز #{$transport->farm_booking_id}",
+                'created_at'       => $transport->updated_at,
+                'updated_at'       => $transport->updated_at,
+            ];
+
+            $transactions[] = [
+                'user_id'          => $transport->company_id,
+                'reference_type'   => 'transport',
+                'reference_id'     => $transport->id,
+                'transaction_type' => 'credit',
+                'amount'           => $companyNet,
+                'description'      => "أرباح رحلة نقل لحجز #{$transport->farm_booking_id}",
+                'created_at'       => $transport->updated_at,
+                'updated_at'       => $transport->updated_at,
             ];
         }
 
-        $companies = User::where('role', 'supply_company')->take(1)->get();
-        foreach ($companies as $company) {
-            $transactions[] = [
-                'user_id' => $company->id,
-                'reference_type' => 'supply_order',
-                'reference_id' => rand(100, 999),
-                'transaction_type' => 'debit',
-                'amount' => rand(20, 50),
-                'description' => "تحويل بنكي للأرباح - مرجع: TR-" . rand(1000, 9999),
-                'created_at' => $now->copy()->subDays(rand(1, 3)),
-                'updated_at' => $now,
-            ];
+        // =========================================================
+        // الجزء الرابع: سحوبات الأرباح (Payouts/Debits) لجميع الشركاء
+        // =========================================================
+        // جلب جميع الشركاء (ملاك، شركات توريد، شركات نقل)
+        $vendors = User::whereIn('role', ['farm_owner', 'supply_company', 'transport_company'])->get();
+
+        foreach ($vendors as $vendor) {
+            // توليد من 3 إلى 10 حركات سحب أرباح لكل شريك عبر الأشهر الماضية (عشان الـ Charts تتعبى)
+            $payoutsCount = rand(3, 10);
+
+            for ($i = 0; $i < $payoutsCount; $i++) {
+                $randomDate = Carbon::now()->subDays(rand(1, 300));
+
+                $transactions[] = [
+                    'user_id'          => $vendor->id,
+                    'reference_type'   => 'manual_payout',
+                    'reference_id'     => rand(1000, 9999),
+                    'transaction_type' => 'debit',
+                    'amount'           => rand(50, 400),
+                    'description'      => "تحويل بنكي للأرباح - مرجع: TRF-" . strtoupper(Str::random(6)),
+                    'created_at'       => $randomDate,
+                    'updated_at'       => $randomDate,
+                ];
+            }
         }
 
-        // 2. إدخال كل المصفوفة مرة واحدة
+        // =========================================================
+        // الإدخال النهائي على دفعات (Bulk Insert) لأداء صاروخي
+        // =========================================================
         if (!empty($transactions)) {
-            DB::table('financial_transactions')->insert($transactions);
-            $this->command->info("تم بنجاح دمج البيانات الحقيقية وإنشاء " . count($transactions) . " عملية مالية.");
+            $chunks = array_chunk($transactions, 1000); // إدخال 1000 سجل في كل دفعة
+            foreach ($chunks as $chunk) {
+                DB::table('financial_transactions')->insert($chunk);
+            }
+            $this->command->info("Financial Ledger populated! Inserted " . count($transactions) . " massive transactions seamlessly.");
+        } else {
+            $this->command->warn('No financial transactions were generated. Check your bookings/orders seeders.');
         }
     }
 }

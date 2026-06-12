@@ -40,8 +40,8 @@ class FarmController extends Controller
             });
         }
 
-        // 👈 تطبيق الـ Eager Loading
-        $farms = $query->with(['images', 'owner', 'reviews'])->latest()->paginate(12)->appends(request()->query());
+        // 👈 تم التعديل هنا: إضافة 'reviews.user' بدلاً من 'reviews' لحل مشكلة Lazy Loading
+        $farms = $query->with(['images', 'owner', 'reviews.user'])->latest()->paginate(12)->appends(request()->query());
 
         return view('public_farms.explore', compact('farms'));
     }
@@ -49,13 +49,12 @@ class FarmController extends Controller
     /**
      * عرض صفحة تفاصيل مزرعة محددة للزبون
      */
-public function show($id)
+    public function show($id)
     {
-        // 1. جلب المزرعة مع الصور والمالك
-        $farm = Farm::with(['images', 'owner'])->findOrFail($id);
+        // 1. 👈 تم التعديل هنا: إضافة 'reviews.user' لجلب التقييمات وأصحابها بـ Query واحد
+        $farm = Farm::with(['images', 'owner', 'reviews.user'])->findOrFail($id);
 
         // 2. جلب لوازم الرحلات (Supplies)
-        // شلنا شرط الـ status لأنه مش موجود عندك بالجدول، بنجيب كل اللوازم المتوفرة
         $supplies = \App\Models\Supply::all();
 
         return view('public_farms.show', compact('farm', 'supplies'));

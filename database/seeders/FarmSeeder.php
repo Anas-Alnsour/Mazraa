@@ -23,7 +23,7 @@ class FarmSeeder extends Seeder
             return;
         }
 
-        // بيانات 24 مزرعة فخمة (مزرعتين لكل محافظة) مع إضافة مسار الصورة الصحيح من قاعدة البيانات      
+        // بيانات 24 مزرعة فخمة أساسية مع مسار الصورة الصحيح من قاعدة البيانات
         $farmsData = [
             // --- عمان (Amman) ---
             [
@@ -147,7 +147,7 @@ class FarmSeeder extends Seeder
                 'name' => 'مخيم وادي رم الفاخر', 'governorate' => 'Maan', 'location' => 'معان - وادي رم',
                 'desc' => "نم تحت النجوم في خيام المريخ الفاخرة! 🌌 \nليست مزرعة تقليدية، بل خيام فقاعية (Bubble Tents) مكيفة ومجهزة بحمام خاص وسرير ملكي. \nمسبح صحراوي فريد، وجلسات سمر بدوية مع عشاء زرب يومي. \nتجربة لا تنسى في وادي القمر.",
                 'cap' => 16, 'pm' => 200, 'pe' => 180, 'pf' => 350, 'pn' => 300, 'lat' => 29.5678, 'lng' => 35.4321,
-                'main_image' => 'farms/covers/ajiAxYbyx4l5hFi40hikaxVT79lZE2UwtbsVRcHC.jpg'
+                'main_image' => 'farms/covers/ajiAxYbyx4l5hFi40hikaxVT79lZE2UwtbsVRcHC.jpg' // Assuming this image exists based on standard naming
             ],
             [
                 'name' => 'شاليه الشوبك الملكي', 'governorate' => 'Maan', 'location' => 'معان - مطل الشوبك',
@@ -183,12 +183,13 @@ class FarmSeeder extends Seeder
             ],
         ];
 
-        // إدخال البيانات إلى قاعدة البيانات
-        foreach ($farmsData as $index => $f) {
-            $owner = $owners->random();
-            $commission_rate = 10; // نسبة العمولة 10% لكل المزارع
+        // مصفوفة لتجميع المزارع التي سيتم إدخالها
+        $insertData = [];
+        $commission_rate = 10;
 
-            Farm::create([
+        // 1. إدخال المزارع الأساسية الـ 24
+        foreach ($farmsData as $f) {
+            $insertData[] = [
                 'name' => $f['name'],
                 'location' => $f['location'],
                 'governorate' => $f['governorate'],
@@ -198,9 +199,9 @@ class FarmSeeder extends Seeder
                 'price_per_morning_shift' => $f['pm'],
                 'price_per_evening_shift' => $f['pe'],
                 'price_per_full_day' => $f['pf'],
-                'rating' => rand(10, 50) / 10, // تقييم بين 1.0 و 5.0
-                'main_image' => $f['main_image'], // هنا تم ربط الحقل بالبيانات الفعلية المستخرجة
-                'owner_id' => $owner->id,
+                'rating' => rand(30, 50) / 10, // تقييم عالي بين 3.0 و 5.0
+                'main_image' => $f['main_image'],
+                'owner_id' => $owners->random()->id,
                 'latitude' => $f['lat'],
                 'longitude' => $f['lng'],
                 'commission_rate' => $commission_rate,
@@ -208,9 +209,49 @@ class FarmSeeder extends Seeder
                 'is_approved' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
+            ];
         }
 
-        $this->command->info('تم زراعة 24 مزرعة فخمة بنجاح في 12 محافظة أردنية مع صورها الصحيحة!');
+        // 2. توليد 250 مزرعة إضافية (Massive Data) باستخدام المزارع الأساسية كقوالب (Templates)
+        for ($i = 1; $i <= 250; $i++) {
+            $template = $farmsData[array_rand($farmsData)]; // اختيار مزرعة عشوائية كقالب
+
+            // إضافة كلمات عشوائية للاسم لتمييزها
+            $prefixes = ['منتجع', 'فيلا', 'شاليه', 'مزرعة', 'استراحة', 'قصر'];
+            $suffixes = ['الملكية', 'الهادئة', 'الخاصة', 'الفخمة', 'الذهبية', 'السياحية', 'VIP'];
+
+            $newName = $prefixes[array_rand($prefixes)] . ' ' . explode(' ', $template['name'])[1] . ' ' . $suffixes[array_rand($suffixes)] . ' ' . $i;
+
+            $insertData[] = [
+                'name' => $newName,
+                'location' => $template['location'] . ' - فرع ' . rand(1, 10),
+                'governorate' => $template['governorate'],
+                'location_link' => 'http://googleusercontent.com/maps.google.com/' . rand(1000, 9999),
+                'description' => $template['desc'] . "\n\n فرع جديد مجهز بأحدث الديكورات.",
+                'capacity' => $template['cap'] + rand(-5, 10), // تغيير طفيف في السعة
+                'price_per_morning_shift' => $template['pm'] + rand(-20, 30),
+                'price_per_evening_shift' => $template['pe'] + rand(-20, 30),
+                'price_per_full_day' => $template['pf'] + rand(-30, 50),
+                'rating' => rand(10, 50) / 10, // تقييمات متنوعة
+                'main_image' => $template['main_image'], // استخدام نفس الصورة للحفاظ عليها!
+                'owner_id' => $owners->random()->id,
+                // تغيير طفيف جداً في الإحداثيات لتتوزع المزارع على الخريطة
+                'latitude' => $template['lat'] + (rand(-50, 50) / 1000),
+                'longitude' => $template['lng'] + (rand(-50, 50) / 1000),
+                'commission_rate' => $commission_rate,
+                'status' => rand(1, 100) > 90 ? 'maintenance' : 'active', // 10% من المزارع في الصيانة
+                'is_approved' => rand(1, 100) > 85 ? 0 : 1, // 15% بانتظار الموافقة (Pending Approval)
+                'created_at' => now()->subDays(rand(1, 365)),
+                'updated_at' => now(),
+            ];
+        }
+
+        // إدخال البيانات على دفعات (Bulk Insert) للأداء العالي
+        $chunks = array_chunk($insertData, 100);
+        foreach ($chunks as $chunk) {
+            DB::table('farms')->insert($chunk);
+        }
+
+        $this->command->info('FarmSeeder: Successfully generated ' . Farm::count() . ' spectacular farms (24 Base + 250 Dynamic) across Jordan with accurate image preservation!');
     }
 }
