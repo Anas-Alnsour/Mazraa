@@ -237,34 +237,6 @@
                         </select>
                     </div>
 
-                    {{-- <div class="md:col-span-2 space-y-2">
-                            <label
-                                class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Assigned
-                                Vehicle <span class="text-slate-400 normal-case">(Permanent 1-to-1 Pairing)</span></label>
-                            @if ($availableVehicles->count() > 0)
-                                <select name="transport_vehicle_id" id="transport_vehicle_id"
-                                    class="w-full dark-select px-5 py-4 font-bold text-sm text-cyan-400">
-                                    <option value="">No vehicle assigned yet</option>
-                                    @foreach ($availableVehicles as $vehicle)
-                                        <option value="{{ $vehicle->id }}"
-                                            {{ old('transport_vehicle_id') == $vehicle->id ? 'selected' : '' }}>
-                                            {{ $vehicle->type }} &mdash; {{ $vehicle->license_plate }}
-                                            ({{ $vehicle->capacity }} seats)
-                                        </option>
-                                    @endforeach
-                                </select>
-                            @else
-                                <div
-                                    class="px-5 py-4 bg-amber-500/10 text-amber-400 rounded-2xl text-sm font-bold border border-amber-500/20">
-                                    All vehicles are currently assigned. <a
-                                        href="{{ route('transport.vehicles.create') }}"
-                                        class="underline text-amber-300">Add a new vehicle</a> first.
-                                </div>
-                            @endif
-                            <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-2 ml-1">Dispatcher
-                                will auto-assign this vehicle — no manual pickup needed.</p>
-                        </div> --}}
-
                     {{-- Vehicle Type --}}
                     <div class="md:col-span-2 space-y-2">
                         <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Vehicle
@@ -288,87 +260,15 @@
                         </select>
                     </div>
 
-                    {{-- License Plate --}}
-                    <div class="space-y-2">
+                    {{-- License Plate (تم تعديل العرض ليأخذ كل المساحة بدلاً من المساحة بجانب Capacity المزال) --}}
+                    <div class="md:col-span-2 space-y-2">
                         <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">License
                             Plate Number <span class="text-cyan-500">*</span></label>
                         <input type="text" name="license_plate" id="license_plate"
                             value="{{ old('license_plate') }}" required placeholder="e.g. 10-12345"
                             class="w-full transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case">
                     </div>
-
-                    {{-- Capacity --}}
-                    <div class="space-y-2">
-                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Passenger
-                            Capacity <span class="text-cyan-500">*</span></label>
-                        <div class="relative">
-                            <input type="number" name="capacity" id="capacity" min="1"
-                                value="{{ old('capacity') }}" required placeholder="e.g. 12"
-                                class="w-full transport-input pl-6 pr-14 py-5 font-bold text-sm">
-                            <div
-                                class="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none text-slate-500 font-black text-[10px] uppercase tracking-widest">
-                                PAX</div>
-                        </div>
-                    </div>
-
-                    {{-- Driver Assignment
-                    <div class="md:col-span-2 pt-6 border-t border-slate-800 space-y-2">
-                        <label
-                            class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-2">Assign
-                            Driver (Optional)</label>
-                        <select name="driver_id" id="driver_id" class="w-full dark-select px-6 py-5 font-bold text-sm">
-                            <option value="">-- No Driver Assigned Yet --</option>
-                            @foreach ($drivers ?? [] as $driver)
-                                <option value="{{ $driver->id }}"
-                                    {{ old('driver_id') == $driver->id ? 'selected' : '' }}>
-                                    {{ $driver->name }} (ID: {{ $driver->id }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div> --}}
                 </div>
-
-                {{-- 🌟 Status Matrix
-                <div class="pt-8 mt-8 border-t border-slate-800">
-                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-2">Initial
-                        Status Matrix</label>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="relative">
-                            <input type="radio" name="status" id="status_available" value="available"
-                                class="status-radio sr-only"
-                                {{ old('status', 'available') === 'available' ? 'checked' : '' }}>
-                            <label for="status_available"
-                                class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-emerald-500/50 group shadow-inner">
-                                <span
-                                    class="w-3 h-3 rounded-full bg-emerald-500 mb-3 shadow-[0_0_10px_#10b981] group-hover:scale-125 transition-transform"></span>
-                                <span
-                                    class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Available</span>
-                            </label>
-                        </div>
-                        <div class="relative">
-                            <input type="radio" name="status" id="status_maintenance" value="maintenance"
-                                class="status-radio sr-only" {{ old('status') === 'maintenance' ? 'checked' : '' }}>
-                            <label for="status_maintenance"
-                                class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-amber-500/50 group shadow-inner">
-                                <span
-                                    class="w-3 h-3 rounded-full bg-amber-500 mb-3 shadow-[0_0_10px_#f59e0b] group-hover:scale-125 transition-transform"></span>
-                                <span
-                                    class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Maintenance</span>
-                            </label>
-                        </div>
-                        <div class="relative">
-                            <input type="radio" name="status" id="status_booked" value="booked"
-                                class="status-radio sr-only" {{ old('status') === 'booked' ? 'checked' : '' }}>
-                            <label for="status_booked"
-                                class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-blue-500/50 group shadow-inner">
-                                <span
-                                    class="w-3 h-3 rounded-full bg-blue-500 mb-3 shadow-[0_0_10px_#3b82f6] group-hover:scale-125 transition-transform"></span>
-                                <span
-                                    class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Booked</span>
-                            </label>
-                        </div>
-                    </div>
-                </div> --}}
 
                 {{-- Security Protocol --}}
                 <div
@@ -455,7 +355,7 @@
                     </a>
                     <button type="submit"
                         class="w-full md:w-auto py-5 px-12 bg-gradient-to-r from-cyan-600 to-blue-500 hover:to-blue-400 text-slate-950 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(6,182,212,0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 border border-cyan-400/50">
-                        Initialize 
+                        Initialize
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7">
                             </path>

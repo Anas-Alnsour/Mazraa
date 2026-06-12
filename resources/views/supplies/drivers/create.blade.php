@@ -237,8 +237,6 @@
                                         Shift (08:00 AM - 05:00 PM)</option>
                                     <option value="evening" {{ old('shift') == 'evening' ? 'selected' : '' }}>🌙 Evening
                                         Shift (07:00 PM - 06:00 AM)</option>
-                                    {{-- <option value="full_day" {{ old('shift') == 'full_day' ? 'selected' : '' }}>🕒 Full Day
-                                        Availability</option> --}}
                                 </select>
                             </div>
                         </div>
@@ -274,7 +272,7 @@
                         </div>
 
                         {{-- License Plate --}}
-                        <div class="space-y-2">
+                        <div class="md:col-span-2 space-y-2">
                             <label
                                 class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">License
                                 Plate Number <span class="text-cyan-500">*</span></label>
@@ -283,72 +281,14 @@
                                 class="rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
                         </div>
 
-                        {{-- Capacity --}}
-                        <div class="space-y-2">
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
-                                Passenger Capacity <span class="text-cyan-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input type="number" name="capacity" id="capacity" min="1"
-                                    value="{{ old('capacity') }}" required placeholder="e.g. 12"
-                                    class="rounded-2xl w-full bg-slate-800/50 border border-slate-700 text-white placeholder:text-slate-500 transport-input px-6 py-5 font-black uppercase font-mono tracking-widest text-sm placeholder:normal-case focus:border-cyan-500 focus:outline-none transition-all">
-                                <div
-                                    class="absolute inset-y-0 right-0 flex items-center pr-12 pointer-events-none text-slate-500 font-black text-[10px] uppercase tracking-widest">
-                                    PAX
-                                </div>
-                            </div>
-                        </div>
+                        {{-- ❌ تم حذف إدخال Capacity من هنا --}}
+
                     </div>
-
-                    {{-- 🌟 Status Matrix
-                    <div class="pt-8 mt-8 border-t border-slate-800">
-                        <label
-                            class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-2">Initial
-                            Status Matrix</label>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="relative">
-                                <input type="radio" name="status" id="status_available" value="available"
-                                    class="status-radio sr-only"
-                                    {{ old('status', 'available') === 'available' ? 'checked' : '' }}>
-                                <label for="status_available"
-                                    class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-emerald-500/50 group shadow-inner">
-                                    <span
-                                        class="w-3 h-3 rounded-full bg-emerald-500 mb-3 shadow-[0_0_10px_#10b981] group-hover:scale-125 transition-transform"></span>
-                                    <span
-                                        class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Available</span>
-                                </label>
-                            </div>
-                            <div class="relative">
-                                <input type="radio" name="status" id="status_maintenance" value="maintenance"
-                                    class="status-radio sr-only" {{ old('status') === 'maintenance' ? 'checked' : '' }}>
-                                <label for="status_maintenance"
-                                    class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-amber-500/50 group shadow-inner">
-                                    <span
-                                        class="w-3 h-3 rounded-full bg-amber-500 mb-3 shadow-[0_0_10px_#f59e0b] group-hover:scale-125 transition-transform"></span>
-                                    <span
-                                        class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Maintenance</span>
-                                </label>
-                            </div>
-                            <div class="relative">
-                                <input type="radio" name="status" id="status_booked" value="booked"
-                                    class="status-radio sr-only" {{ old('status') === 'booked' ? 'checked' : '' }}>
-                                <label for="status_booked"
-                                    class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-[1.5rem] cursor-pointer transition-all hover:border-blue-500/50 group shadow-inner">
-                                    <span
-                                        class="w-3 h-3 rounded-full bg-blue-500 mb-3 shadow-[0_0_10px_#3b82f6] group-hover:scale-125 transition-transform"></span>
-                                    <span
-                                        class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Booked</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div> --}}
-
-
 
                     {{-- Security Protocol --}}
                     <div class="mt-8 p-6 md:p-8 bg-slate-950/50 rounded-[2rem] border border-slate-800 shadow-inner">
 
-                        {{-- Header Tag (صاير فوق الحقول تماماً وما بيخرب الـ Grid) --}}
+                        {{-- Header Tag --}}
                         <div
                             class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#020617] border border-slate-800 text-[9px] font-black text-rose-400 uppercase tracking-widest mb-6">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -382,7 +322,7 @@
                                 </div>
                             </div>
 
-                            {{-- الحقل الثاني (تم حذف mt-4 لضمان التساوي) --}}
+                            {{-- الحقل الثاني --}}
                             <div class="space-y-2">
                                 <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">
                                     Verify Password <span class="text-rose-500">*</span>

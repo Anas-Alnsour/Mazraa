@@ -35,12 +35,12 @@ class TransportVehicleController extends Controller
     public function store(Request $request)
     {
         $company = Auth::user();
-        
+
         $validated = $request->validate([
             // بيانات السائق
             'name'        => 'required|string|max:255',
-            'email'       => 'required|string|email|max:255|unique:users',
-            'phone'       => 'required|string|max:20',
+            'email'       => 'required|string|email|max:255|unique:users,email',
+            'phone'       => 'required|string|max:20|unique:users,phone', // تم التعديل: التحقق من التكرار
             'governorate' => 'required|string|max:255',
             'shift'       => 'required|string|in:morning,evening',
             'password'    => 'required|string|min:8|confirmed',
@@ -48,7 +48,7 @@ class TransportVehicleController extends Controller
             // بيانات المركبة
             'license_plate' => 'required|string|max:255|unique:vehicles',
             'type'          => 'required|string|max:255',
-            'capacity'      => 'required|integer|min:1',
+            // 'capacity'      => 'required|integer|min:1', // تم التعليق: إزالة الإلزام بالسعة
             // 'status'        => 'required|string|in:available,maintenance,booked',
 
             // ربط السائق بالمركبة
@@ -77,7 +77,7 @@ class TransportVehicleController extends Controller
         $vehicle = Vehicle::create([
             'license_plate' => $request->license_plate,
             'type' => $request->type,
-            'capacity' => $request->capacity,
+            'capacity' => 0, // تم التعديل: إسناد قيمة 0 افتراضياً
             'status' => 'Available',
             'driver_id' => $driver->id, // ربط المركبة بالسائق
             'company_id'           => Auth::id(),
@@ -114,7 +114,7 @@ class TransportVehicleController extends Controller
         $validated = $request->validate([
             'type' => 'required|string|max:255',
             'license_plate' => ['required', 'string', 'max:255', Rule::unique('vehicles')->ignore($vehicle->id)],
-            'capacity' => 'required|integer|min:1',
+            // 'capacity' => 'required|integer|min:1', // تم التعليق: إزالة التحقق من السعة عند التعديل
             'status' => 'required|string|in:available,maintenance,in_use',
             'driver_id' => 'nullable|exists:users,id',
         ]);

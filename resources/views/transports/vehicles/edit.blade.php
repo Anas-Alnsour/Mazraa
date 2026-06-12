@@ -103,33 +103,12 @@
                     </select>
                 </div>
 
-                {{-- License Plate --}}
-                <div class="space-y-2">
+                {{-- License Plate (تم تعديل العرض ليأخذ كل المساحة بدلاً من المساحة بجانب Capacity المزال) --}}
+                <div class="md:col-span-2 space-y-2">
                     <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">License Plate Number <span class="text-cyan-500">*</span></label>
                     <input type="text" name="license_plate" id="license_plate" value="{{ old('license_plate', $vehicle->license_plate) }}" required class="w-full transport-input px-5 py-4 font-black uppercase font-mono tracking-widest text-sm">
                 </div>
 
-                {{-- Capacity --}}
-                <div class="space-y-2">
-                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Passenger Capacity <span class="text-cyan-500">*</span></label>
-                    <div class="relative">
-                        <input type="number" name="capacity" id="capacity" min="1" value="{{ old('capacity', $vehicle->capacity) }}" required class="w-full transport-input pl-5 pr-14 py-4 font-bold text-sm">
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-slate-500 font-black text-[10px] uppercase tracking-widest">PAX</div>
-                    </div>
-                </div>
-
-                {{-- Driver Assignment --}}
-                <div class="md:col-span-2 pt-6 border-t border-slate-800 space-y-2">
-                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2 flex items-center gap-2">Assign Driver (Optional)</label>
-                    <select name="driver_id" id="driver_id" class="w-full dark-select px-5 py-4 font-bold text-sm">
-                        <option value="">-- No Driver Assigned --</option>
-                        @foreach($drivers ?? [] as $drv)
-                            <option value="{{ $drv->id }}" {{ old('driver_id', $vehicle->driver_id) == $drv->id ? 'selected' : '' }}>
-                                {{ $drv->name }} (ID: {{ $drv->id }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
             </div>
 
             {{-- 🌟 Status Matrix --}}
