@@ -57,7 +57,7 @@
     <div class="bg-slate-900/60 rounded-[3rem] border border-slate-800 overflow-hidden backdrop-blur-2xl shadow-2xl fade-in-up" style="animation-delay: 0.2s;">
         <div class="p-8 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
             <h2 class="text-sm font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Master Items List
             </h2>
         </div>
@@ -69,7 +69,7 @@
                     <div class="w-full h-40 bg-slate-900 rounded-xl mb-4 overflow-hidden border border-slate-800 relative z-10">
                         @php
                             // 💡 الحل الذكي والنهائي لصور المنتجات في اللارافل
-                            $imgUrl = asset('images/default-product.png'); // صورة بديلة
+                            $imgUrl = asset('images/default-product.png'); // صورة بديلة في حال عدم وجود صورة
 
                             if (!empty($item->image)) {
                                 // إذا كان الرابط يبدأ بـ http (رابط خارجي من الـ Seeder)

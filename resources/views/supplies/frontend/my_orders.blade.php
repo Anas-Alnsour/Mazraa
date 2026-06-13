@@ -21,26 +21,26 @@
     </style>
 
     <div class="bg-gray-50 min-h-[70vh] py-12 fade-in-up" x-data="{
-    reviewModalOpen: false,
-    reviewableId: null,
-    reviewableType: 'supply',
-    rating: 0,
-    hoverRating: 0,
-    comment: '',
-    itemName: '',
-    openReviewModal(id, name) {
-        if (!id) return;
-        this.reviewableId = id;
-        this.itemName = name;
-        this.rating = 0;
-        this.hoverRating = 0;
-        this.comment = '';
-        this.reviewModalOpen = true;
-    },
-    closeReviewModal() {
-        this.reviewModalOpen = false;
-    }
-}">
+        reviewModalOpen: false,
+        reviewableId: null,
+        reviewableType: 'supply',
+        rating: 0,
+        hoverRating: 0,
+        comment: '',
+        itemName: '',
+        openReviewModal(id, name) {
+            if (!id) return;
+            this.reviewableId = id;
+            this.itemName = name;
+            this.rating = 0;
+            this.hoverRating = 0;
+            this.comment = '';
+            this.reviewModalOpen = true;
+        },
+        closeReviewModal() {
+            this.reviewModalOpen = false;
+        }
+    }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {{-- 🌟 Flash Messages --}}
@@ -180,7 +180,20 @@
                                             <div class="flex items-center gap-6">
                                                 <div class="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 shadow-sm relative group">
                                                     @if($item->supply && $item->supply->image)
-                                                        <img src="{{ asset('storage/supplies/' . $item->supply->image) }}" class="h-full w-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                                                        @php
+                                                            // 💡 الحل الذكي والنهائي لصور المنتجات في اللارافل
+                                                            $imgUrl = asset('images/default-product.png');
+                                                            if (!empty($item->supply->image)) {
+                                                                if (filter_var($item->supply->image, FILTER_VALIDATE_URL) || Str::startsWith($item->supply->image, ['http://', 'https://'])) {
+                                                                    $imgUrl = $item->supply->image;
+                                                                } else if (!Str::contains($item->supply->image, '/')) {
+                                                                    $imgUrl = asset('storage/supplies/' . $item->supply->image);
+                                                                } else {
+                                                                    $imgUrl = asset('storage/' . ltrim($item->supply->image, '/'));
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        <img src="{{ $imgUrl }}" class="h-full w-full object-cover transform group-hover:scale-110 transition-transform duration-500">
                                                     @else
                                                         <div class="h-full w-full flex items-center justify-center text-gray-300">
                                                             <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
