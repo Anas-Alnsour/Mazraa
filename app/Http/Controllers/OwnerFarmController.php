@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Farm;
 use App\Models\FarmImage;
+use App\Models\FarmBooking;
 use App\Http\Requests\StoreFarmRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -25,7 +26,7 @@ class OwnerFarmController extends Controller
         }
 
         $farms = Farm::where('owner_id', $user->id)
-            ->with('images')
+            ->with('images') // 👈 جيدة لأنك تستخدم Paginate
             ->latest()
             ->paginate(10);
 
@@ -60,10 +61,8 @@ class OwnerFarmController extends Controller
             'governorate'               => $validated['governorate'],
             'location'                  => $validated['location'],
             'location_link'             => $validated['location_link'] ?? null,
-            // --- الإضافة هنا ---
-            'latitude'                => $validated['latitude'] ?? $request->latitude,
-            'longitude'               => $validated['longitude'] ?? $request->longitude,
-            // ------------------
+            'latitude'                  => $validated['latitude'] ?? $request->latitude,
+            'longitude'                 => $validated['longitude'] ?? $request->longitude,
             'capacity'                  => $validated['capacity'],
             'price_per_morning_shift'   => $validated['price_per_morning_shift'],
             'price_per_evening_shift'   => $validated['price_per_evening_shift'],
@@ -138,29 +137,42 @@ class OwnerFarmController extends Controller
             }
             $validated['main_image'] = $request->file('main_image')->store('farms/covers', 'public');
         }
-        $dataToUpdate = collect($validated)->except(['delete_images','gallery'])->toArray();
-        // إضافة الإحداثيات للمصفوفة إذا لم تكن موجودة في $validated
-        $dataToUpdate['latitude'] = $request->latitude;
-        $dataToUpdate['longitude'] = $request->longitude;
-        $farm->update($dataToUpdate);
 
-        // 2. حذف الصور المختارة من المعرض
-        if ($request->has('delete_images')) {
-            $imagesToDelete = FarmImage::whereIn('id', $request->delete_images)->where('farm_id', $farm->id)->get();
-            foreach ($imagesToDelete as $img) {
-                Storage::disk('public')->delete($img->image_url);
-                $img->delete();
-            }
+        $dataToUpdate = collect($validated)->except(['delete_images','gallery'])->toArray();
+        // ضمان تخزين الإحداثيات إذا تم إرسالها من الخريطة
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $dataToUpdate['latitude'] = $request->latitude;
+            $dataToUpdate['longitude'] = $request->longitude;
         }
 
-        // 3. إضافة صور جديدة للمعرض
+        $farm->update($dataToUpdate);
+
+        // 🚀 2. تفكيك قنبلة الـ N+1 Deletes (حذف جماعي للصور من التخزين والداتابيس)
+        if ($request->has('delete_images')) {
+            $imagesToDelete = FarmImage::whereIn('id', $request->delete_images)->where('farm_id', $farm->id)->get();
+            $paths = $imagesToDelete->pluck('image_url')->toArray();
+
+            if (!empty($paths)) {
+                Storage::disk('public')->delete($paths); // حذف الملفات دفعة واحدة
+            }
+
+            FarmImage::whereIn('id', $request->delete_images)->where('farm_id', $farm->id)->delete(); // استعلام حذف واحد
+        }
+
+        // 🚀 3. تفكيك قنبلة الـ N+1 Inserts (إضافة جماعية للصور الجديدة)
         if ($request->hasFile('gallery')) {
+            $newImages = [];
             foreach ($request->file('gallery') as $file) {
                 $path = $file->store('farms/gallery', 'public');
-                FarmImage::create([
-                    'farm_id'   => $farm->id,
-                    'image_url' => $path
-                ]);
+                $newImages[] = [
+                    'farm_id'    => $farm->id,
+                    'image_url'  => $path,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            if (!empty($newImages)) {
+                FarmImage::insert($newImages); // استعلام إضافة واحد
             }
         }
 
@@ -176,17 +188,36 @@ class OwnerFarmController extends Controller
             abort(403);
         }
 
-        // حذف الصور من التخزين قبل حذف السجل
-        if ($farm->main_image) {
-            Storage::disk('public')->delete($farm->main_image);
+        // =========================================================
+        // 🚀 4. تفكيك قنبلة التدمير العشوائي: منع حذف مزرعة لها حجوزات نشطة
+        // =========================================================
+        $hasActiveBookings = FarmBooking::where('farm_id', $farm->id)
+            ->whereIn('status', ['pending', 'pending_payment', 'confirmed'])
+            ->exists();
+
+        if ($hasActiveBookings) {
+            return redirect()->route('owner.farms.index')
+                ->with('error', 'Cannot delete this farm because it has active or pending bookings. Please resolve them first.');
         }
-        foreach ($farm->images as $img) {
-            Storage::disk('public')->delete($img->image_url);
+        // =========================================================
+
+        // 🚀 5. تسريع الحذف (Bulk Storage Deletion)
+        $pathsToDelete = [];
+        if ($farm->main_image) {
+            $pathsToDelete[] = $farm->main_image;
+        }
+
+        if ($farm->images->isNotEmpty()) {
+            $pathsToDelete = array_merge($pathsToDelete, $farm->images->pluck('image_url')->toArray());
+        }
+
+        if (!empty($pathsToDelete)) {
+            Storage::disk('public')->delete($pathsToDelete);
         }
 
         $farm->delete();
 
         return redirect()->route('owner.farms.index')
-            ->with('success', 'Farm and all its data have been deleted.');
+            ->with('success', 'Farm and all its related images have been deleted successfully.');
     }
 }

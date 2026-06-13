@@ -29,7 +29,7 @@ class FarmController extends Controller
             $query->where('governorate', $request->governorate);
         }
 
-        // فلترة حسب السعر لجميع أوقات الحجز (صباحي، مسائي، يوم كامل)
+        // فلترة حسب السعر لجميع أوقات الحجز
         if ($request->filled('min_price') || $request->filled('max_price')) {
             $min = $request->min_price ?? 0;
             $max = $request->max_price ?? 999999;
@@ -40,8 +40,13 @@ class FarmController extends Controller
             });
         }
 
-        // 👈 تم التعديل هنا: إضافة 'reviews.user' بدلاً من 'reviews' لحل مشكلة Lazy Loading
-        $farms = $query->with(['images', 'owner', 'reviews.user'])->latest()->paginate(12)->appends(request()->query());
+        // 🚀 تفكيك قنبلة الـ RAM: إزالة 'reviews.user' لمنع جلب آلاف التقييمات في صفحة التصفح!
+        // نكتفي بجلب المالك والصور، مع سحب عدد التقييمات فقط من الداتابيس إذا أردت عرضها
+        $farms = $query->with(['images', 'owner'])
+            ->withCount('reviews') // 👈 تجلب رقم يمثل عدد التقييمات بدون سحب البيانات للرام
+            ->latest()
+            ->paginate(12)
+            ->appends($request->all());
 
         return view('public_farms.explore', compact('farms'));
     }
@@ -51,13 +56,17 @@ class FarmController extends Controller
      */
     public function show($id)
     {
-        // 1. 👈 تم التعديل هنا: إضافة 'reviews.user' لجلب التقييمات وأصحابها بـ Query واحد
-        $farm = Farm::with(['images', 'owner', 'reviews.user'])->findOrFail($id);
+        // 🚀 تفكيك قنبلة التفاصيل: جلب بيانات المزرعة الأساسية فقط
+        $farm = Farm::with(['images', 'owner'])->findOrFail($id);
 
-        // 2. جلب لوازم الرحلات (Supplies)
-        $supplies = \App\Models\Supply::all();
+        // 🚀 حماية صفحة العرض: جلب التقييمات بشكل منفصل ومقسم لمنع انهيار الصفحة
+        $reviews = $farm->reviews()->with('user')->latest()->paginate(5, ['*'], 'reviews_page');
 
-        return view('public_farms.show', compact('farm', 'supplies'));
+        // 🚀 تفكيك قنبلة Supply::all() التي تسحب كل الداتابيس للرام
+        $supplies = Supply::limit(50)->get();
+
+        // تمرير المتغيرات للـ view (تأكد من تعديل الـ view لتستقبل $reviews كمتغير منفصل للـ pagination)
+        return view('public_farms.show', compact('farm', 'supplies', 'reviews'));
     }
 
     /**
@@ -104,12 +113,23 @@ class FarmController extends Controller
         $farm = Farm::create($validated);
 
         if ($request->hasFile('gallery')) {
+            $imagesData = [];
+            $now = now();
+
             foreach ($request->file('gallery') as $file) {
                 $galleryPath = $file->store('farms/gallery', 'public');
-                FarmImage::create([
-                    'farm_id' => $farm->id,
-                    'image_url' => $galleryPath
-                ]);
+                // تجهيز المصفوفة
+                $imagesData[] = [
+                    'farm_id'    => $farm->id,
+                    'image_url'  => $galleryPath,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            // 🚀 تفكيك قنبلة الـ N+1 Inserts: حقن كل الصور في قاعدة البيانات باستعلام واحد فقط!
+            if (!empty($imagesData)) {
+                FarmImage::insert($imagesData);
             }
         }
 
@@ -126,14 +146,22 @@ class FarmController extends Controller
             abort(403);
         }
 
+        // 🚀 تسريع عملية الحذف: تجهيز مسارات كل الصور لحذفها دفعة واحدة من الـ Storage
+        $pathsToDelete = [];
+
         if ($farm->main_image) {
-            Storage::disk('public')->delete($farm->main_image);
+            $pathsToDelete[] = $farm->main_image;
         }
 
-        foreach ($farm->images as $img) {
-            Storage::disk('public')->delete($img->image_url);
+        if ($farm->images->isNotEmpty()) {
+            $pathsToDelete = array_merge($pathsToDelete, $farm->images->pluck('image_url')->toArray());
         }
 
+        if (!empty($pathsToDelete)) {
+            Storage::disk('public')->delete($pathsToDelete); // حذف كل الصور بأمر واحد
+        }
+
+        // حذف المزرعة (الصور المرتبطة في الداتابيس ستُحذف تلقائياً إذا كان هناك Cascade Delete)
         $farm->delete();
 
         return redirect()->route('owner.farms.index')

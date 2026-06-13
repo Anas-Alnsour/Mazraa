@@ -20,6 +20,9 @@ class TransportDispatchAction
         $originGov = $transport->destination_governorate;
         $now = Carbon::now();
 
+        // 🚀 حماية من الـ N+1 أثناء جلب نوع الحجز
+        $transport->loadMissing('farmBooking.farm');
+
         // 1. تحديد الشفت للذهاب والعودة بناءً على نوع حجز المزرعة
         $bookingShift = $transport->farmBooking->event_type ?? 'full_day';
 
@@ -88,20 +91,25 @@ class TransportDispatchAction
      */
     private static function findBestDriver($originGov, $passengers, $shift, $now)
     {
+        // 🚀 تفكيك قنبلة الـ Index Killer
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth = $now->copy()->endOfMonth();
+
         return User::role('transport_driver')
             ->where('governorate', $originGov)
             ->where('shift', $shift)
             ->whereNotNull('transport_vehicle_id')
-            ->withCount(['transportDriverJobs' => function($query) use ($now) {
-                $query->whereMonth('created_at', $now->month)
-                      ->whereYear('created_at', $now->year);
+            ->with('transportVehicle') // 🚀 تفكيك N+1 لاحقاً في الـ update
+            ->withCount(['transportDriverJobs' => function($query) use ($startOfMonth, $endOfMonth) {
+                // 🚀 استخدام whereBetween لتمكين الـ Indexing
+                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
             }])
             ->whereHas('transportVehicle', function($query) use ($passengers) {
                 // فلترة السعة: سعة المركبة يجب أن تكون أكبر أو تساوي الركاب
                 $query->where('capacity', '>=', $passengers);
             })
             ->orderBy('transport_driver_jobs_count', 'asc') // للعدالة في توزيع الطلبات
-            ->orderBy('id', 'asc')
+            ->inRandomOrder() // 🚀 تفكيك قنبلة التزامن (Race Condition) عند التعادل
             ->first();
     }
 }

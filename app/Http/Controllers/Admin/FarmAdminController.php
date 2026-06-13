@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Farm;
+use App\Models\FarmImage;
+use App\Models\FarmBooking;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -12,7 +14,7 @@ class FarmAdminController extends Controller
 {
     public function index()
     {
-        // 🚀 Optimizing with Eager Loading (Pillar 4)
+        // 🚀 Optimizing with Eager Loading
         $farms = Farm::with('owner')->latest()->paginate(10);
         return view('admin.farms.index', compact('farms'));
     }
@@ -31,7 +33,6 @@ class FarmAdminController extends Controller
             'location_link'             => 'nullable|url',
             'latitude'                  => 'required|numeric',
             'longitude'                 => 'required|numeric',
-           // 'price_per_night'           => 'required|numeric|min:0',
             'price_per_morning_shift'   => 'required|numeric|min:0',
             'price_per_evening_shift'   => 'required|numeric|min:0',
             'price_per_full_day'        => 'required|numeric|min:0',
@@ -58,11 +59,20 @@ class FarmAdminController extends Controller
 
         $farm = Farm::create($farmData);
 
-        // Handle Gallery
+        // 🚀 Bulk Insert for Gallery Images
         if ($request->hasFile('images')) {
+            $galleryImages = [];
             foreach ($request->file('images') as $img) {
                 $path = $img->store('farms/gallery', 'public');
-                $farm->images()->create(['image_url' => $path]);
+                $galleryImages[] = [
+                    'farm_id'    => $farm->id,
+                    'image_url'  => $path,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            if (!empty($galleryImages)) {
+                FarmImage::insert($galleryImages);
             }
         }
 
@@ -88,7 +98,6 @@ class FarmAdminController extends Controller
             'location_link'             => 'nullable|url',
             'latitude'                  => 'required|numeric',
             'longitude'                 => 'required|numeric',
-            // 'price_per_night'           => 'required|numeric|min:0',
             'price_per_morning_shift'   => 'required|numeric|min:0',
             'price_per_evening_shift'   => 'required|numeric|min:0',
             'price_per_full_day'        => 'required|numeric|min:0',
@@ -115,21 +124,33 @@ class FarmAdminController extends Controller
 
         $farm->update($data);
 
-        // Handle Gallery removal
+        // 🚀 Bulk Delete for Gallery Images
         $removeIds = $request->input('remove_gallery_images', []);
         if (!empty($removeIds)) {
-            $imagesToDelete = $farm->images()->whereIn('id', $removeIds)->get();
-            foreach ($imagesToDelete as $image) {
-                Storage::disk('public')->delete($image->image_url);
-                $image->delete();
+            $imagesToDelete = FarmImage::whereIn('id', $removeIds)->where('farm_id', $farm->id)->get();
+            $paths = $imagesToDelete->pluck('image_url')->toArray();
+
+            if (!empty($paths)) {
+                Storage::disk('public')->delete($paths);
             }
+
+            FarmImage::whereIn('id', $removeIds)->where('farm_id', $farm->id)->delete();
         }
 
-        // Handle new Gallery images
+        // 🚀 Bulk Insert for new Gallery images
         if ($request->hasFile('images')) {
+            $newImages = [];
             foreach ($request->file('images') as $imgFile) {
                 $path = $imgFile->store('farms/gallery', 'public');
-                $farm->images()->create(['image_url' => $path]);
+                $newImages[] = [
+                    'farm_id'    => $farm->id,
+                    'image_url'  => $path,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+            }
+            if (!empty($newImages)) {
+                FarmImage::insert($newImages);
             }
         }
 
@@ -138,20 +159,33 @@ class FarmAdminController extends Controller
 
     public function destroy(Farm $farm)
     {
-        // حذف الصورة الرئيسية
+        // 🚀 منع الحذف العشوائي (Protect Active Bookings)
+        $hasActiveBookings = FarmBooking::where('farm_id', $farm->id)
+            ->whereIn('status', ['pending', 'pending_payment', 'confirmed'])
+            ->exists();
+
+        if ($hasActiveBookings) {
+            return redirect()->route('admin.farms.index')
+                ->with('error', 'Cannot delete this farm because it has active or pending bookings. Please resolve them first.');
+        }
+
+        // 🚀 تسريع الحذف والتخلص من Storage Exhaustion
+        $pathsToDelete = [];
         if ($farm->main_image) {
-            Storage::disk('public')->delete($farm->main_image);
+            $pathsToDelete[] = $farm->main_image;
         }
 
-        // حذف صور المعرض
-        foreach ($farm->images as $image) {
-            Storage::disk('public')->delete($image->image_url);
-            $image->delete();
+        if ($farm->images->isNotEmpty()) {
+            $pathsToDelete = array_merge($pathsToDelete, $farm->images->pluck('image_url')->toArray());
         }
 
-        // حذف السجل
+        if (!empty($pathsToDelete)) {
+            Storage::disk('public')->delete($pathsToDelete);
+        }
+
+        // الحذف الفعلي للكيان
         $farm->delete();
 
-        return redirect()->route('admin.farms.index')->with('success', 'Farm deleted successfully.');
+        return redirect()->route('admin.farms.index')->with('success', 'Farm and all related media deleted successfully.');
     }
 }

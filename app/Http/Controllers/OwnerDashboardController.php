@@ -33,40 +33,40 @@ class OwnerDashboardController extends Controller
         // عدد الحجوزات النشطة الحالية (مؤكدة أو معلقة)
         $activeBookingsCount = FarmBooking::whereIn('farm_id', $farmIds)
             ->whereIn('status', ['confirmed', 'pending'])
-            ->count();
+            ->count(); // ✅ Count on Query Builder
 
         // عدد الحجوزات بانتظار الموافقة
         $pendingApprovalCount = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'pending')
-            ->count();
+            ->count(); // ✅ Count on Query Builder
 
-        // حسابات مالية دقيقة مبنية على الحجوزات المؤكدة الحالية فقط
-        $confirmedBookings = FarmBooking::whereIn('farm_id', $farmIds)
+        // 🚀 إصلاح الكارثة: حساب الأرصدة عبر MySQL مباشرة باستعلام واحد لجميع المجاميع
+        $financialTotals = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'confirmed')
-            ->get();
-
-        $grossRevenue = $confirmedBookings->sum('total_price');
-        $platformCommission = $confirmedBookings->sum('commission_amount');
-        $taxes = $confirmedBookings->sum('tax_amount');
-        $netProfit = $confirmedBookings->sum('net_owner_amount');
+            ->select(
+                DB::raw('COALESCE(SUM(total_price), 0) as gross'),
+                DB::raw('COALESCE(SUM(commission_amount), 0) as commission'),
+                DB::raw('COALESCE(SUM(tax_amount), 0) as taxes'),
+                DB::raw('COALESCE(SUM(net_owner_amount), 0) as net')
+            )->first();
 
         $financials = [
-            'gross' => $grossRevenue,
-            'commission' => $platformCommission,
-            'taxes' => $taxes,
-            'net' => $netProfit
+            'gross' => $financialTotals->gross,
+            'commission' => $financialTotals->commission,
+            'taxes' => $financialTotals->taxes,
+            'net' => $financialTotals->net
         ];
 
-        // 💰 ✅ التعديل الجديد: حساب إجمالي الأرباح مدى الحياة (Lifetime Earnings)
-        // تجمع الحجوزات المكتملة والمدفوعة بنجاح فقط عبر كل مزارع هذا المالك
+        // 💰 التعديل الجديد: حساب إجمالي الأرباح مدى الحياة (Lifetime Earnings) - يعمل على الداتابيس مباشرة
         $totalEarnings = FarmBooking::whereIn('farm_id', $farmIds)
             ->where('status', 'completed')
             ->where('payment_status', 'paid')
-            ->sum('net_owner_amount');
+            ->sum('net_owner_amount'); // ✅ Sum on Query Builder
 
-        // جلب الحجوزات للتقويم التفاعلي
+        // 🚀 حماية المتصفح: جلب الحجوزات لآخر 3 أشهر والمستقبل فقط للتقويم لمنع انهيار الـ DOM
         $allBookings = FarmBooking::with(['user', 'farm'])
             ->whereIn('farm_id', $farmIds)
+            ->where('start_time', '>=', now()->subMonths(3))
             ->get();
 
         $calendarEvents = $allBookings->map(function ($booking) {
@@ -93,7 +93,7 @@ class OwnerDashboardController extends Controller
             ];
         });
 
-        // جلب الأوقات المحجوبة للتقويم
+        // جلب الأوقات المحجوبة للتقويم (يفضل مستقبلاً حصرها بتواريخ معينة إذا كثرت جداً)
         $blockedDates = FarmBlockedDate::whereIn('farm_id', $farmIds)->with('farm')->get();
 
         $blockedEvents = $blockedDates->map(function ($blocked) {
@@ -131,13 +131,12 @@ class OwnerDashboardController extends Controller
 
         $calendarEvents = $calendarEvents->concat($blockedEvents);
 
-        // إرسال البيانات الكلية بما فيها المتغير الجديد إلى الصفحة
         return view('owner.dashboard', compact(
             'totalFarms',
             'activeBookingsCount',
             'pendingApprovalCount',
             'financials',
-            'totalEarnings', // ✅ تمت إضافته بنجاح هنا
+            'totalEarnings',
             'calendarEvents',
             'farms'
         ));
@@ -205,7 +204,7 @@ class OwnerDashboardController extends Controller
 
         $farmIds = Farm::where('owner_id', $user->id)->pluck('id');
 
-        $query = FarmBooking::with(['farm', 'user'])
+        $query = FarmBooking::with(['farm', 'user']) // ✅ حماية N+1 ممتازة
             ->whereIn('farm_id', $farmIds);
 
         // Filter by Status (Optional, useful for UI Tabs)
@@ -225,8 +224,6 @@ class OwnerDashboardController extends Controller
      */
     public function show($id)
     {
-        // Removed undefined 'payments' and 'reviews' relationships
-        // Added 'farm.images' for optimized eager loading
         $booking = FarmBooking::with(['farm.images', 'user'])->findOrFail($id);
 
         if ($booking->farm->owner_id !== Auth::id()) {
@@ -291,13 +288,12 @@ class OwnerDashboardController extends Controller
         // Available Balance for payout
         $availableBalance = round($lifetimeEarnings - $totalPayouts, 2);
 
-        // Calculate pending revenue (future/pending bookings that haven't cleared)
+        // 🚀 إصلاح: حساب الأرباح المعلقة عبر استعلام واحد مباشر بدون تحميلها للـ RAM
         $farmIds = Farm::where('owner_id', $userId)->pluck('id');
         $pendingRevenue = FarmBooking::whereIn('farm_id', $farmIds)
             ->whereIn('status', ['confirmed', 'pending'])
             ->where('end_time', '>=', now())
-            ->get()
-            ->sum('net_owner_amount');
+            ->sum('net_owner_amount'); // ✅ Sum on Query Builder directly
 
         // Recent Transactions History with Filters
         $query = \App\Models\FinancialTransaction::where('user_id', $userId);
@@ -331,10 +327,6 @@ class OwnerDashboardController extends Controller
     public function exportCsv()
     {
         $userId = Auth::id();
-        $transactions = \App\Models\FinancialTransaction::where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
         $filename = "financial_report_" . date('Y-m-d') . ".csv";
 
         $headers = [
@@ -345,24 +337,29 @@ class OwnerDashboardController extends Controller
             "Expires"             => "0"
         ];
 
-        $callback = function () use ($transactions) {
+        // 🚀 إصلاح كارثة الـ CSV: استخدام Chunk لمعالجة آلاف السجلات على دفعات بدون انهيار الرام
+        $callback = function () use ($userId) {
             $file = fopen('php://output', 'w');
 
-            // Add UTF-8 BOM for Excel compatibility (optional but helpful for Arabic text)
-            // fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            // Add UTF-8 BOM for Excel compatibility (Arabic text support)
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($file, ['Date', 'Description', 'Reference Type', 'Reference ID', 'Amount (JOD)', 'Type']);
 
-            foreach ($transactions as $tx) {
-                fputcsv($file, [
-                    $tx->created_at->format('Y-m-d H:i'),
-                    $tx->description,
-                    ucwords(str_replace('_', ' ', $tx->reference_type)),
-                    $tx->reference_id,
-                    number_format($tx->amount, 2),
-                    strtoupper($tx->transaction_type)
-                ]);
-            }
+            \App\Models\FinancialTransaction::where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->chunk(1000, function ($transactions) use ($file) {
+                    foreach ($transactions as $tx) {
+                        fputcsv($file, [
+                            $tx->created_at->format('Y-m-d H:i'),
+                            $tx->description,
+                            ucwords(str_replace('_', ' ', $tx->reference_type)),
+                            $tx->reference_id,
+                            number_format($tx->amount, 2),
+                            strtoupper($tx->transaction_type)
+                        ]);
+                    }
+                });
 
             fclose($file);
         };
@@ -396,7 +393,7 @@ class OwnerDashboardController extends Controller
             return back()->with('success', 'Booking finalized.');
         }
 
-        \Illuminate\Support\Facades\DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $adminId = User::where('role', 'admin')->value('id');
 
@@ -422,10 +419,10 @@ class OwnerDashboardController extends Controller
 
             $booking->update(['status' => 'completed']);
 
-            \Illuminate\Support\Facades\DB::commit();
+            DB::commit();
             return back()->with('success', 'Booking completed and funds cleared to your balance!');
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
+            DB::rollBack();
             return back()->with('error', 'Failed to finalize booking: ' . $e->getMessage());
         }
     }

@@ -70,9 +70,15 @@ class BookingController extends Controller
         }
 
         $suppliesTotal = 0;
+        $fetchedSupplies = collect(); // ✅ متغير لحفظ المستلزمات ومنع N+1
+
         if (!empty($validated['supplies'])) {
+            // 🚀 تفكيك قنبلة الـ N+1: جلب كل المستلزمات المطلوبة باستعلام واحد فقط!
+            $supplyIds = collect($validated['supplies'])->pluck('id');
+            $fetchedSupplies = Supply::whereIn('id', $supplyIds)->get()->keyBy('id');
+
             foreach ($validated['supplies'] as $item) {
-                $supply = Supply::find($item['id']);
+                $supply = $fetchedSupplies->get($item['id']);
                 if ($supply) {
                     $suppliesTotal += ($supply->price * $item['quantity']);
                 }
@@ -166,13 +172,12 @@ class BookingController extends Controller
                 }
 
                 // =========================================================
-                // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات
+                // 🚀 تفكيك قنبلة الإشعارات (استخدام Chunk لتفادي الـ RAM Exhaustion)
                 // =========================================================
                 try {
-                    $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
-                    if ($transportCompanies->isNotEmpty()) {
+                    \App\Models\User::where('role', 'transport_company')->chunk(100, function ($transportCompanies) use ($transport) {
                         \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
-                    }
+                    });
                 } catch (\Exception $e) {
                     \Log::error('Transport Notification Error: ' . $e->getMessage());
                 }
@@ -183,7 +188,8 @@ class BookingController extends Controller
             if (!empty($validated['supplies'])) {
                 $orderId = 'INV-' . strtoupper(uniqid());
                 foreach ($validated['supplies'] as $item) {
-                    $supply = Supply::find($item['id']);
+                    // ✅ استخدام المجموعة المحملة مسبقاً لمنع N+1
+                    $supply = $fetchedSupplies->get($item['id']);
                     if ($supply) {
                         $itemTotal = $supply->price * $item['quantity'];
                         $order = SupplyOrder::create([
@@ -210,6 +216,9 @@ class BookingController extends Controller
             // 🚀 إطلاق الإشعارات (الحجز الجديد) بعد نجاح الحفظ
             // =========================================================
             try {
+                // تحميل صاحب المزرعة لتفادي N+1
+                $farm->loadMissing('user');
+
                 // إشعار لصاحب المزرعة
                 if ($farm->user) {
                     $farm->user->notify(new \App\Notifications\NewBookingReceivedNotification($booking));
@@ -270,7 +279,10 @@ class BookingController extends Controller
             $query->orderBy('start_time', 'asc');
         }
 
-        $bookings = $query->get();
+        // 🚀 تفكيك قنبلة الـ RAM: استخدام paginate بدلاً من get مع الاحتفاظ بالفلاتر
+        $bookings = $query->paginate(10);
+        $bookings->appends($request->all());
+
         return view('bookings.my_bookings', compact('bookings'));
     }
 
@@ -354,6 +366,7 @@ class BookingController extends Controller
         // 🚀 إطلاق الإشعارات (إلغاء الحجز)
         // =========================================================
         try {
+            $booking->farm->loadMissing('user');
             if ($booking->farm->user) {
                 $booking->farm->user->notifications()->create([
                     'id' => \Illuminate\Support\Str::uuid(),
@@ -462,7 +475,7 @@ class BookingController extends Controller
 
         $originalSuppliesCost = SupplyOrder::where('booking_id', $booking->id)
             ->where('status', '!=', 'cancelled')
-            ->sum('total_price');
+            ->sum('total_price'); // ✅ ممتاز لاستخدام Query Builder
 
         $totalBeforeTax = $farmPrice + $transportCost + $originalSuppliesCost;
         $taxAmount = $totalBeforeTax * 0.10;
@@ -579,12 +592,11 @@ class BookingController extends Controller
                 ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($transport);
 
-                // إطلاق إشعار للمواصلات
+                // 🚀 تفكيك قنبلة الإشعارات هنا أيضاً
                 try {
-                    $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
-                    if ($transportCompanies->isNotEmpty()) {
+                    \App\Models\User::where('role', 'transport_company')->chunk(100, function ($transportCompanies) use ($transport) {
                         \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
-                    }
+                    });
                 } catch (\Exception $e) {
                     \Log::error('Transport Notification Error: ' . $e->getMessage());
                 }
@@ -628,6 +640,7 @@ class BookingController extends Controller
                 'read_at' => null,
             ]);
 
+            $farm->loadMissing('user');
             if ($farm->user) {
                 $farm->user->notifications()->create([
                     'id' => \Illuminate\Support\Str::uuid(),
@@ -720,10 +733,9 @@ class BookingController extends Controller
                     // 🚀 إطلاق إشعار طلب التوصيل لشركات المواصلات عند الدفع والترقية
                     // =========================================================
                     try {
-                        $transportCompanies = \App\Models\User::where('role', 'transport_company')->get();
-                        if ($transportCompanies->isNotEmpty()) {
+                        \App\Models\User::where('role', 'transport_company')->chunk(100, function ($transportCompanies) use ($transport) {
                             \Illuminate\Support\Facades\Notification::send($transportCompanies, new \App\Notifications\NewTransportRequestNotification($transport));
-                        }
+                        });
                     } catch (\Exception $e) {
                         \Log::error('Transport Notification Error: ' . $e->getMessage());
                     }

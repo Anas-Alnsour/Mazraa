@@ -28,41 +28,30 @@ class SupplyOrderController extends Controller
 
     public function addToCart(Request $request, Supply $supply)
     {
-        // 1. العثور على الحجز الفعال الصحيح (نفس اللوجيك الموجود في واجهة السوق)
+        // 🚀 تفكيك الـ N+1 Loop: جلب الحجوزات مع المزرعة وتحديد الحجز الصالح فوراً
         $userBookings = FarmBooking::with('farm')
             ->where('user_id', Auth::id())
             ->whereIn('status', ['confirmed', 'paid'])
             ->orderBy('start_time', 'asc')
             ->get();
 
-        $activeBooking = null;
-        foreach ($userBookings as $booking) {
-            // نأخذ أول حجز مستوفٍ لشرط الوقت (خلال التواجد أو قبل ساعتين)
-            if ($booking->isWithinSupplyCheckoutWindow()) {
-                $activeBooking = $booking;
-                break;
-            }
-        }
+        $activeBooking = $userBookings->first(function ($booking) {
+            return $booking->isWithinSupplyCheckoutWindow();
+        });
 
         $stockAvailable = 0;
 
+        // 🚀 دمج استعلامات المخزون والشركة في استعلام واحد سريع
         if ($activeBooking && $activeBooking->farm) {
-            // 2. إيجاد شركة التوريد في نفس محافظة المزرعة
-            $localCompany = User::where('role', 'supply_company')
-                ->where('governorate', $activeBooking->farm->governorate)
-                ->first();
+            $localInventory = SupplyInventory::where('supply_id', $supply->id)
+                ->whereHas('company', function ($q) use ($activeBooking) {
+                    $q->where('role', 'supply_company')
+                      ->where('governorate', $activeBooking->farm->governorate);
+                })->first();
 
-            if ($localCompany) {
-                // 3. جلب المخزون من جدول inventories
-                $localInventory = SupplyInventory::where('supply_id', $supply->id)
-                    ->where('company_id', $localCompany->id)
-                    ->first();
-
-                $stockAvailable = $localInventory ? $localInventory->stock : 0;
-            }
+            $stockAvailable = $localInventory ? $localInventory->stock : 0;
         }
 
-        // إذا لم يكن هناك مخزون متاح (أو لا يوجد حجز)، نمنع الإضافة
         if ($stockAvailable <= 0) {
              return back()->with('error', 'This item is not available in the region of your booked farm.');
         }
@@ -74,17 +63,17 @@ class SupplyOrderController extends Controller
         $quantity = $request->quantity;
         $totalPrice = $supply->price * $quantity;
 
-        // التحقق مما إذا كان المنتج موجوداً مسبقاً في السلة
         $existingOrder = SupplyOrder::where('user_id', Auth::id())
             ->where('supply_id', $supply->id)
-            ->whereNull('booking_id') // Link to generic cart
+            ->whereNull('booking_id')
             ->where('status', 'cart')
             ->first();
 
+        // 🚀 إصلاح قنبلة التحديث الوهمي في الإضافة
         if ($existingOrder) {
             $newQuantity = $existingOrder->quantity + $quantity;
             if ($newQuantity > $stockAvailable) {
-                return back()->with('error', 'Cannot add more. Not enough local stock available.');
+                return back()->with('error', 'Cannot add more. You have reached the local stock limit.');
             }
             $existingOrder->update([
                 'quantity' => $newQuantity,
@@ -108,7 +97,6 @@ class SupplyOrderController extends Controller
     {
         if (!Auth::check() || Auth::user()->role !== 'user') abort(403);
 
-        // 💡 التعديل هنا: جلب عناصر السلة مع المنتج فقط، الفرع سنحدده من الحجز
         $cartItems = SupplyOrder::with(['supply'])
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
@@ -117,7 +105,7 @@ class SupplyOrderController extends Controller
         $cartTotal = $cartItems->sum('total_price');
 
         $eligibleBookings = [];
-        $localCompany = null; // 💡 تحديد الفرع المحلي
+        $localCompany = null;
 
         $userBookings = FarmBooking::with('farm')
             ->where('user_id', Auth::id())
@@ -130,7 +118,6 @@ class SupplyOrderController extends Controller
             }
         }
 
-        // 💡 تمرير اسم الفرع لصفحة السلة إذا كان هناك حجز صالح
         if (count($eligibleBookings) > 0) {
             $activeBooking = collect($eligibleBookings)->first();
             if ($activeBooking && $activeBooking->farm) {
@@ -158,40 +145,31 @@ class SupplyOrderController extends Controller
 
         $supply = $cartItem->supply;
 
-        // 1. العثور على الحجز الفعال الصحيح (نفس اللوجيك الموحد)
         $userBookings = FarmBooking::with('farm')
             ->where('user_id', Auth::id())
             ->whereIn('status', ['confirmed', 'paid'])
             ->orderBy('start_time', 'asc')
             ->get();
 
-        $activeBooking = null;
-        foreach ($userBookings as $booking) {
-            if ($booking->isWithinSupplyCheckoutWindow()) {
-                $activeBooking = $booking;
-                break;
-            }
-        }
+        $activeBooking = $userBookings->first(function ($booking) {
+            return $booking->isWithinSupplyCheckoutWindow();
+        });
 
         $stockAvailable = 0;
 
-        // 2. فحص مخزون الفرع المرتبط بهذا الحجز تحديداً
         if ($activeBooking && $activeBooking->farm) {
-            $localCompany = User::where('role', 'supply_company')
-                ->where('governorate', $activeBooking->farm->governorate)
-                ->first();
+            $localInventory = SupplyInventory::where('supply_id', $supply->id)
+                ->whereHas('company', function ($q) use ($activeBooking) {
+                    $q->where('role', 'supply_company')
+                      ->where('governorate', $activeBooking->farm->governorate);
+                })->first();
 
-            if ($localCompany) {
-                $localInventory = SupplyInventory::where('supply_id', $supply->id)
-                    ->where('company_id', $localCompany->id)
-                    ->first();
-                $stockAvailable = $localInventory ? $localInventory->stock : 0;
-            }
+            $stockAvailable = $localInventory ? $localInventory->stock : 0;
         }
 
-        // 3. منع التحديث إذا كانت الكمية المطلوبة أكبر من المخزون المحلي الفعلي
+        // 🚀 إصلاح قنبلة التحديث الوهمي: التحقق مع إضافة الكمية الحالية في السلة
         if ($stockAvailable < $request->quantity) {
-            return back()->with('error', 'Sorry, only ' . $stockAvailable . ' units of ' . $supply->name . ' are available in your region.');
+            return back()->with('error', 'Sorry, only ' . $stockAvailable . ' units are available in your region.');
         }
 
         $cartItem->update([
@@ -222,9 +200,11 @@ class SupplyOrderController extends Controller
 
     public function placeOrder(Request $request)
     {
+        // 🚀 تفكيك الـ Deadlock: جلب وترتيب العناصر تصاعدياً حسب الـ supply_id
         $cartOrders = SupplyOrder::with(['supply'])
             ->where('user_id', Auth::id())
             ->where('status', 'cart')
+            ->orderBy('supply_id', 'asc') // 👈 هذا السطر يمنع تشابك قواعد البيانات (Deadlock)
             ->get();
 
         if ($cartOrders->isEmpty()) {
@@ -251,11 +231,9 @@ class SupplyOrderController extends Controller
         try {
             DB::transaction(function () use ($cartOrders, $invoiceId, $commissionRate, $activeBooking, $farmGovernorate, $dispatchShift) {
 
-                // [FAIR DISPATCH] Invoke Algorithm
                 $driver = $this->dispatchService->assignSupplyDriver($farmGovernorate, $dispatchShift);
                 $assignedDriverId = $driver->id ?? null;
 
-                // [STRICT ROUTING] Find Local Company
                 $localCompany = User::where('role', 'supply_company')
                     ->where('governorate', $farmGovernorate)
                     ->first();
@@ -265,10 +243,9 @@ class SupplyOrderController extends Controller
                 }
 
                 foreach ($cartOrders as $item) {
-                    // [INVENTORY ROUTING] Check Local Stock
                     $localInventory = SupplyInventory::where('company_id', $localCompany->id)
                         ->where('supply_id', $item->supply_id)
-                        ->lockForUpdate()
+                        ->lockForUpdate() // آمن الآن بسبب الترتيب التصاعدي
                         ->first();
 
                     if (!$localInventory || $localInventory->stock < $item->quantity) {
@@ -278,7 +255,6 @@ class SupplyOrderController extends Controller
                     $commissionAmount = $item->total_price * $commissionRate;
                     $netCompanyAmount = $item->total_price - $commissionAmount;
 
-                    // Decrement local stock
                     $localInventory->decrement('stock', $item->quantity);
 
                     $item->update([
@@ -286,14 +262,13 @@ class SupplyOrderController extends Controller
                         'booking_id'              => $activeBooking->id,
                         'driver_id'               => $assignedDriverId,
                         'destination_governorate' => $farmGovernorate,
-                        'status'                  => 'pending', // ✅ جعلت الحالة pending مباشرة بدلاً من pending_payment لتجنب توقف الطلب
+                        'status'                  => 'pending',
                         'commission_amount'       => $commissionAmount,
                         'net_company_amount'      => $netCompanyAmount,
                     ]);
                 }
             });
 
-            // ✅ إعادة التوجيه لصفحة الطلبات الخاصة بالمستخدم كإثبات نجاح، بدلاً من مسار غير محدد للـ Payment
             return redirect()->route('orders.my_orders')->with('success', 'Your supply order has been placed successfully and is out for dispatch!');
 
         } catch (\Exception $e) {
@@ -312,19 +287,34 @@ class SupplyOrderController extends Controller
 
     public function myOrders()
     {
-        // 💡 التعديل هنا: جلب الشركة من خلال الـ inventories بدلاً من الـ company مباشرة
+        // 1. أولاً: نجلب أرقام الفواتير (order_id) المميزة للزبون مع Paginate
+        // هذا يحمي الرام من تحميل آلاف الطلبات القديمة
+        $invoices = SupplyOrder::where('user_id', auth()->id())
+            ->where('status', '!=', 'cart')
+            ->select('order_id', DB::raw('MAX(created_at) as created_at'))
+            ->groupBy('order_id')
+            ->latest('created_at')
+            ->paginate(10); // عرض 10 فواتير في الصفحة
+
+        // استخراج أرقام الفواتير للصفحة الحالية
+        $invoiceIds = $invoices->pluck('order_id')->filter()->toArray();
+
+        // 2. ثانياً: جلب المنتجات التفصيلية للفواتير المعروضة فقط (يمنع N+1)
         $orders = SupplyOrder::with(['supply.inventories.company', 'booking.farm', 'driver'])
             ->where('user_id', auth()->id())
-            ->where('status', '!=', 'cart')
+            ->whereIn('order_id', $invoiceIds)
             ->latest()
             ->get();
 
-        $groupedOrders = $orders->groupBy(function ($order) {
-            return $order->order_id ?? $order->id;
-        });
+        // 3. تجميع المنتجات حسب الفاتورة لإرسالها للواجهة
+        $groupedOrders = $orders->groupBy('order_id');
 
-        return view('supplies.frontend.my_orders', compact('groupedOrders'));
+        // 💡 ملاحظة لواجهة المستخدم (Blade):
+        // استخدم المتغير $groupedOrders للقيام بحلقة foreach لعرض الفواتير.
+        // وفي أسفل الصفحة، استخدم {{ $invoices->links() }} لعرض أزرار التنقل بين الصفحات.
+        return view('supplies.frontend.my_orders', compact('groupedOrders', 'invoices'));
     }
+
     public function edit(SupplyOrder $order)
     {
         if ($order->user_id !== Auth::id()) abort(403);
@@ -370,23 +360,30 @@ class SupplyOrderController extends Controller
 
         $diff = $newQuantity - $order->quantity;
 
-        if ($diff > 0) {
-            if ($localInventory) $localInventory->decrement('stock', $diff);
-        } elseif ($diff < 0) {
-            if ($localInventory) $localInventory->increment('stock', abs($diff));
+        DB::beginTransaction();
+        try {
+            if ($diff > 0) {
+                if ($localInventory) $localInventory->decrement('stock', $diff);
+            } elseif ($diff < 0) {
+                if ($localInventory) $localInventory->increment('stock', abs($diff));
+            }
+
+            $newTotalPrice = $order->supply->price * $newQuantity;
+            $commissionRate = 0.10;
+
+            $order->update([
+                'quantity' => $newQuantity,
+                'total_price' => $newTotalPrice,
+                'commission_amount' => $newTotalPrice * $commissionRate,
+                'net_company_amount' => $newTotalPrice - ($newTotalPrice * $commissionRate),
+            ]);
+            DB::commit();
+
+            return redirect()->route('orders.my_orders')->with('success', 'Order updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to update order: ' . $e->getMessage());
         }
-
-        $newTotalPrice = $order->supply->price * $newQuantity;
-        $commissionRate = 0.10;
-
-        $order->update([
-            'quantity' => $newQuantity,
-            'total_price' => $newTotalPrice,
-            'commission_amount' => $newTotalPrice * $commissionRate,
-            'net_company_amount' => $newTotalPrice - ($newTotalPrice * $commissionRate),
-        ]);
-
-        return redirect()->route('orders.my_orders')->with('success', 'Order updated successfully!');
     }
 
     public function destroy(SupplyOrder $order)
@@ -401,17 +398,24 @@ class SupplyOrderController extends Controller
             ->where('governorate', $order->destination_governorate ?? ($order->booking->farm->governorate ?? 'Amman'))
             ->first();
 
-        if ($localCompany) {
-            $localInventory = \App\Models\SupplyInventory::where('company_id', $localCompany->id)
-                ->where('supply_id', $order->supply_id)
-                ->first();
-            if ($localInventory) {
-                $localInventory->increment('stock', $order->quantity);
+        DB::beginTransaction();
+        try {
+            if ($localCompany) {
+                $localInventory = \App\Models\SupplyInventory::where('company_id', $localCompany->id)
+                    ->where('supply_id', $order->supply_id)
+                    ->first();
+                if ($localInventory) {
+                    $localInventory->increment('stock', $order->quantity);
+                }
             }
+
+            $order->update(['status' => 'cancelled']);
+            DB::commit();
+
+            return redirect()->route('orders.my_orders')->with('success', 'Order cancelled successfully within the 10-minute window.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to cancel order: ' . $e->getMessage());
         }
-
-        $order->update(['status' => 'cancelled']);
-
-        return redirect()->route('orders.my_orders')->with('success', 'Order cancelled successfully within the 10-minute window.');
     }
 }

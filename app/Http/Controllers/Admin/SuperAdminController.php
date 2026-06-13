@@ -24,61 +24,80 @@ class SuperAdminController extends Controller
      */
     public function index()
     {
-        // ---------------------------------------------------------
-        // 1. GLOBAL METRICS (All Time)
-        // ---------------------------------------------------------
-        $totalUsers    = User::count();
-        $totalPartners = User::whereIn('role', ['farm_owner', 'supply_company', 'transport_company'])->count();
-        $totalFarms    = Farm::count();
-
-        // ---------------------------------------------------------
-        // 2. FINANCIAL OVERSIGHT — ONLY Admin's credit transactions
-        // ---------------------------------------------------------
         $adminId = auth()->id();
 
-        // Total platform commissions earned (only Admin credit entries)
+        // 🚀 1. تفكيك القنبلة النووية (Database Hammer)
+        // دمج 15 استعلام في 3 استعلامات فقط باستخدام SQL Aggregate Functions لسرعة خيالية
+
+        $farmStats = FarmBooking::select(
+            DB::raw('SUM(CASE WHEN status IN ("confirmed", "completed") THEN total_price ELSE 0 END) as farmRevenue'),
+            DB::raw('SUM(CASE WHEN status IN ("pending", "pending_verification", "pending_payment") THEN 1 ELSE 0 END) as pendingFarmBookings'),
+            DB::raw('SUM(CASE WHEN status = "confirmed" AND start_time >= NOW() THEN 1 ELSE 0 END) as activeFarmBookings'),
+            DB::raw('SUM(CASE WHEN status = "pending_verification" THEN 1 ELSE 0 END) as paymentsAwaitingVerificationFarms')
+        )->first();
+
+        $supplyStats = SupplyOrder::select(
+            DB::raw('SUM(CASE WHEN status IN ("delivered", "completed") THEN total_price ELSE 0 END) as supplyRevenue'),
+            DB::raw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pendingSupplyOrders'),
+            DB::raw('SUM(CASE WHEN status IN ("waiting_driver", "in_way") THEN 1 ELSE 0 END) as inTransitSupplies'),
+            DB::raw('SUM(CASE WHEN status = "delivered" THEN 1 ELSE 0 END) as completedSupplies'),
+            DB::raw('SUM(CASE WHEN status = "pending_verification" THEN 1 ELSE 0 END) as paymentsAwaitingVerificationSupplies')
+        )->first();
+
+        $transportStats = Transport::select(
+            DB::raw('SUM(CASE WHEN status = "completed" THEN price ELSE 0 END) as transportRevenue'),
+            DB::raw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pendingTransports'),
+            DB::raw('SUM(CASE WHEN status IN ("in_progress", "in_way") THEN 1 ELSE 0 END) as inProgressTransports'),
+            DB::raw('SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completedTransports')
+        )->first();
+
+        $userStats = User::select(
+            DB::raw('COUNT(*) as totalUsers'),
+            DB::raw('SUM(CASE WHEN role IN ("farm_owner", "supply_company", "transport_company") THEN 1 ELSE 0 END) as totalPartners')
+        )->first();
+
+        $farmCounts = Farm::select(
+            DB::raw('COUNT(*) as totalFarms'),
+            DB::raw('SUM(CASE WHEN is_approved = 1 THEN 1 ELSE 0 END) as activeFarmsCount'),
+            DB::raw('SUM(CASE WHEN is_approved = 0 THEN 1 ELSE 0 END) as farmsAwaitingApproval')
+        )->first();
+
         $totalCommissionEarned = FinancialTransaction::where('user_id', $adminId)
             ->where('transaction_type', 'credit')
             ->sum('amount');
 
-        // Revenue breakdown by sector (Completed/Confirmed only)
-        $farmRevenue      = FarmBooking::whereIn('status', ['confirmed', 'completed'])->sum('total_price');
-        $supplyRevenue    = SupplyOrder::whereIn('status', ['delivered', 'completed'])->sum('total_price');
-        $transportRevenue = Transport::where('status', 'completed')->sum('price');
+        // استخراج المتغيرات للواجهة
+        $totalUsers = $userStats->totalUsers;
+        $totalPartners = $userStats->totalPartners;
 
+        $totalFarms = $farmCounts->totalFarms;
+        $activeFarmsCount = $farmCounts->activeFarmsCount;
+        $farmsAwaitingApproval = $farmCounts->farmsAwaitingApproval;
+
+        $farmRevenue = $farmStats->farmRevenue;
+        $supplyRevenue = $supplyStats->supplyRevenue;
+        $transportRevenue = $transportStats->transportRevenue;
         $totalGrossVolume = $farmRevenue + $supplyRevenue + $transportRevenue;
 
-        // ---------------------------------------------------------
-        // 3. ECOSYSTEM ACTIVITY (Current Status)
-        // ---------------------------------------------------------
-        $activeFarmsCount    = Farm::where('is_approved', true)->count();
-        $pendingFarmBookings = FarmBooking::whereIn('status', ['pending', 'pending_verification', 'pending_payment'])->count();
-        $activeFarmBookings  = FarmBooking::where('status', 'confirmed')->whereDate('start_time', '>=', now())->count();
+        $pendingFarmBookings = $farmStats->pendingFarmBookings;
+        $activeFarmBookings = $farmStats->activeFarmBookings;
 
-        $pendingSupplyOrders = SupplyOrder::where('status', 'pending')->count();
-        $inTransitSupplies   = SupplyOrder::whereIn('status', ['waiting_driver', 'in_way'])->count();
-        $completedSupplies   = SupplyOrder::where('status', 'delivered')->count();
+        $pendingSupplyOrders = $supplyStats->pendingSupplyOrders;
+        $inTransitSupplies = $supplyStats->inTransitSupplies;
+        $completedSupplies = $supplyStats->completedSupplies;
 
-        $pendingTransports    = Transport::where('status', 'pending')->count();
-        $inProgressTransports = Transport::whereIn('status', ['in_progress', 'in_way'])->count();
-        $completedTransports  = Transport::where('status', 'completed')->count();
+        $pendingTransports = $transportStats->pendingTransports;
+        $inProgressTransports = $transportStats->inProgressTransports;
+        $completedTransports = $transportStats->completedTransports;
 
-        // ---------------------------------------------------------
-        // 4. VERIFICATIONS & ACTION CENTER
-        // ---------------------------------------------------------
-        $farmsAwaitingApproval        = Farm::where('is_approved', false)->count();
-        $paymentsAwaitingVerification = FarmBooking::where('status', 'pending_verification')->count()
-                                      + SupplyOrder::where('status', 'pending_verification')->count();
+        $paymentsAwaitingVerification = $farmStats->paymentsAwaitingVerificationFarms + $supplyStats->paymentsAwaitingVerificationSupplies;
         $actionRequiredCount = $farmsAwaitingApproval + $paymentsAwaitingVerification;
 
-        // ---------------------------------------------------------
-        // 5. RECENT TRANSACTIONS FEED
-        // ---------------------------------------------------------
+        // جلب آخر 6 عمليات للواجهة مع منع الـ RAM Exhaustion
         $verifiedFarms = Farm::where('is_approved', true)->select('id', 'name', 'latitude', 'longitude')->get();
-
         $recentTransactions = FinancialTransaction::with('user')
             ->orderBy('created_at', 'desc')
-            ->take(6)
+            ->limit(6)
             ->get();
 
         return view('admin.dashboard', compact(
@@ -95,7 +114,6 @@ class SuperAdminController extends Controller
 
     /**
      * Show pending farm approvals and CliQ payment verifications.
-     * ✅ تم التحديث: تفعيل الـ Isolated Pagination بأسماء متغيرة في الرابط
      */
     public function verifications()
     {
@@ -104,17 +122,17 @@ class SuperAdminController extends Controller
         $pendingFarms = Farm::where('is_approved', false)
             ->with('owner')
             ->latest()
-            ->paginate(5, ['*'], 'farms_page'); // 👈 خصصنا الاسم هنا
+            ->paginate(5, ['*'], 'farms_page');
 
         $farmBookings = FarmBooking::with(['farm', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
-            ->paginate(5, ['*'], 'bookings_page'); // 👈 وهنا
+            ->paginate(5, ['*'], 'bookings_page');
 
         $supplyOrders = SupplyOrder::with(['supply', 'user'])
             ->where('status', 'pending_verification')
             ->orderBy('updated_at', 'asc')
-            ->paginate(5, ['*'], 'supplies_page'); // 👈 وهنا
+            ->paginate(5, ['*'], 'supplies_page');
 
         return view('admin.verifications', compact('pendingFarms', 'farmBookings', 'supplyOrders'));
     }
@@ -146,23 +164,54 @@ class SuperAdminController extends Controller
 
         // ── 2. CliQ for Booking ──────────────────────────────
         elseif ($type === 'farm_booking') {
-            $booking = FarmBooking::with(['farm', 'user'])->findOrFail($id);
+            $booking = FarmBooking::with(['farm.owner', 'user'])->findOrFail($id);
 
             if ($action === 'approve') {
-                $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
+                DB::beginTransaction();
+                try {
+                    $booking->update(['payment_status' => 'paid', 'status' => 'confirmed']);
 
-                if ($booking->user) {
-                    $booking->user->notify(new BookingConfirmedNotification($booking));
-                }
+                    // 🚀 2. تفكيك قنبلة ضياع أموال CliQ (تسجيل المعاملات المالية للآدمن والمالك)
+                    $adminId = auth()->id();
+                    $adminCommission = $booking->commission_amount ?? ($booking->total_price * 0.10);
+                    $ownerNetProfit = $booking->net_owner_amount ?? ($booking->total_price - $adminCommission);
 
-                if ($booking->farm && $booking->farm->owner_id) {
-                    $owner = User::find($booking->farm->owner_id);
-                    if ($owner) {
-                        $owner->notify(new NewBookingReceivedNotification($booking));
+                    // دفع عمولة المنصة
+                    FinancialTransaction::create([
+                        'user_id' => $adminId,
+                        'amount' => $adminCommission,
+                        'transaction_type' => 'credit',
+                        'reference_type' => 'farm_booking',
+                        'reference_id' => $booking->id,
+                        'description' => "Platform Commission for CliQ Booking #{$booking->id}",
+                    ]);
+
+                    // دفع أرباح المالك
+                    if ($booking->farm && $booking->farm->owner_id) {
+                        FinancialTransaction::create([
+                            'user_id' => $booking->farm->owner_id,
+                            'amount' => $ownerNetProfit,
+                            'transaction_type' => 'credit',
+                            'reference_type' => 'farm_booking',
+                            'reference_id' => $booking->id,
+                            'description' => "Net Profit for CliQ Booking #{$booking->id}",
+                        ]);
                     }
-                }
 
-                return back()->with('success', 'Farm Booking CliQ payment verified and notifications sent!');
+                    if ($booking->user) {
+                        $booking->user->notify(new BookingConfirmedNotification($booking));
+                    }
+
+                    if ($booking->farm && $booking->farm->owner) {
+                        $booking->farm->owner->notify(new NewBookingReceivedNotification($booking));
+                    }
+
+                    DB::commit();
+                    return back()->with('success', 'Farm Booking CliQ payment verified and funds recorded!');
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return back()->with('error', 'Error processing CliQ payment: ' . $e->getMessage());
+                }
             }
 
             $booking->update(['payment_status' => 'failed', 'status' => 'cancelled']);
@@ -174,11 +223,12 @@ class SuperAdminController extends Controller
             $order = SupplyOrder::with(['supply', 'user'])->findOrFail($id);
 
             if ($action === 'approve') {
-                $order->update(['status' => 'pending']);
-                return back()->with('success', 'Supply Order CliQ payment verified and funds distributed!');
+                // تحديث جميع المنتجات التابعة لنفس الفاتورة
+                SupplyOrder::where('order_id', $order->order_id)->update(['status' => 'pending']);
+                return back()->with('success', 'Supply Order CliQ payment verified!');
             }
 
-            $order->update(['status' => 'cancelled']);
+            SupplyOrder::where('order_id', $order->order_id)->update(['status' => 'cancelled']);
             return back()->with('success', 'Supply Order CliQ payment rejected and cancelled.');
         }
 
@@ -187,7 +237,6 @@ class SuperAdminController extends Controller
 
     /**
      * Display the Financial Payouts Ledger.
-     * ✅ تم التحديث: استخدام استعلام قاعدة بيانات مباشر (Subqueries) مع Pagination سريع جداً
      */
     public function payouts()
     {
@@ -198,20 +247,19 @@ class SuperAdminController extends Controller
             ->selectRaw('(SELECT COALESCE(SUM(amount), 0) FROM financial_transactions WHERE user_id = users.id AND transaction_type = "credit") - (SELECT COALESCE(SUM(amount), 0) FROM financial_transactions WHERE user_id = users.id AND transaction_type = "debit") as balance')
             ->having('balance', '>', 0)
             ->orderByDesc('balance')
-            ->paginate(10, ['*'], 'vendors_page'); // 👈 صفحة الملاك والشركات المستحقة
+            ->paginate(10, ['*'], 'vendors_page');
 
         $recentPayouts = FinancialTransaction::with('user')
             ->where('reference_type', 'manual_payout')
             ->where('transaction_type', 'debit')
             ->latest()
-            ->paginate(15, ['*'], 'payouts_page'); // 👈 صفحة السجل التاريخي للسحوبات
+            ->paginate(15, ['*'], 'payouts_page');
 
         return view('admin.payouts', compact('vendorsOwed', 'recentPayouts'));
     }
 
     /**
      * Record a manual payout to a vendor.
-     * Enforces balance guard: cannot pay more than available balance.
      */
     public function recordPayout(Request $request)
     {
@@ -265,18 +313,13 @@ class SuperAdminController extends Controller
      */
     public function system()
     {
-        // جلب المستخدمين مع التقسيم ليعمل الـ Pagination في الـ Blade
         $users = User::latest()->paginate(10);
-
-        // تأكد من جلب قيمة العمولات من الإعدادات إذا كانت مخزنة في الداتابيز
         $defaultCommission = config('mazraa.commission_rate', 10);
-
         return view('admin.system', compact('users', 'defaultCommission'));
     }
 
     /**
      * Persist system settings to a local JSON config file.
-     * (No settings DB table exists; JSON file is the safe fallback.)
      */
     public function updateSystem(Request $request)
     {
@@ -286,7 +329,6 @@ class SuperAdminController extends Controller
 
         $settingsPath = storage_path('app/system_settings.json');
 
-        // Load existing settings or start fresh
         $settings = file_exists($settingsPath)
             ? json_decode(file_get_contents($settingsPath), true) ?? []
             : [];
@@ -301,9 +343,6 @@ class SuperAdminController extends Controller
             ->with('success', 'System settings updated. New commission rate: ' . $request->commission_rate . '%');
     }
 
-    /**
-     * Helper: Read the persisted commission rate (falls back to config/env).
-     */
     private function getCommissionRate(): float
     {
         $settingsPath = storage_path('app/system_settings.json');

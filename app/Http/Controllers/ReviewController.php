@@ -10,6 +10,7 @@ use App\Models\SupplyOrder;
 use App\Models\Transport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
@@ -40,7 +41,7 @@ class ReviewController extends Controller
         if ($validated['reviewable_type'] === 'farm') {
             $isVerified = FarmBooking::where('user_id', $userId)
                 ->where('farm_id', $entity->id)
-                ->whereIn('status', ['completed', 'finished']) // 👈 التعديل المعماري
+                ->whereIn('status', ['completed', 'finished'])
                 ->exists();
 
             if (!$isVerified) {
@@ -58,7 +59,7 @@ class ReviewController extends Controller
         } elseif ($validated['reviewable_type'] === 'transport_company') {
             $isVerified = Transport::where('user_id', $userId)
                 ->where('company_id', $entity->id)
-                ->whereIn('status', ['completed', 'delivered']) // 👈 التعديل المعماري
+                ->whereIn('status', ['completed', 'delivered'])
                 ->exists();
 
             if (!$isVerified) {
@@ -66,19 +67,33 @@ class ReviewController extends Controller
             }
         }
 
-        Review::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'reviewable_id' => $validated['reviewable_id'],
-                'reviewable_type' => $modelClass,
-            ],
-            [
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'],
-            ]
-        );
+        // 🚀 تفكيك قنبلة عدم التزامن: استخدام Transaction لضمان تحديث التقييم والمتوسط معاً
+        try {
+            DB::beginTransaction();
 
-        return back()->with('success', 'Thank you! Your verified review has been saved.');
+            Review::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'reviewable_id' => $validated['reviewable_id'],
+                    'reviewable_type' => $modelClass,
+                ],
+                [
+                    'rating' => $validated['rating'],
+                    'comment' => $validated['comment'],
+                ]
+            );
+
+            // 🚀 تفكيك قنبلة التقييم الشبح: تحديث متوسط التقييم للكيان الأب
+            $this->updateEntityAverageRating($modelClass, $entity->id);
+
+            DB::commit();
+
+            return back()->with('success', 'Thank you! Your verified review has been saved.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'An error occurred while saving your review. Please try again.');
+        }
     }
 
     public function destroy(Review $review)
@@ -87,8 +102,41 @@ class ReviewController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $review->delete();
+        $modelClass = $review->reviewable_type;
+        $entityId = $review->reviewable_id;
 
-        return back()->with('success', 'Review deleted successfully.');
+        try {
+            DB::beginTransaction();
+
+            $review->delete();
+
+            // 🚀 تحديث متوسط التقييم بعد الحذف لضمان دقة الأرقام في المنصة
+            $this->updateEntityAverageRating($modelClass, $entityId);
+
+            DB::commit();
+
+            return back()->with('success', 'Review deleted successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'An error occurred while deleting the review.');
+        }
+    }
+
+    /**
+     * دالة مساعدة لحساب وتحديث متوسط التقييمات بشكل فوري وآمن
+     */
+    private function updateEntityAverageRating($modelClass, $entityId)
+    {
+        // حساب المتوسط الحقيقي من الداتابيس (تجاهل التقييمات المحذوفة إذا كان هناك SoftDeletes)
+        $average = Review::where('reviewable_type', $modelClass)
+            ->where('reviewable_id', $entityId)
+            ->avg('rating');
+
+        // تقريب الرقم إلى منزلة عشرية واحدة (مثلاً 4.5)
+        $formattedAverage = $average ? round($average, 1) : 0.0;
+
+        // تحديث الكيان الأب
+        $modelClass::where('id', $entityId)->update(['rating' => $formattedAverage]);
     }
 }

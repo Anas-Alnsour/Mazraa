@@ -22,8 +22,11 @@ class SupplyDispatchAction
      */
     public static function dispatchDriver(SupplyOrder $order)
     {
+        // 🚀 الحماية من الـ N+1 أثناء جلب العلاقات
+        $order->loadMissing('booking.farm');
+
         // Destination: The farm's governorate
-        $farm = $order->booking->farm;
+        $farm = $order->booking->farm ?? null;
         if (!$farm || !$farm->governorate) {
             Log::warning("SupplyDispatchAction: Missing farm governorate for Order #{$order->id}");
             return false;
@@ -32,15 +35,19 @@ class SupplyDispatchAction
         $destGov = $farm->governorate;
         $now = Carbon::now();
 
+        // 🚀 تفكيك قنبلة الـ Index Killer
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth = $now->copy()->endOfMonth();
+
         // Find the best supply driver
         $bestDriver = User::role('supply_driver')
             ->where('governorate', $destGov)
-            ->withCount(['supplyDriverJobs' => function($query) use ($now) {
-                $query->whereMonth('created_at', $now->month)
-                      ->whereYear('created_at', $now->year);
+            ->withCount(['supplyDriverJobs' => function($query) use ($startOfMonth, $endOfMonth) {
+                // 🚀 استخدام whereBetween لتمكين الـ Indexing السريع
+                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
             }])
             ->orderBy('supply_driver_jobs_count', 'asc')
-            ->orderBy('id', 'asc')
+            ->inRandomOrder() // 🚀 تفكيك قنبلة التزامن (Race Condition) عند التعادل
             ->first();
 
         if ($bestDriver) {

@@ -31,7 +31,8 @@ class TransportController extends Controller
     // عرض فورم حجز رحلة جديدة
     public function create()
     {
-        $farms = Farm::where('is_approved', true)->get();
+        // 🚀 تفكيك قنبلة الرام: جلب المعرف والاسم فقط بدلاً من كل بيانات المزرعة
+        $farms = Farm::where('is_approved', true)->select('id', 'name')->get();
         return view('transports.create', compact('farms'));
     }
 
@@ -77,18 +78,20 @@ class TransportController extends Controller
     }
 
     // ==========================================
-    // تم إضافة دوال التعديل والتحديث من كودك الأصلي
+    // دوال التعديل والتحديث
     // ==========================================
 
     public function edit(Transport $transport)
     {
         // التأكد إن الطلب للزبون نفسه، وإنه لسا ما تم الموافقة عليه
         if ($transport->user_id !== Auth::id()) abort(403);
+
         if ($transport->status !== 'pending') {
             return redirect()->route('transports.index')->with('error', 'You cannot edit a request that is already being processed.');
         }
 
-        $farms = Farm::where('is_approved', true)->get();
+        // 🚀 تفكيك قنبلة الرام
+        $farms = Farm::where('is_approved', true)->select('id', 'name')->get();
         return view('transports.edit', compact('transport', 'farms'));
     }
 
@@ -104,7 +107,7 @@ class TransportController extends Controller
             'start_and_return_point' => 'required|string|max:255',
             'farm_id'                => 'required|exists:farms,id',
             'distance'               => 'required|numeric|min:0.1',
-            'Farm_Arrival_Time'      => 'required|date',
+            'Farm_Arrival_Time'      => 'required|date|after:now', // 🚀 تفكيك قنبلة آلة الزمن (منع المواعيد السابقة)
             'Farm_Departure_Time'    => 'nullable|date|after_or_equal:Farm_Arrival_Time',
             'notes'                  => 'nullable|string|max:500'
         ]);
@@ -137,7 +140,12 @@ class TransportController extends Controller
     {
         if ($transport->user_id !== Auth::id()) abort(403);
 
-        // أنا خليتها تعمل delete زي كودك الأصلي عشان ما تتراكم طلبات ملغية بالداتا بيس
+        // 🚀 تفكيك الكارثة الكبرى: منع الزبون من حذف رحلة قيد التنفيذ أو مكتملة
+        if (!in_array($transport->status, ['pending', 'pending_assignment', 'pending_payment'])) {
+            return redirect()->route('transports.index')
+                ->with('error', 'You cannot delete this request because it is already assigned or in progress. Please contact support.');
+        }
+
         $transport->delete();
 
         return redirect()->route('transports.index')->with('success', 'Transport request deleted successfully!');
@@ -146,6 +154,10 @@ class TransportController extends Controller
     public function show(Transport $transport)
     {
         if ($transport->user_id !== Auth::id()) abort(403);
+
+        // 🚀 تفكيك قنبلة الـ N+1: تحميل العلاقات مسبقاً قبل إرسالها للواجهة
+        $transport->load(['farm', 'company', 'vehicle', 'driver']);
+
         return view('transports.show', compact('transport'));
     }
 }

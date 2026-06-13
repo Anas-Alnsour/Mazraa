@@ -264,12 +264,19 @@
                     @endphp
                     <div class="pt-6">
                         <x-reviews-section
-                            :reviews="$farm->reviews"
+                            :reviews="$reviews"
                             :reviewable-id="$farm->id"
                             reviewable-type="farm"
                             :average-rating="$farm->average_rating"
                             :can-review="$canReview"
                         />
+
+                        {{-- إظهار أزرار التقليب للتقييمات بأمان --}}
+                        @if(method_exists($reviews, 'links'))
+                            <div class="mt-8">
+                                {{ $reviews->links() }}
+                            </div>
+                        @endif
                     </div>
                 </div>
 

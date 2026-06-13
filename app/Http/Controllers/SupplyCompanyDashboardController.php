@@ -33,9 +33,8 @@ class SupplyCompanyDashboardController extends Controller
         // ---------------------------------------------------------------
         // REGIONAL BRANCH INTERFACE LOGIC
         // ---------------------------------------------------------------
-        // 1. Fetch all non-cart orders belonging to this company's supplies AND routed to their governorate
-        $orders = SupplyOrder::with(['supply', 'user', 'driver', 'booking.farm'])
-            ->where(function ($query) use ($user) {
+        // 🚀 تفكيك قنبلة الرام 1: إنشاء Base Query Builder بدلاً من سحب الداتا للرام باستخدام get()
+        $ordersQuery = SupplyOrder::where(function ($query) use ($user) {
                 // strict routing: either the farm booking governorate or standalone destination_governorate
                 $query->whereHas('booking.farm', function ($farmQ) use ($user) {
                     $farmQ->where('governorate', $user->governorate);
@@ -45,17 +44,26 @@ class SupplyCompanyDashboardController extends Controller
             ->whereHas('supply.inventories', function($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             })
-            ->whereNotIn('status', ['cart', 'pending_payment'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->whereNotIn('status', ['cart', 'pending_payment']);
 
-        // 2. Financial Metrics — only count completed/delivered orders
-        $completedOrders = $orders->whereIn('status', ['delivered', 'completed']);
+        // 🚀 حساب الإحصائيات مباشرة من الداتابيس MySQL بدون استهلاك الرام
+        $activeOrdersCount = $ordersQuery->clone()
+            ->whereIn('status', ['pending', 'waiting_driver', 'in_way'])
+            ->count();
+
+        // 🚀 تجميع البيانات المالية باستعلام واحد
+        $financialTotals = $ordersQuery->clone()
+            ->whereIn('status', ['delivered', 'completed'])
+            ->select(
+                DB::raw('COALESCE(SUM(total_price), 0) as gross'),
+                DB::raw('COALESCE(SUM(commission_amount), 0) as commission'),
+                DB::raw('COALESCE(SUM(net_company_amount), 0) as net')
+            )->first();
 
         $financials = [
-            'gross'      => $completedOrders->sum('total_price'),
-            'commission' => $completedOrders->sum('commission_amount'),
-            'net'        => $completedOrders->sum('net_company_amount'),
+            'gross'      => $financialTotals->gross,
+            'commission' => $financialTotals->commission,
+            'net'        => $financialTotals->net,
         ];
 
         // 3. Active Drivers for this company (for the dispatch dropdown)
@@ -64,11 +72,14 @@ class SupplyCompanyDashboardController extends Controller
             ->get();
 
         // 4. Recent orders (flat list for the dispatch table)
-        $recentOrders  = $orders->take(50);
-        $groupedOrders = $orders->groupBy('order_id');
+        // 🚀 حماية التجميع: سحب أحدث 50 طلب فقط بدلاً من سحب كل تاريخ الشركة للـ RAM
+        $recentOrders = $ordersQuery->clone()
+            ->with(['supply', 'user', 'driver', 'booking.farm'])
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
 
-        // Supporting metrics (used by some view sections)
-        $activeOrdersCount = $orders->whereIn('status', ['pending', 'waiting_driver', 'in_way'])->count();
+        $groupedOrders = $recentOrders->groupBy('order_id');
 
         // 5. Global Catalog & Local Inventory with Pagination & Filters
         $query = \App\Models\Supply::with(['inventories' => function($q) use ($companyId) {
@@ -121,6 +132,7 @@ class SupplyCompanyDashboardController extends Controller
 
         DB::beginTransaction();
         try {
+            // تحديث كل المنتجات التابعة لنفس الفاتورة لتعيين السائق
             SupplyOrder::where('order_id', $invoiceId)
                 ->whereHas('supply.inventories', function($invQ) use ($user) {
                     $invQ->where('company_id', $user->id);
@@ -144,6 +156,8 @@ class SupplyCompanyDashboardController extends Controller
                 // إشعار للسائق
                 $driver->notify(new SupplyDriverAssignedNotification($invoiceId));
 
+                // تحميل المستخدم مسبقاً لمنع N+1
+                $order->loadMissing('user');
                 // إشعار للعميل صاحب الطلب
                 if ($order->user) {
                     $order->user->notify(new SupplyDriverAssignedNotification($invoiceId));
@@ -196,13 +210,14 @@ class SupplyCompanyDashboardController extends Controller
 
         $branch = User::where('id', $branchId)->where('role', 'supply_company')->firstOrFail();
 
-        // Fetch supplies with their respective stock in this branch, order by ASC stock for load balancing
+        // 🚀 حماية AJAX Payload: تحديد سقف للبيانات لمنع تجميد متصفح الـ HQ إذا كان هناك آلاف المنتجات
         $inventory = \App\Models\Supply::select('supplies.*', 'supply_inventories.stock')
             ->leftJoin('supply_inventories', function($join) use ($branchId) {
                 $join->on('supplies.id', '=', 'supply_inventories.supply_id')
                      ->where('supply_inventories.company_id', '=', $branchId);
             })
             ->orderByRaw('COALESCE(supply_inventories.stock, 0) ASC')
+            ->limit(100)
             ->get();
 
         return response()->json([
@@ -225,7 +240,6 @@ class SupplyCompanyDashboardController extends Controller
             'price' => 'required|numeric|min:0',
         ]);
 
-        // Upload Logic placeholder if needed (assumes normal image logic).
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('supplies', 'public');
             $validated['image'] = $path;
@@ -274,6 +288,7 @@ class SupplyCompanyDashboardController extends Controller
 
         return back()->with('success', 'Global Product Deleted Successfully.');
     }
+
     // ==========================================================
     // Master HQ Specific Views & Actions
     // ==========================================================
@@ -290,10 +305,8 @@ class SupplyCompanyDashboardController extends Controller
     {
         if (!Auth::user()->is_hq) { abort(403); }
 
-        // 💡 التعديل هنا: تحديد المسار الكامل للموديل \App\Models\Supply
         $query = \App\Models\Supply::orderBy('created_at', 'desc');
 
-        // تطبيق الفلتر إذا قام الآدمن باختيار قسم معين
         if ($request->has('category') && $request->category != '') {
             $query->where('category', $request->category);
         }

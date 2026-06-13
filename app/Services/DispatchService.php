@@ -29,7 +29,9 @@ class DispatchService
      */
     private function findHungriestDriver(string $role, string $gov, ?string $shift): ?User
     {
-        $now = Carbon::now();
+        // 🚀 تفكيك قنبلة الـ Index Killer: تجهيز التواريخ للبحث السريع عبر whereBetween
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
 
         // Define the relationship name based on the role
         $relation = $role === 'transport_driver' ? 'transportDriverJobs' : 'supplyDriverJobs';
@@ -44,24 +46,23 @@ class DispatchService
             ->when($shift, function ($q) use ($shift) {
                 return $q->where('shift', $shift);
             })
-            ->withCount([$relation => function($query) use ($now) {
-                $query->whereMonth('created_at', $now->month)
-                      ->whereYear('created_at', $now->year);
+            ->withCount([$relation => function($query) use ($startOfMonth, $endOfMonth) {
+                // 🚀 استخدام whereBetween بدلاً من whereMonth/whereYear لسرعة استجابة خيالية
+                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
             }])
             ->orderBy($relationCountColumn, 'asc')
-            ->orderBy('id', 'asc')
+            ->inRandomOrder() // 🚀 تفكيك قنبلة التزامن: اختيار عشوائي بين السائقين المتعادلين لمنع الضغط على سائق واحد
             ->first();
 
         // Tier 2: Regional Fallback (Role + Gov + ANY Shift)
         if (!$driver && $shift) {
             $driver = User::where('role', $role)
                 ->where('governorate', $gov)
-                ->withCount([$relation => function($query) use ($now) {
-                    $query->whereMonth('created_at', $now->month)
-                          ->whereYear('created_at', $now->year);
+                ->withCount([$relation => function($query) use ($startOfMonth, $endOfMonth) {
+                    $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
                 }])
                 ->orderBy($relationCountColumn, 'asc')
-                ->orderBy('id', 'asc')
+                ->inRandomOrder() // 🚀 اختيار عشوائي عند التعادل
                 ->first();
         }
 

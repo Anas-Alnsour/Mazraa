@@ -37,7 +37,7 @@
                     @endfor
                 </div>
                 <span class="text-sm font-bold text-gray-900">{{ number_format($averageRating, 1) }} out of 5</span>
-                <span class="text-sm text-gray-500">({{ $reviews->count() }} reviews)</span>
+                <span class="text-sm text-gray-500">({{ method_exists($reviews, 'total') ? $reviews->total() : $reviews->count() }} reviews)</span>
             </div>
         </div>
     </div>
@@ -46,8 +46,14 @@
         <div class="lg:col-span-1">
             @auth
                 @php
-                    // Check if the current user already reviewed this item
-                    $userReview = $reviews->where('user_id', Auth::id())->first();
+                    $userReview = null;
+                    if(Auth::check()){
+                        $modelClass = $reviewableType === 'farm' ? 'App\Models\Farm' : 'App\Models\User';
+                        $userReview = \App\Models\Review::where('reviewable_type', $modelClass)
+                            ->where('reviewable_id', $reviewableId)
+                            ->where('user_id', Auth::id())
+                            ->first();
+                    }
                     $isAllowedToReview = $canReview === null ? true : $canReview;
                 @endphp
 
@@ -127,7 +133,7 @@
         <div class="lg:col-span-2">
             @if($reviews->count() > 0)
                 <div class="space-y-6">
-                    @foreach($reviews->sortByDesc('created_at') as $review)
+                   @foreach($reviews as $review)
                         <div class="bg-white rounded-[2rem] p-6 md:p-8 border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex items-center gap-4">

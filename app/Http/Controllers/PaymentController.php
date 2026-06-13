@@ -7,6 +7,7 @@ use App\Models\FinancialTransaction;
 use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Checkout\Session;
+use Stripe\Refund;
 use App\Models\SupplyOrder;
 use App\Notifications\BookingConfirmedNotification;
 use App\Notifications\NewBookingReceivedNotification;
@@ -59,18 +60,12 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized or already paid.');
         }
 
-        // 🛡️ الحماية من الحجز المزدوج (Double Booking Guard)
-        $overlappingBooking = \App\Models\FarmBooking::where('farm_id', $booking->farm_id)
-            ->whereIn('payment_status', ['paid', 'confirmed'])
+        // 🚀 تنظيف وتسريع فحص التعارض (Double Booking Guard)
+        $overlappingBooking = FarmBooking::where('farm_id', $booking->farm_id)
+            ->whereIn('status', ['confirmed', 'completed']) // نعتمد على حالة الحجز المؤكد
             ->where('id', '!=', $booking->id)
-            ->where(function ($query) use ($booking) {
-                $query->whereBetween('start_time', [$booking->start_time, $booking->end_time])
-                      ->orWhereBetween('end_time', [$booking->start_time, $booking->end_time])
-                      ->orWhere(function ($q) use ($booking) {
-                          $q->where('start_time', '<=', $booking->start_time)
-                            ->where('end_time', '>=', $booking->end_time);
-                      });
-            })
+            ->where('start_time', '<', $booking->end_time) // 👈 المعادلة القياسية للتعارض (أسرع وأدق)
+            ->where('end_time', '>', $booking->start_time)
             ->first();
 
         if ($overlappingBooking) {
@@ -85,7 +80,7 @@ class PaymentController extends Controller
 
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        // ✅ تحويل العملة إلى دولار أمريكي
+        // تحويل العملة إلى دولار أمريكي
         $exchangeRate = 1.41;
         $amountInCents = (int) (round($booking->total_price * $exchangeRate, 2) * 100);
 
@@ -96,9 +91,9 @@ class PaymentController extends Controller
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'usd', // 👈 تم التعديل
+                    'currency' => 'usd',
                     'product_data' => [
-                        'name' => 'Farm Booking: ' . $booking->farm->name,
+                        'name' => 'Farm Booking: ' . ($booking->farm->name ?? 'Farm'),
                         'description' => 'From: ' . $startDate . ' | To: ' . $endDate . ' (Testing Mode: Converted to USD)',
                     ],
                     'unit_amount' => $amountInCents,
@@ -122,12 +117,44 @@ class PaymentController extends Controller
         Stripe::setApiKey(config('services.stripe.secret'));
         try {
             $session = Session::retrieve($request->get('session_id'));
+
+            // =========================================================
+            // 🚀 1. سد الثغرة الأمنية الكارثية: منع انتحال المدفوعات (Spoofing)
+            // =========================================================
+            if (!isset($session->metadata->booking_id) || $session->metadata->booking_id != $booking->id || $session->metadata->type !== 'booking') {
+                abort(403, 'Security Alert: Payment session mismatch.');
+            }
+
             if ($session->payment_status === 'paid') {
 
                 if ($booking->payment_status === 'paid') {
                     return redirect()->route('bookings.show', $booking->id)
                         ->with('success', 'Your booking is already confirmed!');
                 }
+
+                // =========================================================
+                // 🚀 2. تفكيك قنبلة الـ Race Condition: فحص التعارض بعد الدفع وقبل التأكيد
+                // =========================================================
+                $overlappingBooking = FarmBooking::where('farm_id', $booking->farm_id)
+                    ->whereIn('status', ['confirmed', 'completed'])
+                    ->where('id', '!=', $booking->id)
+                    ->where('start_time', '<', $booking->end_time)
+                    ->where('end_time', '>', $booking->start_time)
+                    ->first();
+
+                if ($overlappingBooking) {
+                    // الرد المالي الآلي للزبون المظلوم
+                    Refund::create(['payment_intent' => $session->payment_intent]);
+
+                    $booking->update([
+                        'status' => 'cancelled',
+                        'payment_status' => 'refunded'
+                    ]);
+
+                    return redirect()->route('explore')
+                        ->with('error', 'We apologize. Someone else completed their payment for these exact dates just seconds before you. We have automatically fully refunded your payment to your card.');
+                }
+                // =========================================================
 
                 $booking->update([
                     'payment_status'           => 'paid',
@@ -136,9 +163,15 @@ class PaymentController extends Controller
                     'stripe_payment_intent_id' => $session->payment_intent,
                 ]);
 
-                $booking->user->notify(new BookingConfirmedNotification($booking));
-                if ($booking->farm && $booking->farm->owner_id) {
-                    \App\Models\User::find($booking->farm->owner_id)->notify(new NewBookingReceivedNotification($booking));
+                // 🚀 تفكيك قنبلة الـ N+1 في الإشعارات
+                $booking->loadMissing(['user', 'farm.owner']);
+
+                if ($booking->user) {
+                    $booking->user->notify(new BookingConfirmedNotification($booking));
+                }
+
+                if ($booking->farm && $booking->farm->owner) {
+                    $booking->farm->owner->notify(new NewBookingReceivedNotification($booking));
                 }
 
                 return redirect()->route('bookings.show', $booking->id)
@@ -191,7 +224,6 @@ class PaymentController extends Controller
         $totalPrice = $orders->sum('total_price');
         Stripe::setApiKey(config('services.stripe.secret'));
 
-        // ✅ تحويل العملة إلى دولار أمريكي
         $exchangeRate = 1.41;
         $amountInCents = (int) (round($totalPrice * $exchangeRate, 2) * 100);
 
@@ -199,7 +231,7 @@ class PaymentController extends Controller
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'usd', // 👈 تم التعديل
+                    'currency' => 'usd',
                     'product_data' => [
                         'name' => 'Supply Order Invoice: #' . $order_id,
                         'description' => 'Payment for ' . $orders->count() . ' supply items. (Testing Mode)',
@@ -212,7 +244,7 @@ class PaymentController extends Controller
             'success_url' => route('payment.supply.success', ['order_id' => $order_id]) . '?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('cart.view'),
             'metadata' => [
-                'order_id' => $order_id,
+                'order_id' => $order_id, // 👈 للتأكد منها في دالة النجاح
                 'type' => 'supply_order'
             ]
         ]);
@@ -227,6 +259,13 @@ class PaymentController extends Controller
         try {
             $session = Session::retrieve($request->get('session_id'));
 
+            // =========================================================
+            // 🚀 سد الثغرة الأمنية للمشتريات (Spoofing Prevention)
+            // =========================================================
+            if (!isset($session->metadata->order_id) || $session->metadata->order_id !== $order_id || $session->metadata->type !== 'supply_order') {
+                abort(403, 'Security Alert: Payment session mismatch.');
+            }
+
             if ($session->payment_status === 'paid') {
                 $orders = SupplyOrder::where('order_id', $order_id)
                     ->where('user_id', auth()->id())
@@ -239,11 +278,11 @@ class PaymentController extends Controller
                         ->with('success', 'Your order has already been confirmed!');
                 }
 
-                foreach ($orders as $order) {
-                    $order->update(['status' => 'pending']);
-                }
+                // تحديث جماعي للحالات لتفادي الـ Loop Updates
+                SupplyOrder::where('order_id', $order_id)
+                    ->where('user_id', auth()->id())
+                    ->update(['status' => 'pending']);
 
-                // ✅ مسح سلة المشتريات بعد عملية الدفع الناجحة لمنع الدفع المزدوج والتكرار
                 session()->forget('cart');
 
                 return redirect()->route('supplies.my_orders')
@@ -278,19 +317,14 @@ class PaymentController extends Controller
             'cliq_alias' => 'required|string|max:255',
         ]);
 
-        $orders = SupplyOrder::where('order_id', $order_id)
+        $updated = SupplyOrder::where('order_id', $order_id)
             ->where('user_id', auth()->id())
             ->whereIn('status', ['pending_payment', 'pending_assignment'])
-            ->get();
+            ->update(['status' => 'pending_verification']); // تحديث جماعي مباشر أفضل
 
-        foreach ($orders as $order) {
-            $order->update([
-                'status' => 'pending_verification'
-            ]);
+        if($updated) {
+            session()->forget('cart');
         }
-
-        // ✅ مسح سلة المشتريات للـ CliQ أيضاً
-        session()->forget('cart');
 
         return redirect()->route('supplies.my_orders')
             ->with('success', 'Market payment initiated via CliQ! We are verifying your transfer from alias: ' . $request->cliq_alias);
