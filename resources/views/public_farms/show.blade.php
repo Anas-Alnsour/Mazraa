@@ -130,16 +130,22 @@
                         isOpen: false,
                         current: 0,
                         images: [
-                            @if($farm->main_image) '{{ asset('storage/' . $farm->main_image) }}', @endif
+                            @if($farm->main_image)
+                                '{{ Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/')) }}',
+                            @endif
                             @foreach ($farm->images as $image)
-                            '{{ asset('storage/' . $image->image_url) }}',
+                                '{{ Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/')) }}',
                             @endforeach
                         ]
                     }">
                         <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-3 h-[50vh] md:h-[65vh] min-h-[400px] rounded-[2.5rem] overflow-hidden shadow-lg border border-gray-200/50">
                             @if($farm->main_image || isset($farm->images[0]))
                             <div class="md:col-span-2 md:row-span-2 relative group cursor-pointer overflow-hidden h-full w-full" @click="current = 0; isOpen = true;">
-                                <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('storage/' . $farm->images[0]->image_url) }}"
+                                @php
+                                    $mainDisplayImage = $farm->main_image ? $farm->main_image : $farm->images[0]->image_url;
+                                    $mainDisplayUrl = Str::startsWith($mainDisplayImage, ['http://', 'https://']) ? $mainDisplayImage : asset('storage/' . ltrim($mainDisplayImage, '/'));
+                                @endphp
+                                <img src="{{ $mainDisplayUrl }}"
                                      class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Main Image">
                                 <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
                             </div>
@@ -147,7 +153,10 @@
 
                             @foreach($farm->images->take(4) as $index => $image)
                                 <div class="hidden md:block relative group cursor-pointer overflow-hidden h-full w-full" @click="current = {{ $farm->main_image ? $loop->index + 1 : $loop->index }}; isOpen = true;">
-                                    <img src="{{ asset('storage/' . $image->image_url) }}"
+                                    @php
+                                        $thumbUrl = Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/'));
+                                    @endphp
+                                    <img src="{{ $thumbUrl }}"
                                          class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="Gallery Image">
                                     <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500"></div>
                                 </div>

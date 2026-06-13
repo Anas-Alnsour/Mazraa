@@ -349,7 +349,7 @@
                                         <span
                                             class="px-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest border-r border-slate-800">LAT</span>
                                         <input type="text" name="latitude" id="lat"
-                                            value="{{ old('latitude', $farm->latitude ?? '31.9522') }}" 
+                                            value="{{ old('latitude', $farm->latitude ?? '31.9522') }}"
                                             class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none ">
                                     </div>
                                     <div
@@ -357,7 +357,7 @@
                                         <span
                                             class="px-3 text-[10px] font-black text-emerald-500 uppercase tracking-widest border-r border-slate-800">LNG</span>
                                         <input type="text" name="longitude" id="lng"
-                                            value="{{ old('longitude', $farm->longitude ?? '35.2332') }}" 
+                                            value="{{ old('longitude', $farm->longitude ?? '35.2332') }}"
                                             class="bg-transparent text-slate-300 font-mono text-sm w-full pl-4 outline-none ">
                                     </div>
                                 </div>
@@ -382,53 +382,6 @@
                             Financial Strategy (JOD)
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-
-                            {{-- Base Price --}}
-                            {{-- old code --}}
-                                    {{-- </div> --}}
-                                    {{-- <input type="number" step="0.01" name="price_per_night"
-                                        value="{{ old('price_per_night', $farm->price_per_full_day) }}"
-                                        class="w-full bg-transparent border-none text-white rounded-xl focus:ring-0 pl-16 py-2 text-4xl font-black outline-none"
-                                        required> --}}
-                                {{-- </div> --}}
-                            {{-- </div> --}}
-
-                            {{-- new code  --}}
-                            {{-- الكود الجديد والبديل الصحيح --}}
-                            {{-- <div class="grid grid-cols-1 md:grid-cols-2 gap-4"> --}}
-                                {{-- Morning Shift --}}
-                                {{-- <div class="space-y-2">
-                                    <label
-                                        class="block text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2">Morning
-                                        Shift <span class="text-rose-500">*</span></label>
-                                    <div class="relative group">
-                                        <div
-                                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 group-focus-within:text-amber-400 transition-colors">
-                                            <span class="text-sm font-bold uppercase">JOD</span>
-                                        </div>
-                                        <input type="number" step="0.01" name="price_per_morning_shift"
-                                            value="{{ old('price_per_morning_shift', $farm->price_per_morning_shift) }}"
-                                            class="w-full admin-input pl-14 font-bold text-sm" required>
-                                    </div>
-                                </div> --}}
-
-                                {{-- Evening Shift --}}
-                                {{-- <div class="space-y-2">
-                                    <label
-                                        class="block text-[10px] font-black text-amber-500 uppercase tracking-widest ml-2">Evening
-                                        Shift <span class="text-rose-500">*</span></label>
-                                    <div class="relative group">
-                                        <div
-                                            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 group-focus-within:text-amber-400 transition-colors">
-                                            <span class="text-sm font-bold uppercase">JOD</span>
-                                        </div>
-                                        <input type="number" step="0.01" name="price_per_evening_shift"
-                                            value="{{ old('price_per_evening_shift', $farm->price_per_evening_shift) }}"
-                                            class="w-full admin-input pl-14 font-bold text-sm" required>
-                                    </div>
-                                </div>
-                            </div> --}}
-                            {{-- end  --}}
 
                             {{-- Full Day --}}
                             <div class="space-y-2">
@@ -604,7 +557,13 @@
                                     </label>
                                     <div
                                         class="relative h-64 rounded-3xl overflow-hidden group border-2 border-slate-700 bg-[#020617] shadow-inner">
-                                        <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : 'https://via.placeholder.com/400x300' }}"
+                                        @php
+                                            $mainCoverUrl = 'https://via.placeholder.com/400x300';
+                                            if ($farm->main_image) {
+                                                $mainCoverUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                            }
+                                        @endphp
+                                        <img src="{{ $mainCoverUrl }}"
                                             class="w-full h-full object-cover group-hover:scale-110 group-hover:blur-sm transition-all duration-500">
                                         <div
                                             class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center p-4 backdrop-blur-sm">
@@ -644,7 +603,10 @@
                                             @foreach ($farm->images as $img)
                                                 <div class="relative h-32 rounded-2xl overflow-hidden group border border-slate-700 shadow-lg cursor-pointer"
                                                     onclick="const cb = this.querySelector('input'); cb.checked = !cb.checked; this.classList.toggle('ring-2'); this.classList.toggle('ring-rose-500'); this.querySelector('.overlay').classList.toggle('opacity-100');">
-                                                    <img src="{{ asset('storage/' . $img->image_url) }}"
+                                                    @php
+                                                        $galUrl = Str::startsWith($img->image_url, ['http://', 'https://']) ? $img->image_url : asset('storage/' . ltrim($img->image_url, '/'));
+                                                    @endphp
+                                                    <img src="{{ $galUrl }}"
                                                         class="w-full h-full object-cover transition-transform group-hover:scale-110">
                                                     <div
                                                         class="overlay absolute inset-0 bg-rose-950/80 opacity-0 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm">
@@ -687,8 +649,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
 
             </div>
@@ -780,7 +742,7 @@
                         const lat = parseFloat(match[1]);
                         const lng = parseFloat(match[2]);
                         updateCoords(lat, lng);
-                        
+
                         const newPos = { lat: lat, lng: lng };
                         marker.setPosition(newPos);
                         map.setZoom(18); // تقريب شديد جداً لرؤية المزرعة بوضوح بعد لصق الرابط

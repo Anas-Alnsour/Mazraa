@@ -50,7 +50,10 @@
                         <div class="relative h-64 w-full bg-slate-950 p-2 shrink-0">
                             <div class="relative w-full h-full rounded-[2.5rem] overflow-hidden border border-slate-800/80 shadow-inner">
                                 @if($farm->main_image)
-                                    <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700">
+                                    @php
+                                        $mainImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                    @endphp
+                                    <img src="{{ $mainImgUrl }}" alt="{{ $farm->name }}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-slate-900">
                                         <svg class="w-12 h-12 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -90,7 +93,6 @@
 
                             {{-- 🌟 3-Column Rates Grid 🌟 --}}
                             <div class="grid grid-cols-3 gap-2 py-5 border-y border-slate-800/80 mt-auto mb-8 bg-slate-950/40 rounded-2xl px-4 shadow-inner">
-
                                 {{-- Morning Shift --}}
                                 <div class="flex flex-col justify-center text-center sm:text-left pr-2">
                                     <p class="text-[8px] sm:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-center sm:justify-start gap-1">

@@ -123,7 +123,7 @@
                 </div>
                 @endauth
             </div>
-                    {{-- 💡 STRICT TIMING POLICY DISCLAIMER --}}
+                {{-- 💡 STRICT TIMING POLICY DISCLAIMER --}}
         <div class="bg-blue-50/80 border border-blue-100 p-6 mb-8 rounded-2xl shadow-sm fade-in-up">
             <div class="flex items-start gap-4">
                 <div class="flex-shrink-0 bg-blue-100 p-2 rounded-xl text-blue-600">
@@ -207,7 +207,20 @@
                             {{-- 📷 Image Section --}}
                             <div class="p-3 pb-0">
                                 <div class="relative h-60 overflow-hidden rounded-[1.8rem] bg-gray-50 shadow-inner border border-gray-100">
-                                    <img src="{{ asset('storage/supplies/' . $supply->image) }}"
+                                    @php
+                                        // 💡 الحل الجذري للصور في المتجر
+                                        $imgUrl = asset('images/default-product.png');
+                                        if (!empty($supply->image)) {
+                                            if (filter_var($supply->image, FILTER_VALIDATE_URL) || Str::startsWith($supply->image, ['http://', 'https://'])) {
+                                                $imgUrl = $supply->image;
+                                            } else if (!Str::contains($supply->image, '/')) {
+                                                $imgUrl = asset('storage/supplies/' . $supply->image);
+                                            } else {
+                                                $imgUrl = asset('storage/' . ltrim($supply->image, '/'));
+                                            }
+                                        }
+                                    @endphp
+                                    <img src="{{ $imgUrl }}"
                                          alt="{{ $supply->name }}"
                                          class="w-full h-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110">
 

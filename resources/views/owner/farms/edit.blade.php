@@ -412,7 +412,10 @@
                             @if ($farm->main_image)
                                 <div
                                     class="relative w-40 h-40 rounded-[2rem] border-4 border-slate-800 overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(0,0,0,0.5)] bg-[#020617] group">
-                                    <img src="{{ asset('storage/' . $farm->main_image) }}" alt="Cover"
+                                    @php
+                                        $mainImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                    @endphp
+                                    <img src="{{ $mainImgUrl }}" alt="Cover"
                                         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110">
                                     <div
                                         class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none">
@@ -436,7 +439,7 @@
                                         </svg>
                                     </div>
                                     <span
-                                        class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-emerald-400 transition-colors">Upload
+                                        class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover:text-emerald-400 transition-colors main-image-text">Upload
                                         Replacement</span>
                                 </div>
                             </div>
@@ -458,8 +461,10 @@
 
                                         <input type="checkbox" name="delete_images[]" value="{{ $image->id }}"
                                             class="peer sr-only">
-
-                                        <img src="{{ asset('storage/' . $image->image_url) }}" alt="Gallery Image"
+                                        @php
+                                            $galUrl = Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/'));
+                                        @endphp
+                                        <img src="{{ $galUrl }}" alt="Gallery Image"
                                             class="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500">
 
                                         {{-- Overlay for un-checked state (Hover) --}}

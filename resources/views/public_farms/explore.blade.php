@@ -102,7 +102,6 @@
                                 <option value="{{ $gov }}" class="text-gray-900" {{ request('governorate') == $gov ? 'selected' : '' }}>{{ $gov }}</option>
                             @endforeach
                         </select>
-                        {{-- <svg class="w-4 h-4 text-gray-500 absolute right-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> --}}
                     </div>
                 </div>
 
@@ -198,14 +197,15 @@
                         @endif
 
                         <a href="{{ route('farms.show', $farm->id) }}" class="absolute inset-0 z-10 block w-full h-full">
-                            @if($farm->main_image)
-                                <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}"
-                                     class="w-full h-full object-cover image-zoom relative z-10">
-                            @else
-                                <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative z-10">
-                                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                </div>
-                            @endif
+                            @if(!empty($farm->main_image))
+    <img src="{{ filter_var($farm->main_image, FILTER_VALIDATE_URL) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/')) }}"
+         alt="{{ $farm->name }}"
+         class="w-full h-full object-cover image-zoom relative z-10">
+@else
+    <div class="w-full h-full flex flex-col items-center justify-center bg-gray-100 relative z-10">
+        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    </div>
+@endif
                             <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         </a>
                     </div>

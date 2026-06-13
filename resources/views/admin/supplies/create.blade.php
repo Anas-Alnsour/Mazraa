@@ -62,6 +62,7 @@
         </a>
     </div>
 
+    {{-- 🚀 ADDED: enctype="multipart/form-data" --}}
     <form action="{{ route('admin.supplies.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
         @csrf
 

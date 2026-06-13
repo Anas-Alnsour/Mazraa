@@ -151,11 +151,16 @@ class SuperAdminController extends Controller
         if ($type === 'farm_approval') {
             $farm = Farm::findOrFail($id);
             if ($action === 'approve') {
-                $farm->update(['is_approved' => true]);
+                // 🚀 التعديل الجذري: تفعيل المزرعة بالكامل
+                $farm->update([
+                    'is_approved' => true,
+                    'status' => 'active'
+                ]);
+
                 if ($farm->owner) {
                     $farm->owner->notify(new FarmApprovedNotification($farm));
                 }
-                return redirect()->route('admin.verifications')->with('success', 'Farm approved and published!');
+                return redirect()->route('admin.verifications')->with('success', 'Farm approved and published successfully!');
             }
 
             $farm->delete();

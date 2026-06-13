@@ -194,7 +194,13 @@
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 w-full xl:w-2/5">
                             <div
                                 class="relative h-28 w-40 rounded-[1.5rem] overflow-hidden border-2 border-slate-800 flex-shrink-0 shadow-lg group-hover:border-indigo-500/50 transition-colors">
-                                <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('backgrounds/home.JPG') }}"
+                                @php
+                                    $mainImgUrl = asset('backgrounds/home.JPG');
+                                    if ($farm->main_image) {
+                                        $mainImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                    }
+                                @endphp
+                                <img src="{{ $mainImgUrl }}"
                                     class="h-full w-full object-cover">
                                 <div
                                     class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent">

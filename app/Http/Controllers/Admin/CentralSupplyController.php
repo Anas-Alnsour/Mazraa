@@ -39,9 +39,9 @@ class CentralSupplyController extends Controller
             'image' => 'nullable|image|max:2048'
         ]);
 
-        // ✅ التعديل هنا
         $data = $request->except(['_token', '_method', 'image']);
 
+        // ✅ التعديل هنا: التخزين مباشرة في public/supplies ليُحفظ المسار الصحيح
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('supplies', 'public');
         }
@@ -67,12 +67,12 @@ class CentralSupplyController extends Controller
             'image' => 'nullable|image|max:2048'
         ]);
 
-        // ✅ التعديل هنا
         $data = $request->except(['_token', '_method', 'image']);
 
+        // ✅ التعديل هنا: حذف الصورة القديمة (إن وجدت) وتخزين الجديدة بالمسار الصحيح
         if ($request->hasFile('image')) {
-            if ($supply->image) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($supply->image);
+            if ($supply->image && Storage::disk('public')->exists($supply->image)) {
+                Storage::disk('public')->delete($supply->image);
             }
             $data['image'] = $request->file('image')->store('supplies', 'public');
         }
@@ -83,6 +83,12 @@ class CentralSupplyController extends Controller
     public function destroy($id)
     {
         $supply = Supply::findOrFail($id);
+
+        // مسح الصورة عند حذف المنتج
+        if ($supply->image && Storage::disk('public')->exists($supply->image)) {
+             Storage::disk('public')->delete($supply->image);
+        }
+
         $supply->delete();
         return back()->with('success', 'Global Product removed.');
     }

@@ -118,7 +118,13 @@
                         {{-- Image Header --}}
                         <div class="p-3 pb-0">
                             <div class="relative h-56 md:h-64 overflow-hidden rounded-[1.5rem] bg-gray-100 shadow-inner">
-                                <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('backgrounds/home.JPG') }}"
+                                @php
+                                    $exploreImgUrl = asset('backgrounds/home.JPG');
+                                    if ($farm->main_image) {
+                                        $exploreImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                    }
+                                @endphp
+                                <img src="{{ $exploreImgUrl }}"
                                      onerror="this.onerror=null;this.src='{{ asset('backgrounds/home.JPG') }}';"
                                      alt="{{ $farm->name }}"
                                      class="image-zoom w-full h-full object-cover text-transparent relative z-10">

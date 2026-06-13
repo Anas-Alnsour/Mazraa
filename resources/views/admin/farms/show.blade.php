@@ -53,7 +53,10 @@
                 <div class="relative z-10">
                     @if($farm->main_image)
                         <div class="w-full h-80 rounded-2xl overflow-hidden border-2 border-slate-800 shadow-inner">
-                            <img src="{{ asset('storage/' . $farm->main_image) }}" alt="{{ $farm->name }}" class="w-full h-full object-cover">
+                            @php
+                                $mainImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                            @endphp
+                            <img src="{{ $mainImgUrl }}" alt="{{ $farm->name }}" class="w-full h-full object-cover">
                         </div>
                     @else
                         <div class="w-full h-80 rounded-2xl bg-slate-950 border-2 border-slate-800 flex items-center justify-center">
@@ -159,7 +162,10 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                     @foreach($farm->images as $image)
                         <div class="aspect-square rounded-xl overflow-hidden border-2 border-slate-800 shadow-inner">
-                            <img src="{{ asset('storage/' . $image->image_url) }}" alt="Gallery image" class="w-full h-full object-cover">
+                            @php
+                                $galUrl = Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/'));
+                            @endphp
+                            <img src="{{ $galUrl }}" alt="Gallery image" class="w-full h-full object-cover">
                         </div>
                     @endforeach
                 </div>

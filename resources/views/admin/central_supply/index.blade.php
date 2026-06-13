@@ -67,11 +67,26 @@
                 <div class="bg-slate-950/60 rounded-[2rem] border border-slate-800 p-5 shadow-xl hover:border-cyan-500/40 transition-colors group relative overflow-hidden flex flex-col h-full">
                     <div class="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     <div class="w-full h-40 bg-slate-900 rounded-xl mb-4 overflow-hidden border border-slate-800 relative z-10">
-                        @if($item->image)
-                            <img src="{{ asset('storage/supplies/' . $item->image) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-slate-700 text-xs font-black uppercase">No Image</div>
-                        @endif
+                        @php
+                            // 💡 الحل الذكي والنهائي لصور المنتجات في اللارافل
+                            $imgUrl = asset('images/default-product.png'); // صورة بديلة
+
+                            if (!empty($item->image)) {
+                                // إذا كان الرابط يبدأ بـ http (رابط خارجي من الـ Seeder)
+                                if (filter_var($item->image, FILTER_VALIDATE_URL) || Str::startsWith($item->image, ['http://', 'https://'])) {
+                                    $imgUrl = $item->image;
+                                }
+                                // إذا كان اسم الصورة فقط ومحفوظة بمجلد supplies
+                                else if (!Str::contains($item->image, '/')) {
+                                    $imgUrl = asset('storage/supplies/' . $item->image);
+                                }
+                                // إذا كان مسار كامل مثل supplies/image.jpg
+                                else {
+                                    $imgUrl = asset('storage/' . ltrim($item->image, '/'));
+                                }
+                            }
+                        @endphp
+                        <img src="{{ $imgUrl }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                     </div>
                     <div class="relative z-10 flex-1 flex flex-col">
                         <h4 class="font-black text-white text-lg truncate mb-1">{{ $item->name }}</h4>
@@ -106,4 +121,11 @@
         @endif
     </div>
 </div>
+
+<style>
+    /* Custom Pagination Styling for Dark Theme */
+    .custom-pagination nav { @apply flex items-center gap-2; }
+    .custom-pagination .page-link { @apply bg-slate-950 border border-slate-800 text-slate-400 text-[10px] font-black px-4 py-2 rounded-lg transition-all hover:bg-slate-800 hover:text-cyan-400 hover:border-cyan-500/30; }
+    .custom-pagination .active .page-link { @apply bg-cyan-600 border-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)]; }
+</style>
 @endsection

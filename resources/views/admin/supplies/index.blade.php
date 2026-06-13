@@ -50,7 +50,26 @@
                         {{-- Product Image & Overlays --}}
                         <div class="relative h-60 overflow-hidden bg-slate-950 p-2 shrink-0">
                             <div class="relative h-full w-full rounded-[1.5rem] overflow-hidden border border-slate-800/50 shadow-inner">
-                                <img src="{{ $supply->image ? asset('storage/supplies/' . $supply->image) :  asset('storage/supplies/' . $supply->image) }}"
+                                @php
+                                    // 💡 الحل الذكي والنهائي لصور المنتجات في اللارافل
+                                    $imgUrl = asset('images/default-product.png'); // صورة بديلة
+
+                                    if (!empty($supply->image)) {
+                                        // إذا كان الرابط يبدأ بـ http (رابط خارجي من الـ Seeder)
+                                        if (filter_var($supply->image, FILTER_VALIDATE_URL) || Str::startsWith($supply->image, ['http://', 'https://'])) {
+                                            $imgUrl = $supply->image;
+                                        }
+                                        // إذا كان اسم الصورة فقط ومحفوظة بمجلد supplies
+                                        else if (!Str::contains($supply->image, '/')) {
+                                            $imgUrl = asset('storage/supplies/' . $supply->image);
+                                        }
+                                        // إذا كان مسار كامل مثل supplies/image.jpg
+                                        else {
+                                            $imgUrl = asset('storage/' . ltrim($supply->image, '/'));
+                                        }
+                                    }
+                                @endphp
+                                <img src="{{ $imgUrl }}"
                                      class="h-full w-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-700">
                                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent opacity-90"></div>
 
@@ -82,7 +101,7 @@
                             <p class="text-xs text-slate-400 font-medium leading-relaxed line-clamp-2 italic h-10 mb-6">"{{ $supply->description }}"</p>
 
                             {{-- Action Suite --}}
-                            <div class="mt-auto flex items-center gap-3 pt-5 border-t border-slate-800/80">
+                            <div class="mt-auto flex items-center gap-2 border-t border-slate-800/50 pt-4">
                                 <a href="{{ route('admin.supplies.edit', $supply->id) }}" class="flex-1 py-3.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-lime-400 font-black text-[10px] uppercase tracking-widest rounded-xl border border-slate-800 hover:border-lime-500/30 transition-all text-center flex items-center justify-center gap-2 active:scale-95 shadow-sm">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     Adjust
@@ -100,7 +119,7 @@
             </div>
 
             {{-- Pagination --}}
-            @if($supplies->hasPages())
+            @if(method_exists($supplies, 'hasPages') && $supplies->hasPages())
                 <div class="mt-12 flex justify-center text-white pb-8">
                     <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-800 px-6 py-3 rounded-full shadow-2xl custom-pagination">
                         {{ $supplies->links() }}

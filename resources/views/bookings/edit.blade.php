@@ -141,7 +141,13 @@
 
                 {{-- LEFT: Farm Image --}}
                 <div class="relative w-full md:w-[40%] h-80 md:h-auto min-h-[450px]">
-                    <img src="{{ $farm->main_image ? asset('storage/' . $farm->main_image) : asset('backgrounds/home.JPG') }}"
+                    @php
+                        $mainImgUrl = asset('backgrounds/home.JPG');
+                        if ($farm->main_image) {
+                            $mainImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                        }
+                    @endphp
+                    <img src="{{ $mainImgUrl }}"
                          onerror="this.onerror=null;this.src='{{ asset('backgrounds/home.JPG') }}';"
                          class="w-full h-full object-cover text-transparent">
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
@@ -196,18 +202,6 @@
                                 Multiple Days
                             </button>
                         </div>
-
-                        {{-- Event Type --}}
-                        {{-- <div>
-                            <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-2">Event Type</label>
-                            <div class="relative">
-                                <select name="event_type" id="eventType" class="w-full bg-white border border-gray-200 rounded-2xl py-4 px-5 text-sm font-bold text-gray-800 focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500 transition-all outline-none appearance-none shadow-sm" required>
-                                    <option value="Birthday" {{ old('event_type', $booking->event_type) == 'Birthday' ? 'selected' : '' }}>🎉 Birthday Celebration</option>
-                                    <option value="Wedding" {{ old('event_type', $booking->event_type) == 'Wedding' ? 'selected' : '' }}>💍 Wedding / Engagement</option>
-                                    <option value="Other" {{ old('event_type', $booking->event_type) == 'Other' ? 'selected' : '' }}>✨ Family Gathering / Other</option>
-                                </select>
-                            </div>
-                        </div> --}}
 
                         {{-- 🌟 Transport Integration 🌟 --}}
                         @if($farm->latitude && $farm->longitude)

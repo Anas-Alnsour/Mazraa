@@ -264,7 +264,7 @@
                     <div class="md:col-span-2 space-y-2">
                         <label for="location_link"
                             class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Google
-                            Maps Link <span class="text-slate-600">(Optional)</span></label>
+                            Maps Link </label>
                         <input type="url" id="location_link" name="location_link"
                             value="{{ old('location_link') }}" placeholder="https://maps.google.com/..."
                             class="w-full owner-input px-5 py-4 font-mono text-blue-400 text-sm">
@@ -489,7 +489,7 @@
 {{-- Leaflet Map Scripts (Integrated & Fixed Solution) --}}
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // 1. تعريف الحقول
