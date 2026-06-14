@@ -119,9 +119,16 @@
                         <div class="p-3 pb-0">
                             <div class="relative h-56 md:h-64 overflow-hidden rounded-[1.5rem] bg-gray-100 shadow-inner">
                                 @php
+                                    // 💡 الحل الذكي والنهائي لصور المنتجات في اللارافل
                                     $exploreImgUrl = asset('backgrounds/home.JPG');
                                     if ($farm->main_image) {
-                                        $exploreImgUrl = Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/'));
+                                        if (filter_var($farm->main_image, FILTER_VALIDATE_URL) || Str::startsWith($farm->main_image, ['http://', 'https://'])) {
+                                            $exploreImgUrl = $farm->main_image;
+                                        } else if (!Str::contains($farm->main_image, '/')) {
+                                            $exploreImgUrl = asset('storage/farms/' . $farm->main_image);
+                                        } else {
+                                            $exploreImgUrl = asset('storage/' . ltrim($farm->main_image, '/'));
+                                        }
                                     }
                                 @endphp
                                 <img src="{{ $exploreImgUrl }}"

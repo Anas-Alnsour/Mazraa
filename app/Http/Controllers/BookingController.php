@@ -54,6 +54,10 @@ class BookingController extends Controller
         $destGovernorate = $user->governorate ?? 'Amman';
         $requiresTransport = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
+        // تأمين قيم اللوكيشن في حال كانت فاضية
+        $pickupLat = $request->pickup_lat ?? 31.9522; // عمان الافتراضي
+        $pickupLng = $request->pickup_lng ?? 35.9334;
+
         if ($requiresTransport) {
             $hoursUntilCheckIn = Carbon::now()->diffInHours($startTime, false);
             if ($hoursUntilCheckIn < 24) {
@@ -142,8 +146,8 @@ class BookingController extends Controller
                 'status'            => 'pending_payment',
                 'requires_transport' => $requiresTransport,
                 'transport_cost'    => $transportCost,
-                'pickup_lat'        => $requiresTransport ? $validated['pickup_lat'] : null,
-                'pickup_lng'        => $requiresTransport ? $validated['pickup_lng'] : null,
+                'pickup_lat'        => $requiresTransport ? $pickupLat : null,
+                'pickup_lng'        => $requiresTransport ? $pickupLng : null,
             ]);
 
             // Create the transport request (if needed)
@@ -153,13 +157,13 @@ class BookingController extends Controller
                     'farm_id'                => $farm->id,
                     'farm_booking_id'        => $booking->id,
                     'transport_type'         => 'Shuttle',
-                    'passengers'             => $validated['passengers'],
+                    'passengers'             => $request->input('passengers', 1),
                     'start_and_return_point' => $pickupLocation,
                     'destination_governorate' => $destGovernorate,
-                    'pickup_lat'             => $validated['pickup_lat'],
-                    'pickup_lng'             => $validated['pickup_lng'],
+                    'pickup_lat'             => $pickupLat,
+                    'pickup_lng'             => $pickupLng,
                     'price'                  => $transportCost,
-                    'distance'               => $distance,
+                    'distance'               => $distance ?? 0,
                     'Farm_Arrival_Time'      => $startTime,
                     'Farm_Departure_Time'    => $endTime,
                     'status'                 => 'pending',
@@ -231,9 +235,11 @@ class BookingController extends Controller
             // =========================================================
 
             return redirect()->route('payment.select', ['booking' => $booking->id]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'An error occurred while processing your booking. Please try again.');
+            // 🚨 تغيير الرسالة هنا عشان يعطيك الخطأ البرمجي الحقيقي بدل الجملة المبهمة!
+            return back()->with('error', 'Booking Error: ' . $e->getMessage() . ' at line ' . $e->getLine());
         }
     }
 
@@ -453,6 +459,9 @@ class BookingController extends Controller
         $destGovernorate = Auth::user()->governorate ?? 'Amman';
         $requiresTransportFlag = filter_var($request->requires_transport, FILTER_VALIDATE_BOOLEAN);
 
+        $pickupLat = $request->pickup_lat ?? 31.9522;
+        $pickupLng = $request->pickup_lng ?? 35.9334;
+
         // =========================================================
         // 🔒 حماية المواصلات (يجب أن يكون الحجز بعد أكثر من 24 ساعة)
         // =========================================================
@@ -520,8 +529,8 @@ class BookingController extends Controller
                         'new_net_owner' => $netOwnerAmount,
                         'requires_transport' => $requiresTransportFlag ? 'true' : 'false',
                         'transport_cost' => $transportCost,
-                        'pickup_lat' => $request->pickup_lat,
-                        'pickup_lng' => $request->pickup_lng,
+                        'pickup_lat' => $pickupLat,
+                        'pickup_lng' => $pickupLng,
                         'pickup_location' => substr($pickupLocation, 0, 200), // Ensure it fits in Stripe metadata
                         'destination_governorate' => substr($destGovernorate, 0, 200),
                         'transport_passengers' => $request->passengers ?? 1,
@@ -566,8 +575,8 @@ class BookingController extends Controller
                     'price' => $transportCost,
                     'commission_amount' => $transportCost * 0.10,
                     'net_company_amount' => $transportCost * 0.90,
-                    'pickup_lat' => $request->pickup_lat,
-                    'pickup_lng' => $request->pickup_lng,
+                    'pickup_lat' => $pickupLat,
+                    'pickup_lng' => $pickupLng,
                 ]);
                 \App\Services\TransportDispatchAction::dispatchDriver($existingTransport);
             } elseif ($booking->payment_status !== 'paid') {
@@ -580,10 +589,10 @@ class BookingController extends Controller
                     'start_and_return_point' => $pickupLocation,
                     'pickup_location' => $pickupLocation,
                     'destination_governorate' => $destGovernorate,
-                    'pickup_lat' => $request->pickup_lat,
-                    'pickup_lng' => $request->pickup_lng,
+                    'pickup_lat' => $pickupLat,
+                    'pickup_lng' => $pickupLng,
                     'price' => $transportCost,
-                    'distance' => $distance,
+                    'distance' => $distance ?? 0,
                     'Farm_Arrival_Time' => $startTime,
                     'Farm_Departure_Time' => $endTime,
                     'status' => 'pending',
@@ -622,8 +631,8 @@ class BookingController extends Controller
             'net_owner_amount' => $netOwnerAmount,
             'requires_transport' => $requiresTransportFlag,
             'transport_cost' => $transportCost,
-            'pickup_lat' => $requiresTransportFlag ? $request->pickup_lat : null,
-            'pickup_lng' => $requiresTransportFlag ? $request->pickup_lng : null,
+            'pickup_lat' => $requiresTransportFlag ? $pickupLat : null,
+            'pickup_lng' => $requiresTransportFlag ? $pickupLng : null,
             'status' => $newStatus, // الحفاظ على حالة الحجز
         ]);
 
@@ -720,7 +729,7 @@ class BookingController extends Controller
                         'pickup_lat' => $session->metadata->pickup_lat,
                         'pickup_lng' => $session->metadata->pickup_lng,
                         'price' => $session->metadata->transport_cost,
-                        'distance' => $distance,
+                        'distance' => $distance ?? 0,
                         'Farm_Arrival_Time' => Carbon::parse($session->metadata->new_start_time),
                         'Farm_Departure_Time' => Carbon::parse($session->metadata->new_end_time),
                         'status' => 'pending',

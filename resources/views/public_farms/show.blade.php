@@ -131,10 +131,10 @@
                         current: 0,
                         images: [
                             @if($farm->main_image)
-                                '{{ Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/')) }}',
+                                '{{ filter_var($farm->main_image, FILTER_VALIDATE_URL) || Str::startsWith($farm->main_image, ['http://', 'https://']) ? $farm->main_image : asset('storage/' . ltrim($farm->main_image, '/')) }}',
                             @endif
                             @foreach ($farm->images as $image)
-                                '{{ Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/')) }}',
+                                '{{ filter_var($image->image_url, FILTER_VALIDATE_URL) || Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/')) }}',
                             @endforeach
                         ]
                     }">
@@ -143,7 +143,7 @@
                             <div class="md:col-span-2 md:row-span-2 relative group cursor-pointer overflow-hidden h-full w-full" @click="current = 0; isOpen = true;">
                                 @php
                                     $mainDisplayImage = $farm->main_image ? $farm->main_image : $farm->images[0]->image_url;
-                                    $mainDisplayUrl = Str::startsWith($mainDisplayImage, ['http://', 'https://']) ? $mainDisplayImage : asset('storage/' . ltrim($mainDisplayImage, '/'));
+                                    $mainDisplayUrl = (filter_var($mainDisplayImage, FILTER_VALIDATE_URL) || Str::startsWith($mainDisplayImage, ['http://', 'https://'])) ? $mainDisplayImage : asset('storage/' . ltrim($mainDisplayImage, '/'));
                                 @endphp
                                 <img src="{{ $mainDisplayUrl }}"
                                      class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt="Main Image">
@@ -154,7 +154,7 @@
                             @foreach($farm->images->take(4) as $index => $image)
                                 <div class="hidden md:block relative group cursor-pointer overflow-hidden h-full w-full" @click="current = {{ $farm->main_image ? $loop->index + 1 : $loop->index }}; isOpen = true;">
                                     @php
-                                        $thumbUrl = Str::startsWith($image->image_url, ['http://', 'https://']) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/'));
+                                        $thumbUrl = (filter_var($image->image_url, FILTER_VALIDATE_URL) || Str::startsWith($image->image_url, ['http://', 'https://'])) ? $image->image_url : asset('storage/' . ltrim($image->image_url, '/'));
                                     @endphp
                                     <img src="{{ $thumbUrl }}"
                                          class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="Gallery Image">

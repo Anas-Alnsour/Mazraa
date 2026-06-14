@@ -107,7 +107,19 @@
 
                     <div class="flex items-center gap-5 mb-6 relative z-10">
                         <div class="w-16 h-16 rounded-[1.2rem] overflow-hidden border-2 border-slate-800 shrink-0">
-                            <img src="{{ $booking->farm->main_image ? asset('storage/' . $booking->farm->main_image) : 'https://via.placeholder.com/150' }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Property">
+                            @php
+                                $imgUrl = 'https://via.placeholder.com/150';
+                                if ($booking->farm && $booking->farm->main_image) {
+                                    if (filter_var($booking->farm->main_image, FILTER_VALIDATE_URL) || Str::startsWith($booking->farm->main_image, ['http://', 'https://'])) {
+                                        $imgUrl = $booking->farm->main_image;
+                                    } else if (!Str::contains($booking->farm->main_image, '/')) {
+                                        $imgUrl = asset('storage/farms/' . $booking->farm->main_image);
+                                    } else {
+                                        $imgUrl = asset('storage/' . ltrim($booking->farm->main_image, '/'));
+                                    }
+                                }
+                            @endphp
+                            <img src="{{ $imgUrl }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Property">
                         </div>
                         <div class="min-w-0">
                             <p class="font-black text-white text-lg truncate group-hover:text-[#c2a265] transition-colors">{{ $booking->farm?->name ?? 'N/A' }}</p>

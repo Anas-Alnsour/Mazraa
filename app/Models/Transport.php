@@ -34,6 +34,8 @@ class Transport extends Model
         'origin_governorate',
         'destination_governorate',
         'return_scheduled_at',
+        'return_driver_id',   // ✅ تم الإضافة هنا
+        'return_vehicle_id',  // ✅ تم الإضافة هنا
     ];
 
     protected $casts = [
@@ -74,6 +76,7 @@ class Transport extends Model
     {
         return $this->belongsTo(FarmBooking::class, 'farm_booking_id');
     }
+
     // علاقة سائق العودة
     public function returnDriver()
     {
