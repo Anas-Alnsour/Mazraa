@@ -85,7 +85,6 @@
             background-color: #cbd5e1;
         }
 
-
         /* إخفاء أي أيقونة عين تأتي مع المكون الجاهز */
         .hide-internal-eye button svg,
         .hide-internal-eye .eye-icon {
@@ -177,6 +176,9 @@
                 <form method="POST" action="{{ route('partner.register.store') }}" class="space-y-6">
                     @csrf
 
+                    {{-- 💡 حقل مخفي يجبر النظام على تسجيل العميل كصاحب مزرعة فقط 💡 --}}
+                    <input type="hidden" name="role" value="farm_owner">
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-200 transform"
                         :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
                         {{-- Name --}}
@@ -216,62 +218,34 @@
                     </div>
 
                     {{-- Passwords --}}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-[400ms] transform"
-    :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-    
-    <div>
-        <x-password-toggle id="password" name="password" type="signup" color="green" required hide-internal-eye>
-            Password
-        </x-password-toggle>
-
-        @error('password')
-            <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
-        @enderror
-    </div>
-
-    <div>
-        <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup" color="green" required hide-internal-eye>
-            Confirm Password
-        </x-password-toggle>
-
-        @error('password_confirmation')
-            <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
-        @enderror
-    </div>
-
-    
-        <p class="text-xs text-gray-500">At least 8 characters</p>
-        <p class="text-xs text-gray-500">Must contain letters</p>
-        <p class="text-xs text-gray-500">At least one Capital letter</p>
-        <p class="text-xs text-gray-500">Must include numbers & special characters</p>
-    
-</div>
-                    {{-- Partner Type Selection --}}
-                    <div class="group transition-all duration-700 delay-[450ms] transform"
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 transition-all duration-700 delay-[400ms] transform"
                         :class="mounted ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'">
-                        <label for="role"
-                            class="block text-[11px] font-black uppercase tracking-widest text-[#1d5c42] mb-2 flex items-center gap-2">
-                            Select Partner Type <span class="text-red-500">*</span>
-                            <span class="px-2 py-0.5 bg-[#1d5c42]/10 rounded text-[9px] uppercase">Required</span>
-                        </label>
-                        <div class="relative">
-                            <select id="role" name="role" required
-                                class="block w-full bg-[#1d5c42]/5 border-2 border-[#1d5c42]/10 text-gray-900 rounded-2xl shadow-sm focus:bg-white focus:ring-4 focus:ring-[#1d5c42]/20 focus:border-[#1d5c42] sm:text-sm py-4 px-5 font-bold transition-all duration-300 appearance-none cursor-pointer hover:bg-[#1d5c42]/10 {{ $errors->has('role') ? 'border-red-500 ring-4 ring-red-500/20' : '' }}">
-                                <option value="" disabled selected>Select your business sector...</option>
-                                <option value="farm_owner" {{ old('role') === 'farm_owner' ? 'selected' : '' }}>Farm
-                                    Owner (Property Listing)</option>
-                                <option value="supply_company"
-                                    {{ old('role') === 'supply_company' ? 'selected' : '' }}>Supply Company (B2B
-                                    Marketplace)</option>
-                                <option value="transport_company"
-                                    {{ old('role') === 'transport_company' ? 'selected' : '' }}>Transport Company
-                                    (Logistics)</option>
-                            </select>
-                            {{-- <div class="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-[#1d5c42]">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
-                            </div> --}}
+
+                        <div>
+                            <x-password-toggle id="password" name="password" type="signup" color="green" required hide-internal-eye>
+                                Password
+                            </x-password-toggle>
+
+                            @error('password')
+                                <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
+                            @enderror
                         </div>
-                        <x-input-error :messages="$errors->get('role')" class="mt-2 text-xs text-red-600 font-bold" />
+
+                        <div>
+                            <x-password-toggle id="password_confirmation" name="password_confirmation" type="signup" color="green" required hide-internal-eye>
+                                Confirm Password
+                            </x-password-toggle>
+
+                            @error('password_confirmation')
+                                <p class="text-xs text-red-500 mt-1 font-bold">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div class="col-span-1 md:col-span-2 space-y-1">
+                            <p class="text-xs text-gray-500">At least 8 characters</p>
+                            <p class="text-xs text-gray-500">Must contain uppercase & lowercase letters</p>
+                            <p class="text-xs text-gray-500">Must include numbers & special characters</p>
+                        </div>
                     </div>
 
                     {{-- BANK DETAILS SECTION --}}
@@ -354,7 +328,7 @@
                             <span
                                 class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></span>
                             <span class="relative z-10 flex items-center gap-2">
-                                Create Partner Account
+                                Create Farm Owner Account
                                 <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
@@ -383,3 +357,4 @@
 </body>
 
 </html>
+
