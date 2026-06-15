@@ -103,12 +103,17 @@
                     </select>
                 </div>
 
-                {{-- License Plate (تم تعديل العرض ليأخذ كل المساحة بدلاً من المساحة بجانب Capacity المزال) --}}
-                <div class="md:col-span-2 space-y-2">
+                {{-- License Plate --}}
+                <div class="space-y-2">
                     <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">License Plate Number <span class="text-cyan-500">*</span></label>
                     <input type="text" name="license_plate" id="license_plate" value="{{ old('license_plate', $vehicle->license_plate) }}" required class="w-full transport-input px-5 py-4 font-black uppercase font-mono tracking-widest text-sm">
                 </div>
 
+                {{-- Capacity --}}
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest ml-2">Passenger Capacity (PAX) <span class="text-cyan-500">*</span></label>
+                    <input type="number" name="capacity" id="capacity" value="{{ old('capacity', $vehicle->capacity) }}" required min="1" class="w-full transport-input px-5 py-4 font-black uppercase font-mono tracking-widest text-sm">
+                </div>
             </div>
 
             {{-- 🌟 Status Matrix --}}
@@ -130,7 +135,7 @@
                         </label>
                     </div>
                     <div class="relative">
-                        <input type="radio" name="status" id="status_booked" value="in_use" class="status-radio sr-only" {{ old('status', $vehicle->status) === 'booked' ? 'checked' : '' }}>
+                        <input type="radio" name="status" id="status_booked" value="in_use" class="status-radio sr-only" {{ old('status', $vehicle->status) === 'in_use' ? 'checked' : '' }}>
                         <label for="status_booked" class="flex flex-col items-center justify-center p-6 border border-slate-700 bg-slate-950 rounded-2xl cursor-pointer transition-all hover:border-blue-500/50 group shadow-inner">
                             <span class="w-3 h-3 rounded-full bg-blue-500 mb-3 shadow-[0_0_10px_#3b82f6] group-hover:scale-125 transition-transform"></span>
                             <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest group-hover:text-white">Booked</span>

@@ -108,21 +108,21 @@
                 Active Personnel
             </h3>
             <span class="bg-slate-950 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-800 shadow-inner">
-                Total Nodes: <span class="text-emerald-400 ml-1">{{ $drivers->total() ?? $drivers->count() }}</span>
+                Total Nodes: <span class="text-emerald-400 ml-1">{{ method_exists($drivers, 'total') ? $drivers->total() : $drivers->count() }}</span>
             </span>
         </div>
 
         @if($drivers->count() > 0)
             <div class="w-full overflow-x-auto table-scroll bg-slate-900/20">
-                <table class="w-full text-left border-collapse min-w-[900px]">
+                <table class="w-full text-left border-collapse">
                     <thead class="bg-slate-950/80 border-b border-slate-800">
                         <tr>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Agent Identity</th>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Comms Protocol</th>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Activation Date</th>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Type</th>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">License Plate</th>
-                            <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-right">Matrix Control</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Agent Identity</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Comms Protocol</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Activation Date</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">Type</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">License Plate</th>
+                            <th class="px-5 py-5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap text-right">Matrix Control</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-800/40">
@@ -130,14 +130,14 @@
                             <tr class="hover:bg-teal-500/5 transition-colors group">
 
                                 {{-- Driver Identity --}}
-                                <td class="px-10 py-6 whitespace-nowrap">
-                                    <div class="flex items-center gap-5">
-                                        <div class="h-14 w-14 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-emerald-400 font-black text-xl shadow-inner group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase shrink-0">
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <div class="flex items-center gap-4">
+                                        <div class="h-12 w-12 rounded-2xl bg-slate-950 border border-slate-700 flex items-center justify-center text-emerald-400 font-black text-xl shadow-inner group-hover:border-emerald-500/50 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all uppercase shrink-0">
                                             {{ substr($driver->name ?? 'A', 0, 1) }}
                                         </div>
                                         <div class="min-w-0">
-                                            <p class="text-base font-black text-white group-hover:text-emerald-400 transition-colors truncate tracking-tight mb-1">{{ $driver->name }}</p>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                                            <p class="text-sm font-black text-white group-hover:text-emerald-400 transition-colors truncate tracking-tight mb-1">{{ $driver->name }}</p>
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[8px] font-black text-slate-400 uppercase tracking-widest">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]"></span> Dispatch Ready
                                             </span>
                                         </div>
@@ -145,37 +145,37 @@
                                 </td>
 
                                 {{-- Contact Info --}}
-                                <td class="px-10 py-6 whitespace-nowrap">
-                                    <p class="text-sm font-black text-slate-200 tracking-widest mb-1.5 font-mono group-hover:text-white transition-colors">{{ $driver->phone ?? 'NO COMMS' }}</p>
-                                    <p class="text-[10px] font-bold text-slate-500 truncate max-w-[200px]">{{ $driver->email }}</p>
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <p class="text-xs font-black text-slate-200 tracking-widest mb-1 font-mono group-hover:text-white transition-colors">{{ $driver->phone ?? 'NO COMMS' }}</p>
+                                    <p class="text-[9px] font-bold text-slate-500 truncate max-w-[150px] xl:max-w-[200px]">{{ $driver->email }}</p>
                                 </td>
 
                                 {{-- Joined Date --}}
-                                <td class="px-10 py-6 whitespace-nowrap">
-                                    <p class="text-sm font-black text-slate-300">{{ $driver->created_at->format('M d, Y') }}</p>
-                                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">Node Initiated</p>
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <p class="text-xs font-black text-slate-300">{{ $driver->created_at->format('M d, Y') }}</p>
+                                    <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">Node Initiated</p>
                                 </td>
 
                                 {{-- Driver Type --}}
-                                <td class="px-10 py-6 whitespace-nowrap">
+                                <td class="px-5 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-950 border border-slate-800 text-[8px] font-black text-slate-400 uppercase tracking-widest">
                                         {{ $driver->vehicle->type ?? 'N/A' }}
                                     </span>
                                 </td>
                                 {{-- License Plate --}}
-                                <td class="px-10 py-6 whitespace-nowrap">
-                                    <p class="text-sm font-black text-slate-300 tracking-widest">{{ $driver->vehicle->license_plate ?? 'N/A' }}</p>
-                                </td>   
+                                <td class="px-5 py-4 whitespace-nowrap">
+                                    <p class="text-xs font-black text-slate-300 tracking-widest">{{ $driver->vehicle->license_plate ?? 'N/A' }}</p>
+                                </td>
 
                                 {{-- Actions Matrix --}}
-                                <td class="px-10 py-6 whitespace-nowrap text-right">
-                                    <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
-                                        <a href="{{ route('supplies.drivers.edit', $driver->id) }}" class="flex items-center justify-center gap-2 p-3.5 bg-slate-950 text-slate-400 border border-slate-700 hover:border-emerald-500 hover:text-emerald-400 rounded-xl transition-all shadow-inner active:scale-95" title="Configure Agent">
+                                <td class="px-5 py-4 whitespace-nowrap text-right">
+                                    <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                        <a href="{{ route('supplies.drivers.edit', $driver->id) }}" class="flex items-center justify-center p-3 bg-slate-950 text-slate-400 border border-slate-700 hover:border-emerald-500 hover:text-emerald-400 rounded-xl transition-all shadow-inner active:scale-95" title="Configure Agent">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </a>
                                         <form action="{{ route('supplies.drivers.destroy', $driver->id) }}" method="POST" onsubmit="return confirm('WARNING: Terminate this agent from the fleet?');" class="inline-block m-0">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="flex items-center justify-center gap-2 p-3.5 bg-slate-950 text-rose-500 border border-slate-700 hover:border-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all active:scale-95 shadow-inner" title="Terminate Agent">
+                                            <button type="submit" class="flex items-center justify-center p-3 bg-slate-950 text-rose-500 border border-slate-700 hover:border-rose-500 hover:bg-rose-600 hover:text-white rounded-xl transition-all active:scale-95 shadow-inner" title="Terminate Agent">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
                                         </form>
@@ -189,7 +189,7 @@
 
             {{-- Pagination --}}
             @if(method_exists($drivers, 'hasPages') && $drivers->hasPages())
-                <div class="px-10 py-10 border-t border-slate-800 bg-slate-950/40 flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
+                <div class="px-8 py-8 border-t border-slate-800 bg-slate-950/40 flex flex-col sm:flex-row items-center justify-between gap-6 shrink-0">
                     <p class="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">
                         Displaying <span class="text-emerald-400">{{ $drivers->count() }}</span> of <span class="text-white">{{ $drivers->total() }}</span> agents
                     </p>

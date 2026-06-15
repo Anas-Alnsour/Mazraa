@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vehicle;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -13,7 +11,7 @@ class TransportVehicleController extends Controller
 {
     public function index()
     {
-        // سحب المركبات مع السائقين المرتبطين فيها (كودك الأصلي ممتاز)
+        // عرض المركبات مع السائقين (في حال تم ربطهم لاحقاً من صفحة السائقين)
         $vehicles = Vehicle::with('driver')
             ->where('company_id', Auth::id())
             ->latest()
@@ -24,72 +22,31 @@ class TransportVehicleController extends Controller
 
     public function create()
     {
-        // جلب سائقين الشركة عشان نختار منهم (مهم جداً)
-        $drivers = User::where('role', 'transport_driver')
-            ->where('company_id', Auth::id())
-            ->get();
-
-        return view('transports.vehicles.create', compact('drivers'));
+        // لم نعد بحاجة لجلب السائقين هنا، الإضافة مخصصة للمركبة فقط
+        return view('transports.vehicles.create');
     }
 
     public function store(Request $request)
     {
-        $company = Auth::user();
-
+        // 1. التحقق من بيانات المركبة (بما فيها الـ capacity)
         $validated = $request->validate([
-            // بيانات السائق
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|string|email|max:255|unique:users,email',
-            'phone'       => 'required|string|max:20|unique:users,phone', // تم التعديل: التحقق من التكرار
-            'governorate' => 'required|string|max:255',
-            'shift'       => 'required|string|in:morning,evening',
-            'password'    => 'required|string|min:8|confirmed',
-
-            // بيانات المركبة
-            'license_plate' => 'required|string|max:255|unique:vehicles',
+            'license_plate' => 'required|string|max:255|unique:vehicles,license_plate',
             'type'          => 'required|string|max:255',
-            // 'capacity'      => 'required|integer|min:1', // تم التعليق: إزالة الإلزام بالسعة
-            // 'status'        => 'required|string|in:available,maintenance,booked',
-
-            // ربط السائق بالمركبة
-            'driver_id'             => 'nullable|exists:users,id',
-            'transport_vehicle_id'  => 'nullable|exists:vehicles,id',
+            'capacity'      => 'required|integer|min:1', // إضافة السعة للتحقق
         ]);
 
-        // 1. إنشاء السائق
-        $driver = User::create([
-            'name'                 => $validated['name'],
-            'email'                => $validated['email'],
-            'phone'                => $validated['phone'],
-            'governorate'          => $validated['governorate'],
-            'shift'                => $validated['shift'],
-            'password'             => Hash::make($validated['password']),
-            'role'                 => 'transport_driver',
-            'company_id'           => Auth::id(),
-            'transport_vehicle_id' => $validated['transport_vehicle_id'] ?? null,
-            // 💡 STRICT BUSINESS LOGIC: Inherent from Company Branch
-            // 'governorate' => $company->governorate,
-            // 'latitude'    => $company->latitude,
-            // 'longitude'   => $company->longitude,
-        ]);
-
-        // 2. إنشاء المركبة
-        $vehicle = Vehicle::create([
-            'license_plate' => $request->license_plate,
-            'type' => $request->type,
-            'capacity' => 0, // تم التعديل: إسناد قيمة 0 افتراضياً
-            'status' => 'Available',
-            'driver_id' => $driver->id, // ربط المركبة بالسائق
-            'company_id'           => Auth::id(),
-        ]);
-
-        // 3. تحديث السائق وربطه بالمركبة
-        $driver->update([
-            'transport_vehicle_id' => $vehicle->id,
+        // 2. إنشاء المركبة (مع السعة المدخلة)
+        Vehicle::create([
+            'license_plate' => $validated['license_plate'],
+            'type'          => $validated['type'],
+            'capacity'      => $validated['capacity'], // حفظ السعة الفعلية بدلاً من الصفر
+            'status'        => 'available', // حالة افتراضية
+            'driver_id'     => null, // لا يوجد سائق مبدئياً
+            'company_id'    => Auth::id(),
         ]);
 
         return redirect()->route('transport.vehicles.index')
-            ->with('success', 'Vehicle and Driver added and linked successfully.');
+            ->with('success', 'Vehicle added successfully to the fleet.');
     }
 
     public function edit(Vehicle $vehicle)
@@ -98,11 +55,7 @@ class TransportVehicleController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $drivers = User::where('role', 'transport_driver')
-            ->where('company_id', Auth::id())
-            ->get();
-
-        return view('transports.vehicles.edit', compact('vehicle', 'drivers'));
+        return view('transports.vehicles.edit', compact('vehicle'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
@@ -111,14 +64,15 @@ class TransportVehicleController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // التحقق من البيانات المرسلة للتحديث (بما فيها الـ capacity)
         $validated = $request->validate([
-            'type' => 'required|string|max:255',
+            'type'          => 'required|string|max:255',
             'license_plate' => ['required', 'string', 'max:255', Rule::unique('vehicles')->ignore($vehicle->id)],
-            // 'capacity' => 'required|integer|min:1', // تم التعليق: إزالة التحقق من السعة عند التعديل
-            'status' => 'required|string|in:available,maintenance,in_use',
-            'driver_id' => 'nullable|exists:users,id',
+            'capacity'      => 'required|integer|min:1', // إضافة السعة للتحقق
+            'status'        => 'required|string|in:available,maintenance,in_use',
         ]);
 
+        // تحديث المركبة بالبيانات الجديدة
         $vehicle->update($validated);
 
         return redirect()->route('transport.vehicles.index')
@@ -129,6 +83,11 @@ class TransportVehicleController extends Controller
     {
         if ($vehicle->company_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
+        }
+
+        // تفريغ ربط السائق قبل حذف المركبة (لضمان عدم وجود أخطاء في الـ Database)
+        if ($vehicle->driver_id) {
+            \App\Models\User::where('id', $vehicle->driver_id)->update(['transport_vehicle_id' => null]);
         }
 
         $vehicle->delete();
