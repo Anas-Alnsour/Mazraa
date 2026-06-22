@@ -39,14 +39,13 @@
                 </div>
 
                 <div class="w-full overflow-x-auto table-scroll bg-slate-900/20">
-                    <table class="w-full text-left border-collapse min-w-[1100px]">
+                    <table class="w-full text-left border-collapse min-w-[900px]">
                         <thead>
                             <tr class="bg-slate-950/80 border-b border-slate-800">
                                 <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Guest Identity</th>
                                 <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap">Asset / Schedule</th>
                                 <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-right">Revenue Yield</th>
                                 <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-center">Status Matrix</th>
-                                <th class="px-10 py-7 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] whitespace-nowrap text-right">Gateways</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/40">
@@ -104,45 +103,6 @@
                                             @if($status === 'pending') <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> @endif
                                             {{ str_replace('_', ' ', $status) }}
                                         </span>
-                                    </td>
-
-                                    {{-- Actions Gateways --}}
-                                    <td class="px-10 py-6 whitespace-nowrap text-right">
-                                        <div class="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
-                                            @if($status === 'pending')
-                                                <form action="{{ route('owner.bookings.approve', $booking->id) }}" method="POST">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit" class="flex items-center gap-2 px-5 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95" title="Approve Request">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                                        Approve
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('WARNING: Decline this booking request?');">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit" class="flex items-center gap-2 px-4 py-3.5 bg-slate-950 text-rose-500 hover:text-white hover:bg-rose-600 border border-slate-800 hover:border-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95" title="Reject Request">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                                    </button>
-                                                </form>
-                                            @elseif($status === 'confirmed')
-                                                <form action="{{ route('owner.bookings.complete', $booking->id) }}" method="POST">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit" class="flex items-center gap-2 px-5 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)] active:scale-95" title="Mark as Completed">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                                        Complete
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('owner.bookings.reject', $booking->id) }}" method="POST" onsubmit="return confirm('WARNING: Cancel a CONFIRMED booking?');">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit" class="flex items-center gap-2 px-4 py-3.5 bg-slate-950 text-rose-500 hover:text-white hover:bg-rose-600 border border-slate-800 hover:border-rose-500 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm active:scale-95" title="Cancel Booking">
-                                                        Cancel
-                                                    </button>
-                                                </form>
-                                            @else
-                                                <div class="p-3.5 bg-slate-950/50 border border-slate-800 text-slate-600 rounded-xl cursor-not-allowed shadow-inner" title="No actions available">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                                </div>
-                                            @endif
-                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

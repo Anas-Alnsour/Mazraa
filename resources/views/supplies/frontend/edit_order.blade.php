@@ -23,11 +23,11 @@
                 </div>
             @endif
 
-            <form action="{{ route('supplies.update_order', $order->id) }}" method="POST"
+           <form action="{{ route('supplies.update_order', $order->id) }}" method="POST"
                   x-data="{
                       qty: {{ $order->quantity }},
                       price: {{ $order->supply->price }},
-                      maxStock: {{ $order->supply->stock + $order->quantity }},
+                      maxStock: {{ $stockAvailable + $order->quantity }},
                       increment() { if(this.qty < this.maxStock) this.qty++; },
                       decrement() { if(this.qty > 1) this.qty--; }
                   }"

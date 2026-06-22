@@ -100,7 +100,7 @@
 
                 <a href="{{ route('transport.vehicles.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('transport.vehicles.*') ? 'sidebar-link-active' : '' }}">
                     <svg class="w-5 h-5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                    Fleet Vehicles and driver management
+                    Fleet Vehicles management
                 </a>
 
                 <a href="{{ route('transport.drivers.index') }}" class="sidebar-link flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-widest text-slate-400 {{ request()->routeIs('transport.drivers.*') ? 'sidebar-link-active' : '' }}">

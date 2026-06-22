@@ -125,10 +125,6 @@
                         </h3>
                         <p class="text-[10px] font-black text-slate-500 mt-2 uppercase tracking-[0.2em] ml-1">Action needed on latest reservations</p>
                     </div>
-                    <a href="{{ route('owner.bookings.index') }}" class="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#c2a265] bg-[#c2a265]/10 hover:bg-[#c2a265]/20 border border-[#c2a265]/30 px-6 py-3 rounded-2xl transition-all shadow-sm">
-                        View list
-                        <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                    </a>
                 </div>
 
                 @if(isset($recentBookings) && $recentBookings->count() > 0)

@@ -111,7 +111,24 @@ class SupplyController extends Controller
             return redirect()->route('orders.my_orders')->with('error', 'You cannot edit an order that is already being processed.');
         }
 
-        return view('supplies.frontend.edit_order', compact('order'));
+        // 1. تحديد فرع التوريد بناءً على المحافظة
+        $localCompany = User::where('role', 'supply_company')
+            ->where('governorate', $order->destination_governorate ?? ($order->booking->farm->governorate ?? 'Amman'))
+            ->first();
+
+        // 2. جلب المخزون المتوفر في هذا الفرع للمنتج المطلوب
+        $localInventory = null;
+        if ($localCompany) {
+            $localInventory = SupplyInventory::where('company_id', $localCompany->id)
+                ->where('supply_id', $order->supply_id)
+                ->first();
+        }
+
+        // 3. حساب الكمية المتاحة (إذا لم يوجد مخزون نعتبرها 0)
+        $stockAvailable = $localInventory ? $localInventory->stock : 0;
+
+        // تمرير المتغير الجديد stockAvailable للـ view
+        return view('supplies.frontend.edit_order', compact('order', 'stockAvailable'));
     }
 
     /**
